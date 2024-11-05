@@ -46,7 +46,7 @@ class ComposeSpec(
                     .map { holder ->
                       """
                           runner("${getFunctionId(holder)}") {
-                           ${getCodeBody(holder)}
+                           ${getCodeBody(holder).toString().trimIndent()}
                           }
                       """.trimIndent()
                     }.joinToString(separator = "\n")

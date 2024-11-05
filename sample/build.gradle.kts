@@ -1,6 +1,9 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.compose.compiler)
+    kotlin("android")
+    id("com.google.devtools.ksp")
+    //alias(libs.plugins.paparazzi)
 }
 
 apply {
@@ -13,17 +16,24 @@ val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
 android {
-    // TODO - com.infinum.<YOUR-AWESOME-LIBRARY-NAME>.sample
-    namespace = "com.infinum.libname.sample"
+    namespace = "com.infinum.arkive.sample"
     compileSdk = buildConfig["compileSdk"] as Int
 
     defaultConfig {
-        // TODO - com.infinum.<YOUR-AWESOME-LIBRARY-NAME>.sample
-        applicationId = "com.infinum.libname.sample"
+        applicationId = "com.infinum.arkive.sample"
         minSdk = buildConfig["minSdk"] as Int
         targetSdk = buildConfig["targetSdk"] as Int
         versionCode = 1
         versionName = releaseConfig["version"] as String
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildTypes {
@@ -46,15 +56,8 @@ android {
 
 dependencies {
 
-    implementation(project(":processor"))
-    // TODO - replace with your module names accordingly
-    // Comment this out for testing local deploy
-    implementation(project(":libModule2"))
-
-    // TODO - replace with your module packages accordingly
-    // Uncomment this for testing local deploy
-    //    implementation(packages.android-libname.libModule1)
-    //    implementation(packages.android-libname.libModule2)
+    kspDebug(project(":processor"))
+    implementation(kotlin("reflect"))
 
     implementation(libs.androidx.appcompat)
 
@@ -62,4 +65,5 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
     debugImplementation(libs.compose.ui.tooling)
+    testRuntimeOnly(libs.junit.vintage.engine)
 }
