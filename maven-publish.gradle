@@ -1,0 +1,85 @@
+apply plugin: "maven-publish"
+apply plugin: "signing"
+
+// Dokka is optional but recommended.
+// Sonatype will not accept a published artifact without at least an empty Javadoc JAR.
+task javadocsJar(type: Jar, dependsOn: "dokkaJavadoc") {
+    getArchiveClassifier().set("javadoc")
+    from dokkaJavadoc.outputDirectory
+}
+
+task sourcesJar(type: Jar) {
+    getArchiveClassifier().set("sources")
+    if (project.plugins.hasPlugin('com.android.application')
+        || project.plugins.hasPlugin('com.android.library')) {
+        from android.sourceSets.main.kotlin.srcDirs
+    } else {
+        from sourceSets.main.allJava
+    }
+}
+
+afterEvaluate {
+    publishing {
+        // gets specific props defined per each module which breaks the need for multiple (per module) maven-publish files
+        def properties = project.ext.mavenPublishProperties
+
+        repositories {
+            maven {
+                name "SonatypeMavenCentral"
+                url properties.repository.url
+                credentials {
+                    username properties.repository.username
+                    password properties.repository.password
+                }
+            }
+        }
+        publications {
+            release(MavenPublication) {
+                // Only needed for non Android modules. Uncomment if it is needed.
+                // from components.java
+
+                groupId = properties.group
+                version = properties.version
+                artifactId = properties.artifactId
+
+                project.plugins.withId("com.android.library") {
+                    artifact bundleReleaseAar
+                }
+
+                artifact sourcesJar
+                artifact javadocsJar
+
+                pom {
+                    name = properties.name
+                    description = properties.description
+                    url = properties.url
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    organization {
+                        name = 'Infinum Inc.'
+                        url = 'https://infinum.com'
+                    }
+                    developers {
+                        developer {
+                            id = 'Infinum'
+                            name = 'Infinum Inc.'
+                            url = 'https://infinum.com'
+                        }
+                    }
+                    scm {
+                        connection.set(properties.scm.connection)
+                        developerConnection.set(properties.scm.connection)
+                        url.set(properties.scm.url)
+                    }
+                }
+                signing {
+                    sign publishing.publications.release
+                }
+            }
+        }
+    }
+}

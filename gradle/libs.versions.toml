@@ -1,0 +1,17 @@
+[versions]
+appcompat = "1.7.0"
+androidGradlePlugin = "8.6.0"
+detekt = "1.23.6"
+dokka = "1.9.10"
+kotlin = "2.0.20"
+
+[plugins]
+detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}
+
+[libraries]
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+dokka-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
+kotlin-core = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+tools-gradle = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
