@@ -13,9 +13,15 @@ apply {
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    implementation(libs.ksp.api)
+    implementation(libs.kotlinpoet.ksp)
 }
 
 // specify per module - mostly needed due to different artifactIds, names, descriptions

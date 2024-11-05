@@ -1,6 +1,5 @@
-include(":libModule1")
+include(":processor")
 include(":libModule2")
 include(":sample")
 
-// TODO - add project name
-rootProject.name = "Android Library Template"
+rootProject.name = "Arkive"

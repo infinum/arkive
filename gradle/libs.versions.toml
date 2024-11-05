@@ -4,6 +4,8 @@ androidGradlePlugin = "8.6.0"
 detekt = "1.23.6"
 dokka = "1.9.10"
 kotlin = "2.0.20"
+ksp = "2.0.20-1.0.25"
+koltinpoet = "1.16.0"
 
 [plugins]
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}
@@ -15,3 +17,5 @@ dokka-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref
 kotlin-core = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 tools-gradle = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "koltinpoet" }

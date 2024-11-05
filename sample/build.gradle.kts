@@ -46,9 +46,9 @@ android {
 
 dependencies {
 
+    implementation(project(":processor"))
     // TODO - replace with your module names accordingly
     // Comment this out for testing local deploy
-    implementation(project(":libModule1"))
     implementation(project(":libModule2"))
 
     // TODO - replace with your module packages accordingly
