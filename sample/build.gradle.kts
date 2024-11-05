@@ -57,4 +57,9 @@ dependencies {
     //    implementation(packages.android-libname.libModule2)
 
     implementation(libs.androidx.appcompat)
+
+
+    implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.compose)
+    debugImplementation(libs.compose.ui.tooling)
 }

@@ -6,6 +6,7 @@ dokka = "1.9.10"
 kotlin = "2.0.20"
 ksp = "2.0.20-1.0.25"
 koltinpoet = "1.16.0"
+compose-bom = "2024.10.01"
 
 [plugins]
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}
@@ -19,3 +20,16 @@ kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.
 tools-gradle = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "koltinpoet" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+
+
+[bundles]
+compose = [
+    "compose-material3",
+    "compose-ui",
+    "compose-ui-tooling-preview",
+]
