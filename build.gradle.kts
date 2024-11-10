@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.detekt.plugin)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.jetbrains.kotlin.jvm) apply false
 }
 
 buildscript {
