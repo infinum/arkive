@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.SampleApptheme
 
 @Composable
@@ -35,6 +36,7 @@ fun LabeledText(
 }
 
 @Preview
+@ArkiveComposable
 @Composable
 fun PreviewLabeledText() {
     SampleApptheme {
