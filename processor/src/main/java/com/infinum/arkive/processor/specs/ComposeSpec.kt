@@ -17,7 +17,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 class ComposeSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
-) : Spec {
+) : KotlinSpec {
     override fun write() {
         val fileSpec = getFileSpec()
         val arkiveClass = getArkiveClass()
@@ -41,7 +41,7 @@ class ComposeSpec(
 
     private fun getRunnerFunction(holder: ComposeHolder): String {
         return """
-            runner("${getFunctionId(holder)}") {
+            runner("${holder.functionId}") {
              ${getCodeBody(holder).toString().trimIndent()}
             } 
         """.trimIndent()
@@ -69,12 +69,6 @@ class ComposeSpec(
     }
 
     private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder(SIMPLE_NAME)
-
-    // This id should be used in the generated json file to include more info about the component
-    private fun getFunctionId(holder: ComposeHolder): String {
-        val validPackageName = holder.packageName.replace(".", "_")
-        return "${validPackageName}_${holder.functionName}"
-    }
 
     private fun getCodeBody(holder: ComposeHolder): CodeBlock {
         return CodeBlock.builder().apply {
