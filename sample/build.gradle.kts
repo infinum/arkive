@@ -2,13 +2,13 @@ plugins {
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
     kotlin("android")
-    id("com.google.devtools.ksp")
-    //alias(libs.plugins.paparazzi)
+    alias(libs.plugins.ksp)
 }
 
 apply {
     from("$rootDir/config.gradle.kts")
     from("$rootDir/detekt.gradle")
+    plugin("app.cash.paparazzi")
 }
 
 val buildConfig: Map<String, Any> by project
@@ -56,14 +56,15 @@ android {
 
 dependencies {
 
+    // TODO: These deps is going to be added by the plugin
     kspDebug(project(":processor"))
-    implementation(kotlin("reflect"))
+    testImplementation(libs.junit)
+    debugImplementation(libs.compose.ui.tooling)
+    testRuntimeOnly(libs.junit.vintage.engine)
 
     implementation(libs.androidx.appcompat)
 
-
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
-    debugImplementation(libs.compose.ui.tooling)
-    testRuntimeOnly(libs.junit.vintage.engine)
+
 }

@@ -17,6 +17,7 @@ buildscript {
         classpath(libs.tools.gradle)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
+        classpath(libs.paparazzi.plugin)
     }
 }
 
