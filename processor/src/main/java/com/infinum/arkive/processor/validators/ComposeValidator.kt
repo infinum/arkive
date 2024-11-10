@@ -20,6 +20,6 @@ class ComposeValidator : Validator<ComposeHolder> {
         get() = isPublic || isInternal
 
     override fun validate(elements: Set<ComposeHolder>) = elements.filter {
-        it.parameters.isEmpty() && it.function.hasValidScope
+        it.skip.not() && it.parameters.isEmpty() && it.function.hasValidScope
     }.toSet()
 }
