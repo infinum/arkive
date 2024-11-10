@@ -25,7 +25,7 @@ fun CircularButton(
     @DrawableRes id: Int,
     modifier: Modifier = Modifier,
     borderColor: Color = MaterialTheme.colorScheme.background,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -57,8 +57,7 @@ fun PreviewCircularButtonWithBlackBorder() {
     SampleApptheme {
         CircularButton(
             id = R.drawable.ic_settings,
-            borderColor = MaterialTheme.colorScheme.secondary
+            borderColor = MaterialTheme.colorScheme.secondary,
         )
     }
 }
-

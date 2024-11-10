@@ -22,7 +22,7 @@ fun RoundedButton(
         onClick = onClick,
         modifier = modifier,
         shape = CircleShape,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer),
     ) {
         Text(
             text = text,

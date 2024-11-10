@@ -38,7 +38,7 @@ fun Card(
             .fillMaxWidth()
             .clip(shape = shape)
             .background(MaterialTheme.colorScheme.background)
-            .padding(contentPadding)
+            .padding(contentPadding),
     ) {
         content()
     }

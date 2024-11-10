@@ -5,11 +5,10 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.infinum.arkive.processor.models.ComposeHolder
 
 class ComposeCollector(
-    private val resolver: Resolver
+    private val resolver: Resolver,
 ) : Collector<ComposeHolder> {
 
     override fun collect(): Set<ComposeHolder> {
-
         return resolver.getSymbolsWithAnnotation(ANNOTATION_PREVIEW)
             .filterIsInstance<KSFunctionDeclaration>()
             .map {
@@ -17,7 +16,7 @@ class ComposeCollector(
                     function = it,
                     name = it.simpleName.getShortName(),
                     packageName = it.packageName.asString(),
-                    parameters = it.parameters
+                    parameters = it.parameters,
                 )
             }
             .toSet()

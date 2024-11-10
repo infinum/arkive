@@ -19,52 +19,52 @@ val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 62.sp
+        fontSize = 62.sp,
     ),
     displayMedium = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 41.sp
+        fontSize = 41.sp,
     ),
     titleMedium = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 22.sp
+        fontSize = 22.sp,
     ),
     bodyLarge = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp
+        fontSize = 16.sp,
     ),
     labelSmall = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp
+        fontSize = 12.sp,
     ),
 
     headlineLarge = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 62.sp
+        fontSize = 62.sp,
     ),
     headlineMedium = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 41.sp
+        fontSize = 41.sp,
     ),
     titleLarge = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 22.sp
+        fontSize = 22.sp,
     ),
     bodyMedium = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 16.sp
+        fontSize = 16.sp,
     ),
     labelLarge = TextStyle(
         fontFamily = montserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 12.sp
-    )
+        fontSize = 12.sp,
+    ),
 )

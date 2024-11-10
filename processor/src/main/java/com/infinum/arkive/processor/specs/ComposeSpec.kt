@@ -45,7 +45,6 @@ class ComposeSpec(
              ${getCodeBody(holder).toString().trimIndent()}
             } 
         """.trimIndent()
-
     }
 
     private fun getRunTestsFunction(): FunSpec {
@@ -57,23 +56,20 @@ class ComposeSpec(
                         ClassName("kotlin", "String"),
                         LambdaTypeName.get(returnType = UNIT)
                             .copy(annotations = listOf(getComposableAnnotation())),
-
-                        ),
-                    returnType = UNIT
-                )
+                    ),
+                    returnType = UNIT,
+                ),
             )
             .addCode(
                 holders
                     .map { holder ->
                         getRunnerFunction(holder)
-                    }.joinToString(separator = "\n")
+                    }.joinToString(separator = "\n"),
             )
             .build()
     }
 
-    private fun getArkiveClass(): TypeSpec.Builder {
-        return TypeSpec.classBuilder("ArkiveShoot")
-    }
+    private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder("ArkiveShoot")
 
     // This id should be used in the generated json file to include more info about the component
     private fun getFunctionId(holder: ComposeHolder): String {
@@ -88,7 +84,8 @@ class ComposeSpec(
                 simpleName = holder.name,
             )
             addStatement(
-                "%M()", functionMember
+                "%M()",
+                functionMember,
             )
         }.build()
     }

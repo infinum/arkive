@@ -34,6 +34,6 @@ fun SampleApptheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composa
         colorScheme = colors,
         typography = Typography,
         shapes = shapes,
-        content = content
+        content = content,
     )
 }

@@ -24,10 +24,9 @@ fun IconWithText(
     modifier: Modifier = Modifier,
     onCLick: () -> Unit = {},
 ) {
-
     Row(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onCLick) {
             Icon(painter = painterResource(id = icon), contentDescription = null)
@@ -41,14 +40,13 @@ fun IconWithText(
     }
 }
 
-
 @Preview
 @Composable
 fun PreviewIconWithText() {
     SampleApptheme {
         IconWithText(
             text = "Text",
-            icon = R.drawable.ic_settings
+            icon = R.drawable.ic_settings,
         )
     }
 }

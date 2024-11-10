@@ -9,8 +9,8 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
 
+@Suppress("LateinitUsage")
 lateinit var logger: KSPLogger
-var packagesPath: String? = null
 
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
@@ -29,10 +29,9 @@ class ArkiveProcessor(
 
 class ArkiveProcessorProvider : SymbolProcessorProvider {
     override fun create(
-        environment: SymbolProcessorEnvironment
+        environment: SymbolProcessorEnvironment,
     ): SymbolProcessor {
         logger = environment.logger
-        //packagesPath = environment.options["packageFilePath"]
         return ArkiveProcessor(environment.codeGenerator)
     }
 }

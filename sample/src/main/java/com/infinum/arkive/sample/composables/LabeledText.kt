@@ -29,7 +29,7 @@ fun LabeledText(
         Text(
             text = text,
             color = MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
         )
     }
 }
@@ -39,8 +39,9 @@ fun LabeledText(
 fun PreviewLabeledText() {
     SampleApptheme {
         LabeledText(
-            label = "Temperatures", text = "11/0°C",
-            modifier = Modifier.background(Color.White)
+            label = "Temperatures",
+            text = "11/0°C",
+            modifier = Modifier.background(Color.White),
         )
     }
 }
