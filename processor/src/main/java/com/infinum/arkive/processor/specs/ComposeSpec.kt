@@ -48,9 +48,9 @@ class ComposeSpec(
     }
 
     private fun getRunTestsFunction(): FunSpec {
-        return FunSpec.builder("runTests")
+        return FunSpec.builder(RUN_TESTS_FUNCTION)
             .addParameter(
-                "runner",
+                RUNNER_FUNCTION,
                 LambdaTypeName.get(
                     parameters = arrayOf(
                         ClassName("kotlin", "String"),
@@ -69,7 +69,7 @@ class ComposeSpec(
             .build()
     }
 
-    private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder("ArkiveShoot")
+    private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder(SIMPLE_NAME)
 
     // This id should be used in the generated json file to include more info about the component
     private fun getFunctionId(holder: ComposeHolder): String {
@@ -96,7 +96,9 @@ class ComposeSpec(
     }
 
     companion object {
-        const val SIMPLE_NAME = "ArkiveShoot"
-        const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
+        private const val SIMPLE_NAME = "ArkiveShoot"
+        private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
+        private const val RUN_TESTS_FUNCTION = "runTests"
+        private const val RUNNER_FUNCTION = "runner"
     }
 }
