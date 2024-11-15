@@ -11,6 +11,8 @@ apply {
     plugin("app.cash.paparazzi")
 }
 
+apply(plugin = "com.infinum.arkive")
+
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project

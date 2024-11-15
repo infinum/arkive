@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.detekt.plugin)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.jetbrains.kotlin.jvm) apply false
 }
 
 buildscript {
@@ -9,6 +8,7 @@ buildscript {
 
     repositories {
         google()
+        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
     }
@@ -18,6 +18,7 @@ buildscript {
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
         classpath(libs.paparazzi.plugin)
+        classpath("com.infinum.arkive:arkive-plugin:0.0.1")
     }
 }
 

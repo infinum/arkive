@@ -18,9 +18,18 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-
-dependencies {
-    implementation(project(":metadata"))
+afterEvaluate{
+    gradlePlugin {
+        plugins {
+            create("arkivePlugin") {
+                id = "com.infinum.arkive"
+                displayName = "Arkive plugin"
+                description = "Arkive plugin for generating web showcase"
+                implementationClass = "com.infinum.arkive.plugin.ArkivePlugin"
+                version = "0.0.1"
+            }
+        }
+    }
 }
 
 // specify per module - mostly needed due to different artifactIds, names, descriptions
@@ -28,7 +37,7 @@ extra["mavenPublishProperties"] = mapOf(
     "group" to releaseConfig["group"],
     "version" to releaseConfig["version"],
     // TODO - <YOUR-LIBRARY-ARTIFACTID>
-    "artifactId" to "plugin",
+    "artifactId" to "arkive-plugin",
     "repository" to mapOf(
         "url" to sonatype["url"],
         "username" to sonatype["username"],
@@ -47,3 +56,10 @@ extra["mavenPublishProperties"] = mapOf(
         "url" to "https://github.com/infinum/android-libname"
     )
 )
+
+
+
+dependencies {
+    //implementation(project(":metadata"))
+}
+

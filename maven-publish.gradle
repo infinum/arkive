@@ -36,7 +36,7 @@ afterEvaluate {
         publications {
             release(MavenPublication) {
                 // Only needed for non Android modules. Uncomment if it is needed.
-                // from components.java
+                from components.java
 
                 groupId = properties.group
                 version = properties.version

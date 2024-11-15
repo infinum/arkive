@@ -12,13 +12,15 @@ paparazzi = "1.3.4"
 junitJupiter = "5.9.1"
 junit = "4.13.2"
 jetbrainsKotlinJvm = "2.0.20"
+plugin = "0.0.1"
 
 
 [plugins]
-detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}
+detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+arkive = { id = "com.infinum.arkive.plugin.gradle.plugin", version.ref = "plugin" }
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
