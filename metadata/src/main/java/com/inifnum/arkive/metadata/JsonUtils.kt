@@ -8,4 +8,4 @@ val json = Json { encodeDefaults = true }
 
 fun ComponentsMetaData.toJson(): String = json.encodeToString(this)
 
-fun String.ComponentsMetaData(): ComponentsMetaData = json.decodeFromString(this)
+fun String.toComponentsMetaData(): ComponentsMetaData = json.decodeFromString(this)
