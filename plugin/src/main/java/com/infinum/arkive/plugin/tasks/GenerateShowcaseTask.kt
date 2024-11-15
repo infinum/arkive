@@ -20,8 +20,19 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
         const val NAME = "generateShowcase"
         const val DESCRIPTION = "Generates arkive showcase json file"
         const val FD_GENERATED = "generated"
+        const val RECORDING_TASK = "recordPaparazziDebug"
     }
 
+
+    init {
+        dependsOn(RECORDING_TASK)
+    }
+
+    @TaskAction
+    fun doOnRun() {
+        println("Images Path: ${screenshotDir.path}")
+        println("Images: ${screenshotDir.listFiles()?.size}")
+    }
 
     // Required to invalidate the task on version updates.
     @Suppress("unused", "ANNOTATION_TARGETS_NON_EXISTENT_ACCESSOR")
@@ -39,9 +50,5 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
         "$FD_GENERATED${File.separatorChar}}"
     ).asFile
 
-    @TaskAction
-    fun doOnRun() {
-
-    }
 
 }
