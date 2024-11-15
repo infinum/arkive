@@ -9,12 +9,17 @@
 <body>
   <main class="container">
     <h1>Arkive Components</h1>
-    <input 
-      type="text" 
-      id="search-bar" 
-      placeholder="Search components..." 
-      class="search-bar"
-    />
+    <div class="filters">
+      <input 
+        type="text" 
+        id="search-bar" 
+        placeholder="Search components..." 
+        class="search-bar"
+      />
+      <select id="filter-dropdown" class="filter-dropdown">
+        <option value="">Filter by Package, Group, or Tag</option>
+      </select>
+    </div>
     <div id="grid" class="grid"></div>
   </main>
   <script src="script.js"></script>
