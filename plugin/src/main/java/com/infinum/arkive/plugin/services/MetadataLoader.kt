@@ -2,8 +2,8 @@ package com.infinum.arkive.plugin.services
 
 import com.inifnum.arkive.metadata.fromJson
 import com.inifnum.arkive.metadata.model.ComponentsMetaData
-import org.gradle.api.Project
 import java.io.File
+import org.gradle.api.Project
 
 interface MetadataLoader {
     fun loadMetaData(): ComponentsMetaData
@@ -25,5 +25,4 @@ class KSPMetaDataLoader(
 
     override fun getMetaDataFile(): File =
         project.layout.buildDirectory.get().asFile.resolve(KSP_META_DATA_PATH)
-
 }

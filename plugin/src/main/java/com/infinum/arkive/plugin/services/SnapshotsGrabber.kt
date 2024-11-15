@@ -10,20 +10,19 @@ interface SnapshotsGrabber {
     fun grabAndMoveSnapshots(outputDir: File): List<String>
 }
 
-
 private const val SCREEN_SHOTS_PATH = "src/test/snapshots/images"
 
 class SnapshotsGrabberImpl(
-    private val project: Project
+    private val project: Project,
 ) : SnapshotsGrabber {
+
+    private val screenshotDir: File
+        get() = project.projectDir.resolve(SCREEN_SHOTS_PATH)
 
     override fun grabAndMoveSnapshots(outputDir: File): List<String> {
         val originalSnapshots = screenshotDir.listFiles().orEmpty().map { it.path }
         return moveSnapshots(outputDir, originalSnapshots)
     }
-
-    private val screenshotDir: File
-        get() = project.projectDir.resolve(SCREEN_SHOTS_PATH)
 
     private fun moveSnapshots(outputDir: File, snapshots: List<String>): List<String> {
         outputDir.mkdirs()

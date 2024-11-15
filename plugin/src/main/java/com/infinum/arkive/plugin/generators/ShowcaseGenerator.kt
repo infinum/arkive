@@ -11,12 +11,12 @@ interface ShowcaseGenerator {
 class ShowcaseGeneratorImpl : ShowcaseGenerator {
     override fun generateShowcase(
         snapshots: List<String>,
-        metadata: ComponentsMetaData
+        metadata: ComponentsMetaData,
     ): ArkiveShowcase {
         val items = metadata.components.map { component ->
             ShowcaseItem(
                 component = component,
-                snapshotPath = snapshots.findSnapshot(component.id)
+                snapshotPath = snapshots.findSnapshot(component.id),
             )
         }
         return ArkiveShowcase(items)
@@ -25,8 +25,6 @@ class ShowcaseGeneratorImpl : ShowcaseGenerator {
     private fun List<String>.findSnapshot(id: String): String {
         return find {
             it.endsWith("$id.png")
-        } ?: throw IllegalStateException("Cant find component with id: $id")
+        } ?: error("Cant find component with id: $id")
     }
-
-
 }

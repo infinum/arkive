@@ -19,15 +19,15 @@ import java.io.File
 @CacheableTask
 internal open class GenerateShowcaseTask : BaseSourceTask() {
 
-    companion object {
-        const val GROUP = "arkive"
-        const val NAME = "generateShowcase"
-        const val DESCRIPTION = "Generates arkive showcase json file"
-        val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
-        const val RECORDING_TASK = "recordPaparazziDebug"
-        const val IMAGES_OUTPUT_PATH = "images"
-    }
+    @get:OutputDirectory
+    var outputDirectory: File = project.layout.buildDirectory.get().file(
+        FD_GENERATED,
+    ).asFile
 
+    // Required to invalidate the task on version updates.
+    @Suppress("unused", "ANNOTATION_TARGETS_NON_EXISTENT_ACCESSOR")
+    @get:Input
+    private val pluginVersion = "0.0.1" // TODO automate this
 
     init {
         dependsOn(RECORDING_TASK)
@@ -54,19 +54,18 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
         logger.warn("Showcase written")
     }
 
-    // Required to invalidate the task on version updates.
-    @Suppress("unused", "ANNOTATION_TARGETS_NON_EXISTENT_ACCESSOR")
-    @get:Input
-    private val pluginVersion = "0.0.1" // TODO automate this
-
     @InputFiles
     @SkipWhenEmpty
     @PathSensitive(PathSensitivity.ABSOLUTE)
     override fun getSource(): FileTree =
         super.getSource()
 
-    @get:OutputDirectory
-    var outputDirectory: File = project.layout.buildDirectory.get().file(
-        FD_GENERATED
-    ).asFile
+    companion object {
+        const val GROUP = "arkive"
+        const val NAME = "generateShowcase"
+        const val DESCRIPTION = "Generates arkive showcase json file"
+        val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
+        const val RECORDING_TASK = "recordPaparazziDebug"
+        const val IMAGES_OUTPUT_PATH = "images"
+    }
 }
