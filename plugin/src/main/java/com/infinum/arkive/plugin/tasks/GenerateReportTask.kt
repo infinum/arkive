@@ -13,12 +13,12 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @CacheableTask
-internal open class GenerateReportTask : BaseSourceTask() {
+internal open class GenerateShowcaseTask : BaseSourceTask() {
 
     companion object {
         const val GROUP = "arkive"
-        const val NAME = "generateReport"
-        const val DESCRIPTION = "Generates arkive showcase report"
+        const val NAME = "generateShowcase"
+        const val DESCRIPTION = "Generates arkive showcase json file"
         const val FD_GENERATED = "generated"
     }
 
