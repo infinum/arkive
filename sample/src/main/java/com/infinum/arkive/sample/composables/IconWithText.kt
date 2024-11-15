@@ -43,14 +43,14 @@ fun IconWithText(
 }
 
 @Preview
-@ArkiveComposable(name = "Icon with Text", group = "Text", tags = ["Text","Icon"])
+@ArkiveComposable(name = "Icon with Text", group = "Text", tags = ["Text", "Icon"])
 @Composable
 fun PreviewIconWithText() {
     SampleApptheme {
         IconWithText(
             text = "Text",
             icon = R.drawable.ic_settings,
-            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
         )
     }
 }

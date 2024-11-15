@@ -1,10 +1,10 @@
 package com.infinum.arkive.plugin.services
 
-import org.gradle.api.Project
-import org.gradle.internal.cc.base.logger
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import org.gradle.api.Project
+import org.gradle.internal.cc.base.logger
 
 interface SnapshotsGrabber {
     fun grabAndMoveSnapshots(outputDir: File): List<String>

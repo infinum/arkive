@@ -41,7 +41,7 @@ fun PreviewRoundedButton() {
     SampleApptheme {
         RoundedButton(
             text = "5 DAY FORECAST",
-            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
 
         )
     }

@@ -2,6 +2,7 @@ package com.infinum.arkive.plugin.tasks
 
 import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
 import com.infinum.arkive.plugin.tasks.shared.BaseSourceTask
+import java.io.File
 import org.gradle.api.file.FileTree
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -11,7 +12,6 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 @CacheableTask
 internal open class GenerateWebShowcaseTask : BaseSourceTask() {
