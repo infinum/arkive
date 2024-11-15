@@ -1,24 +1,29 @@
 package com.infinum.arkive.plugin.services
 
+import com.inifnum.arkive.metadata.model.ComponentsMetaData
+import com.inifnum.arkive.metadata.toComponentsMetaData
 import org.gradle.api.Project
 import java.io.File
 
-interface SnapshotsLoader {
-    fun loadSnapshots(): List<String>
+interface MetadataLoader {
+    fun loadMetaData(): ComponentsMetaData
 }
 
+interface ProcessorMetadataLoader : MetadataLoader {
+    fun getMetaDataFile(): File
+    override fun loadMetaData(): ComponentsMetaData =
+        getMetaDataFile().readText().toComponentsMetaData()
+}
 
-private const val SCREEN_SHOTS_PATH = "src/test/snapshots/images"
+// TODO: Support for KAPT
+private const val KSP_META_DATA_PATH =
+    "generated/ksp/debug/resources/META-INF/arkive/components_meta_data.json"
 
-class SnapshotsLoaderImpl(
-    private val project: Project
-) : SnapshotsLoader {
+class KSPMetaDataLoader(
+    private val project: Project,
+) : ProcessorMetadataLoader {
 
-    override fun loadSnapshots(): List<String> {
-        return screenshotDir.listFiles().orEmpty().map { it.path }
-    }
-
-    private val screenshotDir: File
-        get() = project.projectDir.resolve(SCREEN_SHOTS_PATH)
+    override fun getMetaDataFile(): File =
+        project.layout.buildDirectory.get().asFile.resolve(KSP_META_DATA_PATH)
 
 }
