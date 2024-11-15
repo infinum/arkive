@@ -36,7 +36,7 @@ fun LabeledText(
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Labeled Text", group = "Text", tags = ["Text","Label"])
 @Composable
 fun PreviewLabeledText() {
     SampleApptheme {

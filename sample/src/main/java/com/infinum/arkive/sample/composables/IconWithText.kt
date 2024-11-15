@@ -1,6 +1,7 @@
 package com.infinum.arkive.sample.composables
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -42,13 +43,14 @@ fun IconWithText(
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Icon with Text", group = "Text", tags = ["Text","Icon"])
 @Composable
 fun PreviewIconWithText() {
     SampleApptheme {
         IconWithText(
             text = "Text",
             icon = R.drawable.ic_settings,
+            modifier = Modifier.background(MaterialTheme.colorScheme.background)
         )
     }
 }
