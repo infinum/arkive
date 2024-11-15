@@ -1,6 +1,7 @@
 package com.infinum.arkive.plugin.tasks
 
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
+import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.SnapshotsLoaderImpl
 import com.infinum.arkive.plugin.tasks.shared.BaseSourceTask
 import org.gradle.api.file.FileTree
@@ -32,10 +33,14 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
 
     @TaskAction
     fun doOnRun() {
-        val snapshots = SnapshotsLoaderImpl(project).loadSnapshots()
-        val metadata = KSPMetaDataLoader(project).loadMetaData()
-        logger.info("Snapshot found: $snapshots")
-        logger.info("MetaData found: $metadata")
+        val generator = ShowcaseGeneratorImpl(
+            SnapshotsLoaderImpl(project),
+            KSPMetaDataLoader(project),
+        )
+
+        val arkiveShowcase = generator.generateShowcase()
+
+        logger.warn("Showcase generated: $arkiveShowcase")
     }
 
     // Required to invalidate the task on version updates.
@@ -53,6 +58,4 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
     var outputDirectory: File = project.layout.buildDirectory.get().file(
         "$FD_GENERATED${File.separatorChar}}"
     ).asFile
-
-
 }

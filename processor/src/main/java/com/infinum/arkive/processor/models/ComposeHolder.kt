@@ -18,6 +18,6 @@ data class ComposeHolder(
     val functionId: String
         get() {
             val validPackageName = packageName.replace(".", "_")
-            return "${validPackageName}_$functionName"
+            return "${validPackageName}_$functionName".lowercase()
         }
 }
