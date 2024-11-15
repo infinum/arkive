@@ -1,9 +1,10 @@
 package com.infinum.arkive.plugin.tasks
 
-import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
-import com.infinum.arkive.plugin.services.SnapshotsLoaderImpl
+import com.infinum.arkive.plugin.services.KSPMetaDataLoader
+import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.tasks.shared.BaseSourceTask
+import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import org.gradle.api.file.FileTree
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -22,8 +23,9 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
         const val GROUP = "arkive"
         const val NAME = "generateShowcase"
         const val DESCRIPTION = "Generates arkive showcase json file"
-        const val FD_GENERATED = "generated"
+        val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
         const val RECORDING_TASK = "recordPaparazziDebug"
+        const val IMAGES_OUTPUT_PATH = "images"
     }
 
 
@@ -33,14 +35,23 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
 
     @TaskAction
     fun doOnRun() {
-        val generator = ShowcaseGeneratorImpl(
-            SnapshotsLoaderImpl(project),
-            KSPMetaDataLoader(project),
+        val snapshotsGrabber = SnapshotsGrabberImpl(project)
+        val metadataLoader = KSPMetaDataLoader(project)
+        val generator = ShowcaseGeneratorImpl()
+        val writer = ShowcaseWriterImpl()
+
+        val snapshots =
+            snapshotsGrabber.grabAndMoveSnapshots(outputDirectory.resolve(IMAGES_OUTPUT_PATH))
+        val metadata = metadataLoader.loadMetaData()
+
+        val arkiveShowcase = generator.generateShowcase(snapshots, metadata)
+        logger.warn("Showcase generated: $arkiveShowcase")
+        writer.write(
+            outputDir = outputDirectory,
+            showcase = arkiveShowcase,
         )
 
-        val arkiveShowcase = generator.generateShowcase()
-
-        logger.warn("Showcase generated: $arkiveShowcase")
+        logger.warn("Showcase written")
     }
 
     // Required to invalidate the task on version updates.
@@ -56,6 +67,6 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
 
     @get:OutputDirectory
     var outputDirectory: File = project.layout.buildDirectory.get().file(
-        "$FD_GENERATED${File.separatorChar}}"
+        FD_GENERATED
     ).asFile
 }
