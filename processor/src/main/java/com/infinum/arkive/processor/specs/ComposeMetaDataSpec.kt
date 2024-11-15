@@ -33,7 +33,7 @@ class ComposeMetaDataSpec(
         val metaData = ComponentsMetaData(components)
 
         writer.use {
-            it.write(metaData.toJson())
+            it.write(toJson(metaData))
         }
     }
 

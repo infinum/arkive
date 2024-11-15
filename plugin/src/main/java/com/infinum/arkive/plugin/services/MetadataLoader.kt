@@ -1,7 +1,7 @@
 package com.infinum.arkive.plugin.services
 
+import com.inifnum.arkive.metadata.fromJson
 import com.inifnum.arkive.metadata.model.ComponentsMetaData
-import com.inifnum.arkive.metadata.toComponentsMetaData
 import org.gradle.api.Project
 import java.io.File
 
@@ -12,7 +12,7 @@ interface MetadataLoader {
 interface ProcessorMetadataLoader : MetadataLoader {
     fun getMetaDataFile(): File
     override fun loadMetaData(): ComponentsMetaData =
-        getMetaDataFile().readText().toComponentsMetaData()
+        fromJson(getMetaDataFile().readText())
 }
 
 // TODO: Support for KAPT
