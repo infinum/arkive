@@ -18,7 +18,7 @@ buildscript {
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
         classpath(libs.paparazzi.plugin)
-        classpath("com.infinum.arkive:arkive-plugin:0.0.1")
+        classpath(libs.arkive.plugin)
     }
 }
 

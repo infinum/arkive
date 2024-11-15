@@ -18,7 +18,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-afterEvaluate{
+afterEvaluate {
     gradlePlugin {
         plugins {
             create("arkivePlugin") {
@@ -60,6 +60,6 @@ extra["mavenPublishProperties"] = mapOf(
 
 
 dependencies {
-    //implementation(project(":metadata"))
+    implementation(libs.arkive.metadata)
 }
 
