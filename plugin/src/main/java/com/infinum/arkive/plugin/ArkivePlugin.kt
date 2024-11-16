@@ -9,8 +9,27 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
-            addDependencies(project)
-            addTasks(project)
+            addPlugins(this)
+            addDependencies(this)
+            addTasks(this)
+        }
+    }
+
+    private fun addPlugins(project: Project) {
+        if (!project.pluginManager.hasPlugin("app.cash.paparazzi")) {
+            project.buildscript.dependencies.add(
+                "classpath",
+                "app.cash.paparazzi:paparazzi-gradle-plugin:1.3.4"
+            )
+            project.pluginManager.apply("app.cash.paparazzi")
+        }
+
+        if (!project.pluginManager.hasPlugin("com.google.devtools.ksp")) {
+            project.buildscript.dependencies.add(
+                "classpath",
+                "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.0.20-1.0.25"
+            )
+            project.pluginManager.apply("com.google.devtools.ksp")
         }
     }
 

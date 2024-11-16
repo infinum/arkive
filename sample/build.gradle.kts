@@ -2,13 +2,11 @@ plugins {
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
     kotlin("android")
-    alias(libs.plugins.ksp)
 }
 
 apply {
     from("$rootDir/config.gradle.kts")
     from("$rootDir/detekt.gradle")
-    plugin("app.cash.paparazzi")
 }
 
 apply(plugin = "com.infinum.arkive")
