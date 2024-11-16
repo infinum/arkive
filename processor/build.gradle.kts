@@ -20,7 +20,7 @@ java {
 }
 
 dependencies {
-    implementation(project(":annotaions"))
+    implementation(project(":annotations"))
     implementation(project(":metadata"))
     implementation(libs.ksp.api)
     implementation(libs.kotlinpoet.ksp)

@@ -58,16 +58,17 @@ android {
 
 dependencies {
 
-    // TODO: These deps is going to be added by the plugin
-    debugImplementation(project(":annotaions"))
-    kspDebug(project(":processor"))
-    kspTestDebug(project(":testprocessor"))
-    testImplementation(libs.junit)
-    debugImplementation(libs.compose.ui.tooling)
-    testRuntimeOnly(libs.junit.vintage.engine)
+    // uncomment if you want to test without the plugin
+//    debugImplementation(project(":annotaions"))
+//    kspDebug(project(":processor"))
+//    kspTestDebug(project(":testprocessor"))
+//    testImplementation(libs.junit)
+//    testRuntimeOnly(libs.junit.vintage.engine)
+
 
     implementation(libs.androidx.appcompat)
 
+    debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
 
