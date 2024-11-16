@@ -29,7 +29,7 @@ extra["mavenPublishProperties"] = mapOf(
     "group" to releaseConfig["group"],
     "version" to releaseConfig["version"],
     // TODO - <YOUR-LIBRARY-ARTIFACTID>
-    "artifactId" to "libModule1",
+    "artifactId" to "testprocessor",
     "repository" to mapOf(
         "url" to sonatype["url"],
         "username" to sonatype["username"],
