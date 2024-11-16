@@ -27,7 +27,6 @@ class ArkiveTestProcessor(
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
-
         if (processed) {
             return emptyList()
         }
@@ -35,7 +34,7 @@ class ArkiveTestProcessor(
 
         FileSpec.builder(
             PACKAGE_NAME,
-            FILE_NAME
+            FILE_NAME,
         ).addType(generateTestClass())
             .build()
             .writeTo(
@@ -49,15 +48,15 @@ class ArkiveTestProcessor(
     private fun generateTestClass(): TypeSpec {
         val ruleProperty = PropertySpec.builder(
             "paparazzi",
-            ClassName("app.cash.paparazzi", "Paparazzi")
+            ClassName("app.cash.paparazzi", "Paparazzi"),
         )
             .addAnnotation(
                 AnnotationSpec.builder(ClassName("org.junit", "Rule"))
                     .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
-                    .build()
+                    .build(),
             )
             .initializer(
-                "Paparazzi(renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK)"
+                "Paparazzi(renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK)",
             )
             .build()
 
@@ -71,7 +70,7 @@ class ArkiveTestProcessor(
                         function()
                     }
                 }
-                """.trimIndent()
+                """.trimIndent(),
             )
             .build()
 
