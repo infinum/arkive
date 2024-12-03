@@ -37,7 +37,7 @@ fun RoundedButton(
 @Preview
 @ArkiveComposable(name = "Rounded Button", group = "Button", tags = ["Rounded"])
 @Composable
-fun PreviewRoundedButton() {
+internal fun PreviewRoundedButton() {
     SampleApptheme {
         RoundedButton(
             text = "5 DAY FORECAST",
@@ -50,7 +50,7 @@ fun PreviewRoundedButton() {
 @Preview
 @ArkiveComposable(name = "Big Rounded Button", group = "Button", tags = ["Rounded"])
 @Composable
-fun PreviewWideRoundedButton() {
+internal fun PreviewWideRoundedButton() {
     SampleApptheme {
         RoundedButton(
             text = "5 DAY FORECAST",

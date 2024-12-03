@@ -9,11 +9,9 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
 
-@Suppress("LateinitUsage")
-lateinit var logger: KSPLogger
-
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
+    private val logger: KSPLogger
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -22,7 +20,7 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor().process(resolver, codeGenerator)
+        ComposeSubprocessor().process(resolver, codeGenerator, logger)
         return emptyList()
     }
 }
@@ -31,7 +29,6 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor {
-        logger = environment.logger
-        return ArkiveProcessor(environment.codeGenerator)
+        return ArkiveProcessor(environment.codeGenerator, environment.logger)
     }
 }
