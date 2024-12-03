@@ -10,7 +10,8 @@ interface SnapshotsGrabber {
     fun grabAndMoveSnapshots(outputDir: File): List<String>
 }
 
-private const val SCREEN_SHOTS_PATH = "src/test/snapshots/images"
+private val SCREEN_SHOTS_PATH =
+    "src${File.separator}test${File.separator}snapshots${File.separator}images"
 
 class SnapshotsGrabberImpl(
     private val project: Project,
