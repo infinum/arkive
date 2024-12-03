@@ -1,35 +1,26 @@
 package com.infinum.arkive.plugin
 
+import app.cash.paparazzi.gradle.PaparazziPlugin
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.internal.cc.base.logger
 
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             addPlugins(this)
             addDependencies(this)
+            addTestDependencies(this)
             addTasks(this)
         }
     }
 
     private fun addPlugins(project: Project) {
+        logger.info("Adding plugins")
         if (!project.pluginManager.hasPlugin("app.cash.paparazzi")) {
-            project.buildscript.dependencies.add(
-                "classpath",
-                "app.cash.paparazzi:paparazzi-gradle-plugin:1.3.4"
-            )
-            project.pluginManager.apply("app.cash.paparazzi")
-        }
-
-        if (!project.pluginManager.hasPlugin("com.google.devtools.ksp")) {
-            project.buildscript.dependencies.add(
-                "classpath",
-                "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.0.20-1.0.25"
-            )
-            project.pluginManager.apply("com.google.devtools.ksp")
+            project.pluginManager.apply(PaparazziPlugin::class.java)
         }
     }
 
@@ -49,16 +40,27 @@ class ArkivePlugin : Plugin<Project> {
                 "kspTestDebug",
                 "com.infinum.arkive:testprocessor:$arkiveVersion"
             )
+        }
+    }
 
-            dependencies.add(
-                "testImplementation",
-                "junit:junit:4.13.2"
-            )
+    private fun addTestDependencies(project: Project) {
+        val testDependencies = listOf(
+            "junit:junit:4.13.2" to "testImplementation",
+            "org.junit.vintage:junit-vintage-engine:5.9.1" to "testRuntimeOnly"
+        )
 
-            dependencies.add(
-                "testRuntimeOnly",
-                "org.junit.vintage:junit-vintage-engine:5.9.1"
-            )
+        testDependencies.forEach { (dependencyNotation, configurationName) ->
+            val configuration = project.configurations.getByName(configurationName)
+
+            val dependencyExists = configuration.dependencies.any { dependency ->
+                dependency.group == dependencyNotation.substringBefore(":") &&
+                        dependency.name == dependencyNotation.substringAfter(":")
+                    .substringBefore(":")
+            }
+
+            if (!dependencyExists) {
+                project.dependencies.add(configurationName, dependencyNotation)
+            }
         }
     }
 

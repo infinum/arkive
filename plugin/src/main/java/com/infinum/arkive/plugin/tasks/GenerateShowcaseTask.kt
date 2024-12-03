@@ -19,6 +19,8 @@ import org.gradle.api.tasks.TaskAction
 @CacheableTask
 internal open class GenerateShowcaseTask : BaseSourceTask() {
 
+
+    // Property<File>
     @get:OutputDirectory
     var outputDirectory: File = project.layout.buildDirectory.get().file(
         FD_GENERATED,
@@ -35,6 +37,7 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
 
     @TaskAction
     fun doOnRun() {
+
         val snapshotsGrabber = SnapshotsGrabberImpl(project)
         val metadataLoader = KSPMetaDataLoader(project)
         val generator = ShowcaseGeneratorImpl()
@@ -65,7 +68,7 @@ internal open class GenerateShowcaseTask : BaseSourceTask() {
         const val NAME = "generateShowcase"
         const val DESCRIPTION = "Generates arkive showcase json file"
         val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
-        const val RECORDING_TASK = "recordPaparazziDebug"
+        const val RECORDING_TASK = "recordPaparazzi"
         const val IMAGES_OUTPUT_PATH = "images"
     }
 }
