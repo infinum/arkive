@@ -1,0 +1,11 @@
+apply plugin: "org.jetbrains.dokka"
+
+tasks.named("dokkaJavadoc") {
+    outputDirectory.set(file("$buildDir/javadoc"))
+
+    dokkaSourceSets {
+        named("main") {
+            // TODO add dokka configuration
+        }
+    }
+}

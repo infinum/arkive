@@ -1,0 +1,44 @@
+def properties = new Properties()
+def propsFile = file("$rootDir/publish.properties")
+
+/*
+* the file will not exist if you go with system based sonatype setup - Option 3
+* */
+if (propsFile.exists()) {
+    properties.load(propsFile.newInputStream())
+}
+
+/*
+* There are 3 possible approaches to retrieving previously defined sonatype credentials and setting it on a sonatype file:
+*
+*    Option 1:
+*       - findProperty("SOME_PROPERTY") - use parameter from the command (if attached) so you can run ->
+*         ./gradlew deploy -PsonatypeSOME_PROPERTY_NAME={SOME_PROPERTY_VALUE} -PsonatypeSOME_PROPERTY_NAME_2={SOME_PROPERTY_VALUE_2}
+*
+*    Option 2:
+*       - properties["SOME_PROPERTY"]: use property defined in publish.properties file in the root directory(if going with this option the
+*         file must first be manually created as described in the handbook) so you can run -> ./gradlew deploy
+*
+*    Option 3:
+*       - System.getenv("SONATYPE_PASS"): use global variable defined in the system. With this approach there is no need to create a
+*         publish.properties file so you can simply run -> ./gradlew deploy
+* */
+ext.sonatype = [
+
+        // If going with Option 3 the properties file will not exist and will fallback to the specified hardcoded value
+        url     : properties["sonatype.url"] ?: "https://oss.sonatype.org/service/local/staging/deploy/maven2",
+
+                  // Option 1
+        username: findProperty("sonatypeUsername")?.toString()
+                  // Option 2
+                ?: properties["sonatype.user"]
+                  // Option 3
+                ?: System.getenv("SONATYPE_USERNAME"),
+
+                  // Option 1
+        password: findProperty("sonatypePassword")?.toString()
+                  // Option 2
+                ?: properties["sonatype.password"]
+                  // Option 3
+                ?: System.getenv("SONATYPE_PASS")
+]
