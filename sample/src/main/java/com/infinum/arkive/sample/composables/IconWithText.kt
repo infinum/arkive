@@ -45,7 +45,7 @@ fun IconWithText(
 @Preview
 @ArkiveComposable(name = "Icon with Text", group = "Text", tags = ["Text", "Icon"])
 @Composable
-fun PreviewIconWithText() {
+internal fun PreviewIconWithText() {
     SampleApptheme {
         IconWithText(
             text = "Text",

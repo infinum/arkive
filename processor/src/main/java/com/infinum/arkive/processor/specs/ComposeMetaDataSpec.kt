@@ -6,6 +6,7 @@ import com.infinum.arkive.processor.models.ComposeHolder
 import com.inifnum.arkive.metadata.model.Component
 import com.inifnum.arkive.metadata.model.ComponentsMetaData
 import com.inifnum.arkive.metadata.toJson
+import java.io.File
 
 class ComposeMetaDataSpec(
     private val codeGenerator: CodeGenerator,
@@ -38,7 +39,7 @@ class ComposeMetaDataSpec(
     }
 
     companion object {
-        private const val META_DATA_RESOURCES_PATH = "META-INF/arkive/components_meta_data"
+        private val META_DATA_RESOURCES_PATH = "arkive${File.separator}components_meta_data"
         private const val META_DATA_FILE_EXTENSION = "json"
     }
 }
