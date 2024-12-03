@@ -1,10 +1,13 @@
 package com.infinum.arkive.processor.validators
 
+import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Modifier
 import com.infinum.arkive.processor.models.ComposeHolder
 
-class ComposeValidator : Validator<ComposeHolder> {
+class ComposeValidator(
+    private val logger: KSPLogger,
+) : Validator<ComposeHolder> {
     private val KSFunctionDeclaration.isPublic: Boolean
         get() {
             return when {

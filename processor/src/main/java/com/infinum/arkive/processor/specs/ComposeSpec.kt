@@ -1,6 +1,7 @@
 package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.KSPLogger
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.shared.Constants
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -17,6 +18,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 class ComposeSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
+    private val logger: KSPLogger,
 ) : Spec {
     override fun write() {
         val fileSpec = getFileSpec()
