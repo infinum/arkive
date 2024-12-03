@@ -36,7 +36,7 @@ fun LabeledText(
 
 @Preview
 @Composable
-fun PreviewLabeledText() {
+internal fun PreviewLabeledText() {
     SampleApptheme {
         LabeledText(
             label = "Temperatures",

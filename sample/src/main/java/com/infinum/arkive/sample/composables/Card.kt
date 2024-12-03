@@ -50,7 +50,7 @@ enum class RoundDirection {
 
 @Preview
 @Composable
-fun PreviewUpCard() {
+internal fun PreviewUpCard() {
     SampleApptheme {
         Card(roundDirection = RoundDirection.UP) {
             Column(Modifier.align(Alignment.Center)) {
@@ -64,7 +64,7 @@ fun PreviewUpCard() {
 
 @Preview
 @Composable
-fun PreviewDownCard() {
+internal fun PreviewDownCard() {
     SampleApptheme {
         Card(roundDirection = RoundDirection.DOWN) {
             Column(Modifier.align(Alignment.Center)) {

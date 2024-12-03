@@ -42,7 +42,7 @@ fun IconWithText(
 
 @Preview
 @Composable
-fun PreviewIconWithText() {
+internal fun PreviewIconWithText() {
     SampleApptheme {
         IconWithText(
             text = "Text",
