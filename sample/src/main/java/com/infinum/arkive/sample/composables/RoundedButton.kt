@@ -36,7 +36,7 @@ fun RoundedButton(
 @Preview
 @ArkiveComposable
 @Composable
-fun PreviewRoundedButton() {
+internal fun PreviewRoundedButton() {
     SampleApptheme {
         RoundedButton(text = "5 DAY FORECAST")
     }
@@ -45,7 +45,7 @@ fun PreviewRoundedButton() {
 @Preview
 @ArkiveComposable
 @Composable
-fun PreviewWideRoundedButton() {
+internal fun PreviewWideRoundedButton() {
     SampleApptheme {
         RoundedButton(text = "5 DAY FORECAST", Modifier.width(200.dp))
     }
