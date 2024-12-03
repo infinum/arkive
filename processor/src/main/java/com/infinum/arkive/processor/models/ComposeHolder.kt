@@ -13,4 +13,11 @@ data class ComposeHolder(
     val extraMetadata: List<String>,
     val function: KSFunctionDeclaration,
     val parameters: List<KSValueParameter>,
-)
+) {
+    // This id should be used in the generated json file to include more info about the component
+    val functionId: String
+        get() {
+            val validPackageName = packageName.replace(".", "_")
+            return "${validPackageName}_$functionName"
+        }
+}

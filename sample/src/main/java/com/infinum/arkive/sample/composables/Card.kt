@@ -50,7 +50,7 @@ enum class RoundDirection {
 }
 
 @Preview
-@ArkiveComposable(skip = true)
+@ArkiveComposable(name = "Up Card", group = "Card", tags = ["Tag1", "Tag2"])
 @Composable
 internal fun PreviewUpCard() {
     SampleApptheme {
@@ -65,7 +65,7 @@ internal fun PreviewUpCard() {
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Down Card", group = "Card", tags = ["Tag1", "Tag2"])
 @Composable
 internal fun PreviewDownCard() {
     SampleApptheme {
