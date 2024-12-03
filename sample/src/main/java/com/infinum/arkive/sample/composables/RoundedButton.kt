@@ -1,6 +1,7 @@
 package com.infinum.arkive.sample.composables
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -34,19 +35,28 @@ fun RoundedButton(
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Rounded Button", group = "Button", tags = ["Rounded"])
 @Composable
 internal fun PreviewRoundedButton() {
     SampleApptheme {
-        RoundedButton(text = "5 DAY FORECAST")
+        RoundedButton(
+            text = "5 DAY FORECAST",
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
+
+        )
     }
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Big Rounded Button", group = "Button", tags = ["Rounded"])
 @Composable
 internal fun PreviewWideRoundedButton() {
     SampleApptheme {
-        RoundedButton(text = "5 DAY FORECAST", Modifier.width(200.dp))
+        RoundedButton(
+            text = "5 DAY FORECAST",
+            Modifier
+                .width(200.dp)
+                .background(MaterialTheme.colorScheme.background),
+        )
     }
 }

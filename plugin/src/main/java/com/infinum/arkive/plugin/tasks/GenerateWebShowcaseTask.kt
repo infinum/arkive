@@ -1,9 +1,6 @@
 package com.infinum.arkive.plugin.tasks
 
-import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
-import com.infinum.arkive.plugin.services.KSPMetaDataLoader
-import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
-import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
+import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
 import java.io.File
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
@@ -20,7 +17,7 @@ import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 
 @CacheableTask
-internal open class GenerateShowcaseTask : SourceTask() {
+internal open class GenerateWebShowcaseTask : SourceTask() {
 
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
@@ -36,30 +33,14 @@ internal open class GenerateShowcaseTask : SourceTask() {
             .convention("0.0.1") // TODO automate this
 
     init {
-        dependsOn(RECORDING_TASK)
+        dependsOn(GenerateShowcaseTask.NAME)
     }
 
     @TaskAction
     fun doOnRun() {
-        val snapshotsGrabber = SnapshotsGrabberImpl(project)
-        val metadataLoader = KSPMetaDataLoader(project)
-        val generator = ShowcaseGeneratorImpl()
-        val writer = ShowcaseWriterImpl()
-
-        val snapshots =
-            snapshotsGrabber.grabAndMoveSnapshots(
-                outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
-            )
-        val metadata = metadataLoader.loadMetaData()
-
-        val arkiveShowcase = generator.generateShowcase(snapshots, metadata)
-        logger.warn("Showcase generated: $arkiveShowcase")
-        writer.write(
-            outputDir = outputDirectory.get().asFile,
-            showcase = arkiveShowcase,
-        )
-
-        logger.warn("Showcase written")
+        val generator = ShowcaseWebGeneratorImpl()
+        generator.generateWeb(outputDirectory.get().asFile)
+        logger.info("Generated web showcase")
     }
 
     @InputFiles
@@ -70,10 +51,8 @@ internal open class GenerateShowcaseTask : SourceTask() {
 
     companion object {
         const val GROUP = "arkive"
-        const val NAME = "generateShowcase"
-        const val DESCRIPTION = "Generates arkive showcase json file"
+        const val NAME = "generateWebShowcase"
+        const val DESCRIPTION = "Generates arkive web showcase "
         val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
-        const val RECORDING_TASK = "recordPaparazziDebug"
-        const val IMAGES_OUTPUT_PATH = "images"
     }
 }

@@ -45,7 +45,7 @@ fun CircularButton(
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Circular Button", group = "Button", tags = ["Circular"])
 @Composable
 internal fun PreviewCircularButton() {
     SampleApptheme {
@@ -54,7 +54,7 @@ internal fun PreviewCircularButton() {
 }
 
 @Preview
-@ArkiveComposable
+@ArkiveComposable(name = "Circular Button with border", group = "Button", tags = ["Circular", "Border"])
 @Composable
 internal fun PreviewCircularButtonWithBlackBorder() {
     SampleApptheme {
