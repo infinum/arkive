@@ -11,7 +11,7 @@ import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
 
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
-    private val logger: KSPLogger
+    private val logger: KSPLogger,
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {

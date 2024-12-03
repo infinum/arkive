@@ -4,6 +4,7 @@ import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
+import java.io.File
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -17,7 +18,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
@@ -48,7 +48,7 @@ internal open class GenerateShowcaseTask : SourceTask() {
 
         val snapshots =
             snapshotsGrabber.grabAndMoveSnapshots(
-                outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile
+                outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
             )
         val metadata = metadataLoader.loadMetaData()
 

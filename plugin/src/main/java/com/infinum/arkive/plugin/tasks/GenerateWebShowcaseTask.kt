@@ -1,6 +1,7 @@
 package com.infinum.arkive.plugin.tasks
 
 import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
+import java.io.File
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -14,7 +15,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 @CacheableTask
 internal open class GenerateWebShowcaseTask : SourceTask() {
