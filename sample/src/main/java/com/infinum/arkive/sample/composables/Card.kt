@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.SampleApptheme
 
 @Composable
@@ -49,6 +50,7 @@ enum class RoundDirection {
 }
 
 @Preview
+@ArkiveComposable(skip = true)
 @Composable
 internal fun PreviewUpCard() {
     SampleApptheme {
@@ -63,6 +65,7 @@ internal fun PreviewUpCard() {
 }
 
 @Preview
+@ArkiveComposable
 @Composable
 internal fun PreviewDownCard() {
     SampleApptheme {

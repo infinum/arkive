@@ -63,10 +63,9 @@ class ComposeSpec(
                 ),
             )
             .addCode(
-                holders
-                    .map { holder ->
-                        getRunnerFunction(holder)
-                    }.joinToString(separator = "\n"),
+                holders.joinToString(separator = "\n") { holder ->
+                    getRunnerFunction(holder)
+                },
             )
             .build()
     }
@@ -76,14 +75,14 @@ class ComposeSpec(
     // This id should be used in the generated json file to include more info about the component
     private fun getFunctionId(holder: ComposeHolder): String {
         val validPackageName = holder.packageName.replace(".", "_")
-        return "${validPackageName}_${holder.name}"
+        return "${validPackageName}_${holder.functionName}"
     }
 
     private fun getCodeBody(holder: ComposeHolder): CodeBlock {
         return CodeBlock.builder().apply {
             val functionMember = MemberName(
                 packageName = holder.packageName,
-                simpleName = holder.name,
+                simpleName = holder.functionName,
             )
             addStatement(
                 "%M()",

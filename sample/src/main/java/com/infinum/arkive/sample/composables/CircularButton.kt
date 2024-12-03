@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.R
 import com.infinum.arkive.sample.theme.SampleApptheme
 
@@ -44,6 +45,7 @@ fun CircularButton(
 }
 
 @Preview
+@ArkiveComposable
 @Composable
 internal fun PreviewCircularButton() {
     SampleApptheme {
@@ -52,6 +54,7 @@ internal fun PreviewCircularButton() {
 }
 
 @Preview
+@ArkiveComposable
 @Composable
 internal fun PreviewCircularButtonWithBlackBorder() {
     SampleApptheme {

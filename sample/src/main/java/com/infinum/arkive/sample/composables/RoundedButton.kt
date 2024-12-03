@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.SampleApptheme
 
 @Composable
@@ -33,6 +34,7 @@ fun RoundedButton(
 }
 
 @Preview
+@ArkiveComposable
 @Composable
 internal fun PreviewRoundedButton() {
     SampleApptheme {
@@ -41,6 +43,7 @@ internal fun PreviewRoundedButton() {
 }
 
 @Preview
+@ArkiveComposable
 @Composable
 internal fun PreviewWideRoundedButton() {
     SampleApptheme {

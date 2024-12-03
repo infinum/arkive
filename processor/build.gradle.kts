@@ -20,6 +20,7 @@ java {
 }
 
 dependencies {
+    implementation(project(":annotaions"))
     implementation(libs.ksp.api)
     implementation(libs.kotlinpoet.ksp)
 }

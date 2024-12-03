@@ -1,6 +1,6 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("java-library")
+    id("kotlin")
 }
 
 apply {
@@ -10,36 +10,13 @@ apply {
     from("$rootDir/detekt.gradle")
 }
 
-val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
-android {
-    // TODO - com.infinum.<YOUR-AWESOME-LIBRARY-NAME>
-    namespace = "com.infinum.libname"
-    compileSdk = buildConfig["compileSdk"] as Int
 
-    defaultConfig {
-        minSdk = buildConfig["minSdk"] as Int
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 // specify per module - mostly needed due to different artifactIds, names, descriptions
@@ -47,7 +24,7 @@ extra["mavenPublishProperties"] = mapOf(
     "group" to releaseConfig["group"],
     "version" to releaseConfig["version"],
     // TODO - <YOUR-LIBRARY-ARTIFACTID>
-    "artifactId" to "libModule2",
+    "artifactId" to "annotaions",
     "repository" to mapOf(
         "url" to sonatype["url"],
         "username" to sonatype["username"],

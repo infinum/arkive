@@ -1,5 +1,5 @@
 include(":processor")
-include(":libModule2")
+include(":annotaions")
 include(":sample")
 
 rootProject.name = "Arkive"
