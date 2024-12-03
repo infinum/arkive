@@ -3,7 +3,6 @@ package com.infinum.arkive.plugin.tasks
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
-import com.infinum.arkive.plugin.tasks.shared.BaseSourceTask
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
@@ -16,11 +15,12 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
+import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @CacheableTask
-internal open class GenerateShowcaseTask : BaseSourceTask() {
+internal open class GenerateShowcaseTask : SourceTask() {
 
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
