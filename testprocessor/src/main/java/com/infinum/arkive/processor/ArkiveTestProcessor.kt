@@ -16,14 +16,12 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.writeTo
 
-@Suppress("LateinitUsage")
-lateinit var logger: KSPLogger
-
 private const val PACKAGE_NAME = "com.infinum.arkive"
 private const val FILE_NAME = "ArkiveSnapshotTestGenerator"
 
 class ArkiveTestProcessor(
     private val codeGenerator: CodeGenerator,
+    private val logger: KSPLogger,
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -86,7 +84,6 @@ class ArkiveTestProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor {
-        logger = environment.logger
-        return ArkiveTestProcessor(environment.codeGenerator)
+        return ArkiveTestProcessor(environment.codeGenerator, environment.logger)
     }
 }

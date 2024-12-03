@@ -16,8 +16,9 @@ interface ProcessorMetadataLoader : MetadataLoader {
 }
 
 // TODO: Support for KAPT
-private const val KSP_META_DATA_PATH =
-    "generated/ksp/debug/resources/META-INF/arkive/components_meta_data.json"
+@SuppressWarnings("MaximumLineLength")
+private val KSP_META_DATA_PATH =
+    "generated${File.separator}ksp${File.separator}debug${File.separator}resources${File.separator}arkive${File.separator}components_meta_data.json"
 
 class KSPMetaDataLoader(
     private val project: Project,

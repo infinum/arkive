@@ -1,14 +1,15 @@
 package com.inifnum.arkive.metadata.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ShowcaseItem(
-    val component: Component,
-    val snapshotPath: String,
+    @SerialName("component") val component: Component,
+    @SerialName("snapshotPath") val snapshotPath: String,
 )
 
 @Serializable
 data class ArkiveShowcase(
-    val items: List<ShowcaseItem>,
+    @SerialName("items") val items: List<ShowcaseItem>,
 )
