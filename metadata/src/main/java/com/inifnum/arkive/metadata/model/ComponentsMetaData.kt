@@ -1,19 +1,20 @@
 package com.inifnum.arkive.metadata.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Component(
-    val id: String,
-    val name: String,
-    val functionName: String,
-    val packageName: String,
-    val group: String,
-    val tags: List<String>,
-    val extraMetadata: List<String>,
+    @SerialName("id") val id: String,
+    @SerialName("name") val name: String,
+    @SerialName("functionName") val functionName: String,
+    @SerialName("packageName") val packageName: String,
+    @SerialName("group") val group: String,
+    @SerialName("tags") val tags: List<String>,
+    @SerialName("extraMetadata") val extraMetadata: List<String>,
 )
 
 @Serializable
 data class ComponentsMetaData(
-    val components: List<Component>,
+    @SerialName("components") val components: List<Component>,
 )
