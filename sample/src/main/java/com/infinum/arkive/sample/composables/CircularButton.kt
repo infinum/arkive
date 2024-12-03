@@ -47,7 +47,7 @@ fun CircularButton(
 @Preview
 @ArkiveComposable
 @Composable
-fun PreviewCircularButton() {
+internal fun PreviewCircularButton() {
     SampleApptheme {
         CircularButton(id = R.drawable.ic_settings)
     }
@@ -56,7 +56,7 @@ fun PreviewCircularButton() {
 @Preview
 @ArkiveComposable
 @Composable
-fun PreviewCircularButtonWithBlackBorder() {
+internal fun PreviewCircularButtonWithBlackBorder() {
     SampleApptheme {
         CircularButton(
             id = R.drawable.ic_settings,
