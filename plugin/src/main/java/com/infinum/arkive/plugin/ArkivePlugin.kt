@@ -1,7 +1,6 @@
 package com.infinum.arkive.plugin
 
 import app.cash.paparazzi.gradle.PaparazziPlugin
-import com.google.devtools.ksp.gradle.KspGradleSubplugin
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import org.gradle.api.Plugin
@@ -35,15 +34,15 @@ class ArkivePlugin : Plugin<Project> {
         with(project) {
             dependencies.add(
                 "implementation",
-                "com.infinum.arkive:annotations:$arkiveVersion"
+                "com.infinum.arkive:annotations:$arkiveVersion",
             )
             dependencies.add(
                 "kspDebug",
-                "com.infinum.arkive:processor:$arkiveVersion"
+                "com.infinum.arkive:processor:$arkiveVersion",
             )
             dependencies.add(
                 "kspTestDebug",
-                "com.infinum.arkive:testprocessor:$arkiveVersion"
+                "com.infinum.arkive:testprocessor:$arkiveVersion",
             )
         }
     }
@@ -51,7 +50,7 @@ class ArkivePlugin : Plugin<Project> {
     private fun addTestDependencies(project: Project) {
         val testDependencies = listOf(
             "junit:junit:4.13.2" to "testImplementation",
-            "org.junit.vintage:junit-vintage-engine:5.9.1" to "testRuntimeOnly"
+            "org.junit.vintage:junit-vintage-engine:5.9.1" to "testRuntimeOnly",
         )
 
         testDependencies.forEach { (dependencyNotation, configurationName) ->
@@ -59,8 +58,8 @@ class ArkivePlugin : Plugin<Project> {
 
             val dependencyExists = configuration.dependencies.any { dependency ->
                 dependency.group == dependencyNotation.substringBefore(":") &&
-                        dependency.name == dependencyNotation.substringAfter(":")
-                    .substringBefore(":")
+                    dependency.name == dependencyNotation.substringAfter(":")
+                        .substringBefore(":")
             }
 
             if (!dependencyExists) {
@@ -79,7 +78,7 @@ class ArkivePlugin : Plugin<Project> {
 
             tasks.register(
                 GenerateWebShowcaseTask.NAME,
-                GenerateWebShowcaseTask::class.java
+                GenerateWebShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION

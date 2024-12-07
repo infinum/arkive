@@ -22,7 +22,6 @@ import org.gradle.api.tasks.TaskAction
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
 
-
     // Property<File>
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
@@ -43,7 +42,6 @@ internal open class GenerateShowcaseTask : SourceTask() {
 
     @TaskAction
     fun doOnRun() {
-
         val snapshotsGrabber = SnapshotsGrabberImpl(project)
         val metadataLoader = KSPMetaDataLoader(project)
         val generator = ShowcaseGeneratorImpl()
