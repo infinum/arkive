@@ -17,6 +17,10 @@ val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
+configure<ArkiveExtension>{
+    variant.set("uat")
+}
+
 android {
     namespace = "com.infinum.arkive.sample"
     compileSdk = buildConfig["compileSdk"] as Int
@@ -55,7 +59,11 @@ android {
         jvmTarget = "17"
     }
 
-
+    productFlavors {
+        create("staging")
+        create("uat")
+        create("production")
+    }
 }
 
 dependencies {
