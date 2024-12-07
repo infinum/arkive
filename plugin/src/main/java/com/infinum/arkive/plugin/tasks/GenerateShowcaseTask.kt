@@ -1,10 +1,10 @@
 package com.infinum.arkive.plugin.tasks
 
+import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
-import java.io.File
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -18,11 +18,13 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
 
-    // Property<File>
+    private val extention = project.extensions.getByType(ArkiveExtension::class.java)
+
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
         get() = project.layout.buildDirectory.dir(
@@ -36,12 +38,20 @@ internal open class GenerateShowcaseTask : SourceTask() {
         get() = project.objects.property(String::class.java)
             .convention("0.0.1") // TODO automate this
 
+
+    @get:Input
+    val varient: Property<String>
+        get() = project.objects.property(String::class.java)
+            .convention(extention.variant)
+
     init {
         dependsOn(RECORDING_TASK)
     }
 
     @TaskAction
     fun doOnRun() {
+        logger.error("Varient:${varient.get()}")
+
         val snapshotsGrabber = SnapshotsGrabberImpl(project)
         val metadataLoader = KSPMetaDataLoader(project)
         val generator = ShowcaseGeneratorImpl()

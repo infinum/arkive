@@ -1,3 +1,5 @@
+import com.infinum.arkive.plugin.extensions.ArkiveExtension
+
 plugins {
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
@@ -52,6 +54,8 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+
 }
 
 dependencies {

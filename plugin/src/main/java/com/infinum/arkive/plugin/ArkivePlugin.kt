@@ -1,6 +1,7 @@
 package com.infinum.arkive.plugin
 
 import app.cash.paparazzi.gradle.PaparazziPlugin
+import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import org.gradle.api.Plugin
@@ -10,10 +11,20 @@ import org.gradle.internal.cc.base.logger
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
+            addExtensions(this)
             addPlugins(this)
             addDependencies(this)
             addTestDependencies(this)
             addTasks(this)
+        }
+    }
+
+    private fun addExtensions(project: Project) {
+        project.plugins.withId("com.android.base") {
+            project.extensions.create(
+                "arkive",
+                ArkiveExtension::class.java,
+            )
         }
     }
 
@@ -58,8 +69,8 @@ class ArkivePlugin : Plugin<Project> {
 
             val dependencyExists = configuration.dependencies.any { dependency ->
                 dependency.group == dependencyNotation.substringBefore(":") &&
-                    dependency.name == dependencyNotation.substringAfter(":")
-                        .substringBefore(":")
+                        dependency.name == dependencyNotation.substringAfter(":")
+                    .substringBefore(":")
             }
 
             if (!dependencyExists) {
