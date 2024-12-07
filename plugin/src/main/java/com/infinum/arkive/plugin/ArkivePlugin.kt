@@ -1,6 +1,7 @@
 package com.infinum.arkive.plugin
 
 import app.cash.paparazzi.gradle.PaparazziPlugin
+import com.google.devtools.ksp.gradle.KspGradleSubplugin
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import org.gradle.api.Plugin
@@ -21,6 +22,10 @@ class ArkivePlugin : Plugin<Project> {
         logger.info("Adding plugins")
         if (!project.pluginManager.hasPlugin("app.cash.paparazzi")) {
             project.pluginManager.apply(PaparazziPlugin::class.java)
+        }
+
+        if (!project.pluginManager.hasPlugin("com.google.devtools.ksp")) {
+            project.pluginManager.apply("com.google.devtools.ksp")
         }
     }
 
@@ -61,14 +66,6 @@ class ArkivePlugin : Plugin<Project> {
             if (!dependencyExists) {
                 project.dependencies.add(configurationName, dependencyNotation)
             }
-        }
-    }
-
-
-    fun Project.hasDependency(configurationName: String, group: String, name: String): Boolean {
-        val configuration = configurations.findByName(configurationName) ?: return false
-        return configuration.dependencies.any { dependency ->
-            dependency.group == group && dependency.name == name
         }
     }
 
