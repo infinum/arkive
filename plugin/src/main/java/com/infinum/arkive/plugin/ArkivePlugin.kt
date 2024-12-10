@@ -3,7 +3,6 @@ package com.infinum.arkive.plugin
 import app.cash.paparazzi.gradle.PaparazziPlugin
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
-import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
@@ -15,20 +14,10 @@ import org.gradle.internal.cc.base.logger
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
-            addExtensions(this)
             addPlugins(this)
             addDependencies(this)
             addTestDependencies(this)
             addTasks(this)
-        }
-    }
-
-    private fun addExtensions(project: Project) {
-        project.plugins.withId("com.android.base") {
-            project.extensions.create(
-                "arkive",
-                ArkiveExtension::class.java,
-            )
         }
     }
 

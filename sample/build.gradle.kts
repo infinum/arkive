@@ -17,10 +17,6 @@ val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
-configure<ArkiveExtension>{
-    variant.set("uatDebug")
-}
-
 android {
     namespace = "com.infinum.arkive.sample"
     compileSdk = buildConfig["compileSdk"] as Int
