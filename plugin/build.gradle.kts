@@ -61,5 +61,7 @@ dependencies {
     implementation(libs.arkive.metadata)
     implementation(libs.paparazzi.plugin)
     implementation(libs.ksp.plugin)
+    compileOnly(libs.gradle.android)
+
 }
 

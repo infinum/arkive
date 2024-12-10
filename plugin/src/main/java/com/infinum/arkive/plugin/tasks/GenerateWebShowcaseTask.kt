@@ -1,7 +1,8 @@
 package com.infinum.arkive.plugin.tasks
 
+import com.android.build.gradle.internal.crash.afterEvaluate
 import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
-import java.io.File
+import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -15,6 +16,7 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 @CacheableTask
 internal open class GenerateWebShowcaseTask : SourceTask() {
@@ -31,10 +33,6 @@ internal open class GenerateWebShowcaseTask : SourceTask() {
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
             .convention("0.0.1") // TODO automate this
-
-    init {
-        dependsOn(GenerateShowcaseTask.NAME)
-    }
 
     @TaskAction
     fun doOnRun() {

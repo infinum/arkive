@@ -1,9 +1,10 @@
 package com.infinum.arkive.plugin.tasks
 
-import com.infinum.arkive.plugin.extensions.ArkiveExtension
+import com.android.build.gradle.internal.crash.afterEvaluate
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
+import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
@@ -22,9 +23,6 @@ import java.io.File
 
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
-
-    private val extention = project.extensions.getByType(ArkiveExtension::class.java)
-
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
         get() = project.layout.buildDirectory.dir(
@@ -40,18 +38,21 @@ internal open class GenerateShowcaseTask : SourceTask() {
 
 
     @get:Input
-    val varient: Property<String>
-        get() = project.objects.property(String::class.java)
-            .convention(extention.variant)
-
+    var variant = ""
     init {
-        dependsOn(RECORDING_TASK)
+        project.gradle.projectsEvaluated {
+            val variantText = variant
+
+            if (variantText.isEmpty()) {
+                dependsOn(RECORDING_TASK)
+            } else {
+                dependsOn("$RECORDING_TASK${variantText.capFirst}")
+            }
+        }
     }
 
     @TaskAction
     fun doOnRun() {
-        logger.error("Varient:${varient.get()}")
-
         val snapshotsGrabber = SnapshotsGrabberImpl(project)
         val metadataLoader = KSPMetaDataLoader(project)
         val generator = ShowcaseGeneratorImpl()
@@ -61,7 +62,10 @@ internal open class GenerateShowcaseTask : SourceTask() {
             snapshotsGrabber.grabAndMoveSnapshots(
                 outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
             )
-        val metadata = metadataLoader.loadMetaData()
+
+        val vrr = variant
+        logger.warn("Loading metadata for variant: $vrr")
+        val metadata = metadataLoader.loadMetaData(vrr)
 
         val arkiveShowcase = generator.generateShowcase(snapshots, metadata)
         logger.warn("Showcase generated: $arkiveShowcase")
@@ -71,6 +75,7 @@ internal open class GenerateShowcaseTask : SourceTask() {
         )
 
         logger.warn("Showcase written")
+
     }
 
     @InputFiles

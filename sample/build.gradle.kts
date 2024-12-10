@@ -18,7 +18,7 @@ val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
 configure<ArkiveExtension>{
-    variant.set("uat")
+    variant.set("uatDebug")
 }
 
 android {
@@ -59,10 +59,18 @@ android {
         jvmTarget = "17"
     }
 
+    flavorDimensions += "api"
+
     productFlavors {
-        create("staging")
-        create("uat")
-        create("production")
+        create("staging") {
+            dimension = "api"
+        }
+        create("uat"){
+            dimension = "api"
+        }
+        create("production"){
+            dimension = "api"
+        }
     }
 }
 

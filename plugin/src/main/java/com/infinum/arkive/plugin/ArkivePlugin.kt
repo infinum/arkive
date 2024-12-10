@@ -1,9 +1,13 @@
 package com.infinum.arkive.plugin
 
 import app.cash.paparazzi.gradle.PaparazziPlugin
+import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
+import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
+import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.internal.cc.base.logger
@@ -80,21 +84,59 @@ class ArkivePlugin : Plugin<Project> {
     }
 
     private fun addTasks(project: Project) {
+        logger.warn("Arkive: Adding tasks")
+
+        project.plugins.withId("com.android.application") {
+            logger.warn("Arkive: Android app")
+
+            val androidComponents =
+                project.extensions.getByType(AndroidComponentsExtension::class.java)
+
+            androidComponents.onVariants {
+                addTaskWithVariant(project, it.name)
+            }
+        }
+
+        project.plugins.withId("com.android.library") {
+            val libraryComponents =
+                project.extensions.getByType(LibraryAndroidComponentsExtension::class.java)
+
+            libraryComponents.onVariants {
+                addTaskWithVariant(project, it.name)
+            }
+        }
+
+    }
+
+    private fun addTaskWithVariant(project: Project, variant: String) {
         with(project) {
-            tasks.register(GenerateShowcaseTask.NAME, GenerateShowcaseTask::class.java) { task ->
+            tasks.register(
+                "${GenerateShowcaseTask.NAME}${variant.capFirst}",
+                GenerateShowcaseTask::class.java
+            ) { task ->
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
+                task.variant = variant
+                if (variant.isEmpty()) {
+                    task.dependsOn(RECORDING_TASK)
+                } else {
+                    task.dependsOn("$RECORDING_TASK${variant.capFirst}")
+                }
                 task.setSource(projectDir)
             }
 
             tasks.register(
-                GenerateWebShowcaseTask.NAME,
+                "${GenerateWebShowcaseTask.NAME}${variant.capFirst}",
                 GenerateWebShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION
+                task.dependsOn(
+                    "${GenerateShowcaseTask.NAME}${variant.capFirst}",
+                )
                 task.setSource(projectDir)
             }
         }
     }
+
 }
