@@ -1,11 +1,11 @@
 package com.infinum.arkive.plugin.tasks
 
-import com.android.build.gradle.internal.crash.afterEvaluate
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
+import java.io.File
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -19,7 +19,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
@@ -35,7 +34,6 @@ internal open class GenerateShowcaseTask : SourceTask() {
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
             .convention("0.0.1") // TODO automate this
-
 
     @get:Input
     var variant = ""
@@ -75,7 +73,6 @@ internal open class GenerateShowcaseTask : SourceTask() {
         )
 
         logger.warn("Showcase written")
-
     }
 
     @InputFiles

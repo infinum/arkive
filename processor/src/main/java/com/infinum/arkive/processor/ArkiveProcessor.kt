@@ -29,5 +29,4 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor = ArkiveProcessor(environment.codeGenerator, environment.logger)
-
 }

@@ -73,8 +73,8 @@ class ArkivePlugin : Plugin<Project> {
 
             val dependencyExists = configuration.dependencies.any { dependency ->
                 dependency.group == dependencyNotation.substringBefore(":") &&
-                        dependency.name == dependencyNotation.substringAfter(":")
-                    .substringBefore(":")
+                    dependency.name == dependencyNotation.substringAfter(":")
+                        .substringBefore(":")
             }
 
             if (!dependencyExists) {
@@ -105,14 +105,13 @@ class ArkivePlugin : Plugin<Project> {
                 addTaskWithVariant(project, it.name)
             }
         }
-
     }
 
     private fun addTaskWithVariant(project: Project, variant: String) {
         with(project) {
             tasks.register(
                 "${GenerateShowcaseTask.NAME}${variant.capFirst}",
-                GenerateShowcaseTask::class.java
+                GenerateShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
@@ -138,5 +137,4 @@ class ArkivePlugin : Plugin<Project> {
             }
         }
     }
-
 }
