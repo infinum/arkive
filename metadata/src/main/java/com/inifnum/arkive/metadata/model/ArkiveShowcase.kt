@@ -10,6 +10,13 @@ data class ShowcaseItem(
 )
 
 @Serializable
-data class ArkiveShowcase(
+data class ArkiveModule(
+    @SerialName("name") val name: String,
     @SerialName("items") val items: List<ShowcaseItem>,
+)
+
+@Serializable
+data class ArkiveShowcase(
+    @SerialName("projectName") val projectName: String,
+    @SerialName("modules") val modules: List<ArkiveModule>
 )
