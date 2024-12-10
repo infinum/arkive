@@ -20,6 +20,7 @@ class ArkivePlugin : Plugin<Project> {
             addDependencies(this)
             addTestDependencies(this)
             addTasks(this)
+            addRootTasks(rootProject)
         }
     }
 
@@ -84,6 +85,7 @@ class ArkivePlugin : Plugin<Project> {
     }
 
     private fun addTasks(project: Project) {
+
         logger.warn("Arkive: Adding tasks")
 
         project.plugins.withId("com.android.application") {
@@ -124,19 +126,39 @@ class ArkivePlugin : Plugin<Project> {
                 }
                 task.setSource(projectDir)
             }
+        }
+    }
 
-            tasks.register(
-                "${GenerateWebShowcaseTask.NAME}${variant.capFirst}",
+    private fun addRootTasks(rootProject: Project) {
+        if (rootProject.tasks.findByName(GenerateWebShowcaseTask.NAME) != null) {
+            return
+        }
+        rootProject.gradle.projectsEvaluated {
+            val subTasks = rootProject.subprojects
+                .filter {
+                    it.pluginManager.hasPlugin("com.infinum.arkive")
+                }.map { module ->
+                    val variant = module.extensions.findByType(ArkiveExtension::class.java)
+                        ?.multiModuleVariant?.get().orEmpty()
+
+                    module.tasks.getByName("${GenerateShowcaseTask.NAME}${variant.capFirst}").path
+                }
+
+
+            rootProject.tasks.register(
+                GenerateWebShowcaseTask.NAME,
                 GenerateWebShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION
                 task.dependsOn(
-                    "${GenerateShowcaseTask.NAME}${variant.capFirst}",
+                    *subTasks.toTypedArray()
                 )
-                task.setSource(projectDir)
+                task.setSource(rootProject.projectDir)
             }
         }
+
+
     }
 
 }

@@ -1,7 +1,5 @@
 package com.infinum.arkive.plugin.generators
 
-import com.inifnum.arkive.metadata.model.ArkiveModule
-import com.inifnum.arkive.metadata.model.ArkiveShowcase
 import com.inifnum.arkive.metadata.model.ComponentsMetaData
 import com.inifnum.arkive.metadata.model.ShowcaseItem
 

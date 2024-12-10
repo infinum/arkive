@@ -1,3 +1,5 @@
+import com.infinum.arkive.plugin.extensions.ArkiveExtension
+
 plugins {
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
@@ -10,6 +12,10 @@ apply {
 }
 
 apply(plugin = "com.infinum.arkive")
+
+configure<ArkiveExtension>{
+    multiModuleVariant.set("uatDebug")
+}
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project

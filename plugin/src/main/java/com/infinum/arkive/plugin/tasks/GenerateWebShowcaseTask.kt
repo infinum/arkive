@@ -1,7 +1,8 @@
 package com.infinum.arkive.plugin.tasks
 
-import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
-import java.io.File
+import com.infinum.arkive.plugin.services.ModuleLoaderImpl
+import com.infinum.arkive.plugin.writers.ShowcaseMultiModuleWriterImpl
+import com.inifnum.arkive.metadata.model.ArkiveShowcase
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -15,6 +16,7 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 @CacheableTask
 internal open class GenerateWebShowcaseTask : SourceTask() {
@@ -34,9 +36,15 @@ internal open class GenerateWebShowcaseTask : SourceTask() {
 
     @TaskAction
     fun doOnRun() {
-        val generator = ShowcaseWebGeneratorImpl()
-        generator.generateWeb(outputDirectory.get().asFile)
-        logger.info("Generated web showcase")
+        val moduleLoader = ModuleLoaderImpl(project)
+        val modules = moduleLoader.loadModules(outputDirectory.get().asFile)
+        val showcase = ArkiveShowcase(
+            project.name,
+            modules
+        )
+
+        val multiModuleWriter = ShowcaseMultiModuleWriterImpl()
+        multiModuleWriter.write(outputDirectory.get().asFile, showcase)
     }
 
     @InputFiles
