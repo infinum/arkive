@@ -1,25 +1,26 @@
 package com.infinum.arkive.plugin.generators
 
+import com.inifnum.arkive.metadata.model.ArkiveModule
 import com.inifnum.arkive.metadata.model.ArkiveShowcase
 import com.inifnum.arkive.metadata.model.ComponentsMetaData
 import com.inifnum.arkive.metadata.model.ShowcaseItem
 
 interface ShowcaseGenerator {
-    fun generateShowcase(snapshots: List<String>, metadata: ComponentsMetaData): ArkiveShowcase
+    fun generateShowcase(snapshots: List<String>, metadata: ComponentsMetaData): List<ShowcaseItem>
 }
 
 class ShowcaseGeneratorImpl : ShowcaseGenerator {
     override fun generateShowcase(
         snapshots: List<String>,
         metadata: ComponentsMetaData,
-    ): ArkiveShowcase {
+    ): List<ShowcaseItem> {
         val items = metadata.components.map { component ->
             ShowcaseItem(
                 component = component,
                 snapshotPath = snapshots.findSnapshot(component.id),
             )
         }
-        return ArkiveShowcase(items)
+        return items
     }
 
     private fun List<String>.findSnapshot(id: String): String {
