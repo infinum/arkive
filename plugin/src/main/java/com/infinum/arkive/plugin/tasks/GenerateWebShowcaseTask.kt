@@ -1,5 +1,6 @@
 package com.infinum.arkive.plugin.tasks
 
+import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
 import com.infinum.arkive.plugin.services.ModuleLoaderImpl
 import com.infinum.arkive.plugin.writers.ShowcaseMultiModuleWriterImpl
 import com.inifnum.arkive.metadata.model.ArkiveShowcase
@@ -45,6 +46,9 @@ internal open class GenerateWebShowcaseTask : SourceTask() {
 
         val multiModuleWriter = ShowcaseMultiModuleWriterImpl()
         multiModuleWriter.write(outputDirectory.get().asFile, showcase)
+
+        val webGenerator = ShowcaseWebGeneratorImpl()
+        webGenerator.generateWeb(outputDirectory.get().asFile)
     }
 
     @InputFiles
