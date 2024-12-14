@@ -54,6 +54,10 @@ class ArkivePlugin : Plugin<Project> {
                 "com.infinum.arkive:annotations:$arkiveVersion",
             )
             dependencies.add(
+                "implementation",
+                "com.infinum.arkive:composeUtils:$arkiveVersion",
+            )
+            dependencies.add(
                 "kspDebug",
                 "com.infinum.arkive:processor:$arkiveVersion",
             )

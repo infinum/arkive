@@ -79,7 +79,7 @@ android {
 
 dependencies {
 
-    implementation(project(":composeUtils"))
+    //implementation(project(":composeUtils"))
     // uncomment if you want to test without the plugin
 //    implementation(project(":annotations"))
 //    kspDebug(project(":processor"))

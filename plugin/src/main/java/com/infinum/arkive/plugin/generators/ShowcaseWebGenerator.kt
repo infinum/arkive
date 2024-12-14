@@ -11,6 +11,8 @@ private const val INDEX_HTML_FILE = "index.html"
 private const val INDEX_JS_FILE = "index.js"
 private const val MODULE_HTML_FILE = "module.html"
 private const val MODULE_JS_FILE = "module.js"
+private const val COMPONENT_HTML_FILE = "component.html"
+private const val COMPONENT_JS_FILE = "component.js"
 private const val STYLES_FILE = "styles.css"
 
 private const val RESOURCES_DIR = "web"
@@ -27,6 +29,8 @@ class ShowcaseWebGeneratorImpl : ShowcaseWebGenerator {
             INDEX_JS_FILE,
             MODULE_HTML_FILE,
             MODULE_JS_FILE,
+            COMPONENT_HTML_FILE,
+            COMPONENT_JS_FILE,
             STYLES_FILE,
         ).forEach {
             writeResource(it, outputDir)
