@@ -15,7 +15,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.writeTo
 
-class ComposeSpec(
+class ComposeRunnerSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
     private val logger: KSPLogger,
