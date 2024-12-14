@@ -41,12 +41,14 @@ class ComposeRunnerSpec(
         )
     }
 
-    private fun getRunnerFunction(holder: ComposeHolder): String {
-        return """
-            runner("${holder.functionId}") {
-             ${getCodeBody(holder).toString().trimIndent()}
-            } 
-        """.trimIndent()
+    private fun getRunnerFunction(holder: ComposeHolder): CodeBlock {
+        val functionRunner = MemberName(
+            packageName = "com.infinum.arkive",
+            simpleName = holder.functionName
+        )
+        return CodeBlock.builder().apply {
+            addStatement("%M(runner)", functionRunner)
+        }.build()
     }
 
     private fun getRunTestsFunction(): FunSpec {
@@ -64,7 +66,7 @@ class ComposeRunnerSpec(
             )
             .addCode(
                 holders.joinToString(separator = "\n") { holder ->
-                    getRunnerFunction(holder)
+                    getRunnerFunction(holder).toString()
                 },
             )
             .build()

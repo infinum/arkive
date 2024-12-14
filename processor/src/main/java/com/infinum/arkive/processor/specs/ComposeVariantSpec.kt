@@ -156,7 +156,7 @@ class ComposeVariantSpec(
             }.build()
         }
     }
-    
+
     companion object {
         private const val SIMPLE_NAME = "ComposeVariants"
         private const val RUNNER_FUNCTION = "runner"
