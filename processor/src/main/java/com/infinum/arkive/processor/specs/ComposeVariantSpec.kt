@@ -117,18 +117,25 @@ class ComposeVariantSpec(
     }
 
     private fun generateDensityVariants(id: String, componentMember: MemberName): List<CodeBlock> {
-        val densities = listOf(1.0f, 2.0f, 3.0f)
+        val densities = mapOf(
+            "ldpi" to 0.75f,
+            "mdpi" to 1.0f,
+            "hdpi" to 1.5f,
+            "xhdpi" to 2.0f,
+            "xxhdpi" to 3.0f,
+            "xxxhdpi" to 4.0f
+        )
         val fontDensityMember = MemberName(
             packageName = "com.infinum.arkive.composeutils",
             simpleName = "DensityVariant"
         )
-        return densities.map { density ->
+        return densities.map { (density, value) ->
             CodeBlock.builder().apply {
                 addStatement(
                     "runner(%S) { %M(scale = %Lf) { %M() } }",
                     "${id}_density_$density",
                     fontDensityMember,
-                    density,
+                    value,
                     componentMember,
                 )
             }.build()
@@ -139,7 +146,7 @@ class ComposeVariantSpec(
         id: String,
         componentMember: MemberName
     ): List<CodeBlock> {
-        val layoutDirections = listOf("LTR" to true, "RTL" to false)
+        val layoutDirections = mapOf("LTR" to true, "RTL" to false)
         val layoutDirectionMember = MemberName(
             packageName = "com.infinum.arkive.composeutils",
             simpleName = "LayoutDirectionVariant"
