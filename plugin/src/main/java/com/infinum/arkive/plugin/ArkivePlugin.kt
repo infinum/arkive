@@ -20,6 +20,7 @@ class ArkivePlugin : Plugin<Project> {
             addDependencies(this)
             addTestDependencies(this)
             addTasks(this)
+
             addRootTasks(rootProject)
         }
     }
@@ -39,9 +40,9 @@ class ArkivePlugin : Plugin<Project> {
             project.pluginManager.apply(PaparazziPlugin::class.java)
         }
 
-        if (!project.pluginManager.hasPlugin("com.google.devtools.ksp")) {
-            project.pluginManager.apply("com.google.devtools.ksp")
-        }
+//        if (!project.pluginManager.hasPlugin("com.google.devtools.ksp")) {
+//            project.pluginManager.apply("com.google.devtools.ksp")
+//        }
     }
 
     private fun addDependencies(project: Project) {
@@ -137,11 +138,11 @@ class ArkivePlugin : Plugin<Project> {
             val subTasks = rootProject.subprojects
                 .filter {
                     it.pluginManager.hasPlugin("com.infinum.arkive")
-                }.map { module ->
+                }.mapNotNull { module ->
                     val variant = module.extensions.findByType(ArkiveExtension::class.java)
                         ?.multiModuleVariant?.get().orEmpty()
 
-                    module.tasks.getByName("${GenerateShowcaseTask.NAME}${variant.capFirst}").path
+                    module.tasks.findByName("${GenerateShowcaseTask.NAME}${variant.capFirst}")?.path
                 }
 
 

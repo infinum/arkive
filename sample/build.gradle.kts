@@ -1,6 +1,7 @@
 import com.infinum.arkive.plugin.extensions.ArkiveExtension
 
 plugins {
+    alias(libs.plugins.ksp)
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
     kotlin("android")
@@ -16,6 +17,7 @@ apply(plugin = "com.infinum.arkive")
 configure<ArkiveExtension>{
     multiModuleVariant.set("uatDebug")
 }
+
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
@@ -77,9 +79,9 @@ android {
 dependencies {
 
     // uncomment if you want to test without the plugin
-//    debugImplementation(project(":annotaions"))
-//    kspDebug(project(":processor"))
-//    kspTestDebug(project(":testprocessor"))
+//    implementation(project(":annotations"))
+////    ksp(project(":processor"))
+////    kspTestDebug(project(":testprocessor"))
 //    testImplementation(libs.junit)
 //    testRuntimeOnly(libs.junit.vintage.engine)
 
