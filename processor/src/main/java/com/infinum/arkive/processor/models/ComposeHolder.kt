@@ -20,4 +20,19 @@ data class ComposeHolder(
             val validPackageName = packageName.replace(".", "_")
             return "${validPackageName}_$functionName".lowercase()
         }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+        if (other !is ComposeHolder) {
+            return false
+        }
+        return functionId == other.functionId
+    }
+
+    override fun hashCode(): Int {
+        return functionId.hashCode()
+    }
+
 }
