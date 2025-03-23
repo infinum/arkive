@@ -10,6 +10,6 @@ interface Subprocessor {
         resolver: Resolver,
         codeGenerator: CodeGenerator,
         logger: KSPLogger,
-        options: ArkiveOptions
+        options: ArkiveOptions,
     )
 }

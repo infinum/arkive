@@ -31,8 +31,5 @@ data class ComposeHolder(
         return functionId == other.functionId
     }
 
-    override fun hashCode(): Int {
-        return functionId.hashCode()
-    }
-
+    override fun hashCode(): Int = functionId.hashCode()
 }

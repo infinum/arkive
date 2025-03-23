@@ -33,7 +33,9 @@ class ArkiveComposableCollector(
                     parameters = it.parameters,
                 )
             }
-            .toSet()
+            .toSet().also {
+                logger.info("Collected ${it.size} @ArkiveComposable")
+            }
     }
 
     companion object {

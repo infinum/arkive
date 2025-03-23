@@ -83,7 +83,5 @@ class ArkiveTestProcessor(
 class ArkiveTestProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
-    ): SymbolProcessor {
-        return ArkiveTestProcessor(environment.codeGenerator, environment.logger)
-    }
+    ): SymbolProcessor = ArkiveTestProcessor(environment.codeGenerator, environment.logger)
 }

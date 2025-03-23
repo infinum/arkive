@@ -28,8 +28,6 @@ class ComposeSubprocessor : Subprocessor {
             }
         }
 
-        logger.warn("Holders: $composeHolders")
-
         with(validator.validate(composeHolders)) {
             ComposeSpec(codeGenerator, this, logger).write()
             ComposeMetaDataSpec(codeGenerator, this).write()

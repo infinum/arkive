@@ -32,6 +32,8 @@ class ComposeSpec(
                 codeGenerator = codeGenerator,
                 aggregating = false,
             )
+
+        logger.info("Generated $SIMPLE_NAME")
     }
 
     override fun getFileSpec(): FileSpec.Builder {

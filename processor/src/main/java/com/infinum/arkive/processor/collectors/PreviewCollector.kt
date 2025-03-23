@@ -1,6 +1,5 @@
 package com.infinum.arkive.processor.collectors
 
-import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -12,7 +11,7 @@ class PreviewCollector(
     private val logger: KSPLogger,
 ) : Collector<ComposeHolder> {
 
-    @OptIn(KspExperimental::class)
+    @Suppress("LabeledExpression")
     override fun collect(): Set<ComposeHolder> {
         return resolver.getSymbolsWithAnnotation(COMPOSABLE_ANNOTATION)
             .filterIsInstance<KSFunctionDeclaration>()
@@ -33,7 +32,9 @@ class PreviewCollector(
                     parameters = it.parameters,
                 )
             }
-            .toSet()
+            .toSet().also {
+                logger.info("Collected ${it.size} @Previews")
+            }
     }
 
     private fun KSFunctionDeclaration.getMainPreviewAnnotation(): KSAnnotation? =
