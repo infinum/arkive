@@ -7,11 +7,13 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
 
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
+    private val options: ArkiveOptions
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -20,7 +22,7 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor().process(resolver, codeGenerator, logger)
+        ComposeSubprocessor().process(resolver, codeGenerator, logger, options)
         return emptyList()
     }
 }
@@ -28,6 +30,9 @@ class ArkiveProcessor(
 class ArkiveProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
-    ): SymbolProcessor = ArkiveProcessor(environment.codeGenerator, environment.logger)
-
+    ): SymbolProcessor {
+        val skipPreviews: Boolean = environment.options["skipPreviews"]?.toBooleanStrict() ?: false
+        val options = ArkiveOptions(skipPreviews)
+        return ArkiveProcessor(environment.codeGenerator, environment.logger, options)
+    }
 }
