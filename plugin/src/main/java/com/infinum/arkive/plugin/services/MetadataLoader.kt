@@ -1,7 +1,7 @@
 package com.infinum.arkive.plugin.services
 
-import com.inifnum.arkive.metadata.fromJson
-import com.inifnum.arkive.metadata.model.ComponentsMetaData
+import com.infinum.arkive.metadata.fromJson
+import com.infinum.arkive.metadata.model.ComponentsMetaData
 import java.io.File
 import org.gradle.api.Project
 
