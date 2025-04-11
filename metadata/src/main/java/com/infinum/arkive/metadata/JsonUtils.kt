@@ -1,4 +1,4 @@
-package com.inifnum.arkive.metadata
+package com.infinum.arkive.metadata
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
