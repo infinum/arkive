@@ -4,6 +4,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
 import com.infinum.arkive.processor.models.ComposeHolder
 
 class PreviewCollector(
@@ -26,7 +27,7 @@ class PreviewCollector(
                     name = previewAnnotation.getStringArgument("name").orEmpty(),
                     group = previewAnnotation.getStringArgument("group").orEmpty(),
                     skip = false,
-                    tags = emptyList(),
+                    tags = listOf(TAG_COMPOSABLE),
                     extraMetadata = emptyList(),
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
