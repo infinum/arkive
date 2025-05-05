@@ -59,7 +59,7 @@ class ArkiveTestProcessor(
             .build()
 
         val composableTestFunction = FunSpec.builder("testAllComposableFunctions")
-            .addAnnotation(ClassName("org.junit", "Test"))
+            .addAnnotation(getTestAnnotation())
             .addCode(
                 """
                 val shooter = ArkiveShoot()
@@ -76,7 +76,7 @@ class ArkiveTestProcessor(
         val layoutInflaterClass = ClassName("android.view", "LayoutInflater")
 
         val viewTestFunction = FunSpec.builder("testAllViewFunctions")
-            .addAnnotation(ClassName("org.junit", "Test"))
+            .addAnnotation(getTestAnnotation())
             .addCode(
                 """
                 val shooter = ArkiveShoot()
@@ -98,6 +98,8 @@ class ArkiveTestProcessor(
             .addFunction(viewTestFunction)
             .build()
     }
+
+    private fun getTestAnnotation() = ClassName("org.junit", "Test")
 }
 
 class ArkiveTestProcessorProvider : SymbolProcessorProvider {
