@@ -83,7 +83,7 @@ class UiComponentSpec(
                 LambdaTypeName.get(
                     parameters = arrayOf(
                         ClassName("kotlin", "String"),
-                        LambdaTypeName.get(returnType = INT)
+                        LambdaTypeName.get(returnType = INT),
                     ),
                     returnType = UNIT,
                 ),
