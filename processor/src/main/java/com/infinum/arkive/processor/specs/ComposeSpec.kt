@@ -2,13 +2,19 @@ package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
+import com.infinum.arkive.processor.collectors.ArkiveComposableCollector
+import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
+import com.infinum.arkive.processor.collectors.ArkiveViewCollector
+import com.infinum.arkive.processor.collectors.ArkiveViewCollector.Companion.TAG_VIEW
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.shared.Constants
+import com.infinum.arkive.processor.specs.ViewSpec.Companion
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.TypeSpec
@@ -23,7 +29,8 @@ class ComposeSpec(
     override fun write() {
         val fileSpec = getFileSpec()
         val arkiveClass = getArkiveClass()
-        arkiveClass.addFunction(getRunTestsFunction())
+        arkiveClass.addFunction(getRunComposableTestsFunction())
+        arkiveClass.addFunction(getRunViewTestsFunction())
 
         fileSpec
             .addType(arkiveClass.build())
@@ -51,8 +58,8 @@ class ComposeSpec(
         """.trimIndent()
     }
 
-    private fun getRunTestsFunction(): FunSpec {
-        return FunSpec.builder(RUN_TESTS_FUNCTION)
+    private fun getRunComposableTestsFunction(): FunSpec {
+        return FunSpec.builder(RUN_COMPOSABLE_TESTS_FUNCTION)
             .addParameter(
                 RUNNER_FUNCTION,
                 LambdaTypeName.get(
@@ -65,7 +72,27 @@ class ComposeSpec(
                 ),
             )
             .addCode(
-                holders.joinToString(separator = "\n") { holder ->
+                holders.filter { it.extraMetadata.contains(TAG_COMPOSABLE) }.joinToString(separator = "\n") { holder ->
+                        getRunnerFunction(holder)
+                    },
+            )
+            .build()
+    }
+
+    private fun getRunViewTestsFunction(): FunSpec {
+        return FunSpec.builder(RUN_VIEW_TESTS_FUNCTION)
+            .addParameter(
+                RUNNER_FUNCTION,
+                LambdaTypeName.get(
+                    parameters = arrayOf(
+                        ClassName("kotlin", "String"),
+                        LambdaTypeName.get(returnType = INT)
+                    ),
+                    returnType = UNIT,
+                ),
+            )
+            .addCode(
+                holders.filter { it.extraMetadata.contains(TAG_VIEW) }.joinToString(separator = "\n") { holder ->
                     getRunnerFunction(holder)
                 },
             )
@@ -95,7 +122,8 @@ class ComposeSpec(
     companion object {
         private const val SIMPLE_NAME = "ArkiveShoot"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
-        private const val RUN_TESTS_FUNCTION = "runTests"
+        private const val RUN_COMPOSABLE_TESTS_FUNCTION = "runComposableTests"
+        private const val RUN_VIEW_TESTS_FUNCTION = "runViewTests"
         private const val RUNNER_FUNCTION = "runner"
     }
 }
