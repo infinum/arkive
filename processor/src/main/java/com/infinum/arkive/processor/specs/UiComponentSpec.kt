@@ -69,7 +69,7 @@ class UiComponentSpec(
                 ),
             )
             .addCode(
-                holders.filter { it.extraMetadata.contains(TAG_COMPOSABLE) }.joinToString(separator = "\n") { holder ->
+                holders.filter { it.tags.contains(TAG_COMPOSABLE) }.joinToString(separator = "\n") { holder ->
                     getRunnerFunction(holder)
                 },
             )
@@ -89,7 +89,7 @@ class UiComponentSpec(
                 ),
             )
             .addCode(
-                holders.filter { it.extraMetadata.contains(TAG_VIEW) }.joinToString(separator = "\n") { holder ->
+                holders.filter { it.tags.contains(TAG_VIEW) }.joinToString(separator = "\n") { holder ->
                     getRunnerFunction(holder)
                 },
             )
