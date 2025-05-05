@@ -8,7 +8,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.infinum.arkive.processor.models.ArkiveOptions
-import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
+import com.infinum.arkive.processor.subprocessors.UiComponentSubprocessor
 
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
@@ -22,7 +22,7 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor().process(resolver, codeGenerator, logger, options)
+        UiComponentSubprocessor().process(resolver, codeGenerator, logger, options)
         return emptyList()
     }
 }

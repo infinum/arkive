@@ -3,7 +3,7 @@ package com.infinum.arkive.processor.models
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 
-data class ComposeHolder(
+data class UiComponentHolder(
     val name: String,
     val functionName: String,
     val packageName: String,
@@ -25,7 +25,7 @@ data class ComposeHolder(
         if (this === other) {
             return true
         }
-        if (other !is ComposeHolder) {
+        if (other !is UiComponentHolder) {
             return false
         }
         return functionId == other.functionId

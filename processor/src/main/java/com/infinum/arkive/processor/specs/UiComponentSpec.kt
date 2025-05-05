@@ -2,13 +2,10 @@ package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
-import com.infinum.arkive.processor.collectors.ArkiveComposableCollector
 import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
-import com.infinum.arkive.processor.collectors.ArkiveViewCollector
 import com.infinum.arkive.processor.collectors.ArkiveViewCollector.Companion.TAG_VIEW
-import com.infinum.arkive.processor.models.ComposeHolder
+import com.infinum.arkive.processor.models.UiComponentHolder
 import com.infinum.arkive.processor.shared.Constants
-import com.infinum.arkive.processor.specs.ViewSpec.Companion
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -21,9 +18,9 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.writeTo
 
-class ComposeSpec(
+class UiComponentSpec(
     private val codeGenerator: CodeGenerator,
-    private val holders: Set<ComposeHolder>,
+    private val holders: Set<UiComponentHolder>,
     private val logger: KSPLogger,
 ) : KotlinSpec {
     override fun write() {
@@ -50,7 +47,7 @@ class ComposeSpec(
         )
     }
 
-    private fun getRunnerFunction(holder: ComposeHolder): String {
+    private fun getRunnerFunction(holder: UiComponentHolder): String {
         return """
             runner("${holder.functionId}") {
              ${getCodeBody(holder).toString().trimIndent()}
@@ -73,8 +70,8 @@ class ComposeSpec(
             )
             .addCode(
                 holders.filter { it.extraMetadata.contains(TAG_COMPOSABLE) }.joinToString(separator = "\n") { holder ->
-                        getRunnerFunction(holder)
-                    },
+                    getRunnerFunction(holder)
+                },
             )
             .build()
     }
@@ -101,7 +98,7 @@ class ComposeSpec(
 
     private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder(SIMPLE_NAME)
 
-    private fun getCodeBody(holder: ComposeHolder): CodeBlock {
+    private fun getCodeBody(holder: UiComponentHolder): CodeBlock {
         return CodeBlock.builder().apply {
             val functionMember = MemberName(
                 packageName = holder.packageName,
