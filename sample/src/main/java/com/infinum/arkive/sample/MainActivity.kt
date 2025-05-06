@@ -13,3 +13,6 @@ class MainActivity : AppCompatActivity() {
 
 @ArkiveView(name = "Main Activity")
 fun previewMainActivity(): Int = R.layout.activity_main
+
+@ArkiveView(name = "Show Card")
+fun previewShowCard() = R.layout.show_card_view
