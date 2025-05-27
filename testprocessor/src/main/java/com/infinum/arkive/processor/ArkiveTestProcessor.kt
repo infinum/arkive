@@ -62,7 +62,7 @@ class ArkiveTestProcessor(
             .addAnnotation(getTestAnnotation())
             .addCode(
                 """
-                val shooter = ArkiveShoot()
+                val shooter = ArkiveComposeShoot()
                 shooter.runComposableTests { name, function ->
                     paparazzi.snapshot(name = name) {
                         function()
@@ -79,7 +79,7 @@ class ArkiveTestProcessor(
             .addAnnotation(getTestAnnotation())
             .addCode(
                 """
-                val shooter = ArkiveShoot()
+                val shooter = ArkiveViewShoot()
                 shooter.runViewTests { name, function ->
                     val viewId = function()
                     val view = %T.from(paparazzi.context).inflate(viewId, %T(paparazzi.context))
