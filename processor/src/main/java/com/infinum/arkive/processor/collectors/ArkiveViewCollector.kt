@@ -6,21 +6,21 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.infinum.arkive.annotations.ArkiveView
-import com.infinum.arkive.processor.models.UiComponentHolder
+import com.infinum.arkive.processor.models.ViewHolder
 
 class ArkiveViewCollector(
     private val resolver: Resolver,
     private val logger: KSPLogger,
-) : Collector<UiComponentHolder> {
+) : Collector<ViewHolder> {
 
     @OptIn(KspExperimental::class)
-    override fun collect(): Set<UiComponentHolder> {
+    override fun collect(): Set<ViewHolder> {
         return resolver.getSymbolsWithAnnotation(ANNOTATION_ARKIVE_VIEW)
             .filterIsInstance<KSFunctionDeclaration>()
             .map {
                 val arkiveView = it.getAnnotationsByType(ArkiveView::class).first()
                 val name = arkiveView.name.ifEmpty { it.simpleName.getShortName() }
-                UiComponentHolder(
+                ViewHolder(
                     function = it,
                     functionName = it.simpleName.getShortName(),
                     name = name,
