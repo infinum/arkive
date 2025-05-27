@@ -5,16 +5,16 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.repository.ComponentRepository
-import com.infinum.arkive.processor.specs.ComposeSpec
+import com.infinum.arkive.processor.specs.ViewSpec
 
-class ComposeSubprocessor : Subprocessor {
+class ViewSubprocessor : Subprocessor {
     override fun process(
         resolver: Resolver,
         codeGenerator: CodeGenerator,
         logger: KSPLogger,
         options: ArkiveOptions,
     ) {
-        val composeHolders = ComponentRepository.getComposeHolders(resolver, logger, options)
-        ComposeSpec(codeGenerator, composeHolders, logger).write()
+        val viewHolders = ComponentRepository.getViewHolders(resolver, logger, options)
+        ViewSpec(codeGenerator, viewHolders, logger).write()
     }
 }

@@ -3,7 +3,6 @@ package com.infinum.arkive.processor.specs
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
-import com.infinum.arkive.processor.collectors.ArkiveViewCollector.Companion.TAG_VIEW
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.shared.Constants
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -11,7 +10,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.TypeSpec
