@@ -3,11 +3,11 @@ package com.infinum.arkive.processor.validators
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Modifier
-import com.infinum.arkive.processor.models.UiComponentHolder
+import com.infinum.arkive.processor.models.ComposeHolder
 
-class UiComponentValidator(
+class ComposeValidator(
     private val logger: KSPLogger,
-) : Validator<UiComponentHolder> {
+) : Validator<ComposeHolder> {
     private val KSFunctionDeclaration.isPublic: Boolean
         get() {
             return when {
@@ -22,10 +22,10 @@ class UiComponentValidator(
     private val KSFunctionDeclaration.hasValidScope: Boolean
         get() = isPublic || isInternal
 
-    override fun validate(elements: Set<UiComponentHolder>) = elements.filter {
+    override fun validate(elements: Set<ComposeHolder>) = elements.filter {
         it.skip.not() && it.parameters.isEmpty() && it.function.hasValidScope
     }.toSet()
         .also {
-            logger.info("Validated UI component to only ${it.size}")
+            logger.info("Validated composable to only ${it.size}")
         }
 }

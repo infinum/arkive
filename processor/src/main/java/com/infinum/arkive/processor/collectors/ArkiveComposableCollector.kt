@@ -6,21 +6,21 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.infinum.arkive.annotations.ArkiveComposable
-import com.infinum.arkive.processor.models.UiComponentHolder
+import com.infinum.arkive.processor.models.ComposeHolder
 
 class ArkiveComposableCollector(
     private val resolver: Resolver,
     private val logger: KSPLogger,
-) : Collector<UiComponentHolder> {
+) : Collector<ComposeHolder> {
 
     @OptIn(KspExperimental::class)
-    override fun collect(): Set<UiComponentHolder> {
+    override fun collect(): Set<ComposeHolder> {
         return resolver.getSymbolsWithAnnotation(ANNOTATION_ARKIVE_COMPOSABLE)
             .filterIsInstance<KSFunctionDeclaration>()
             .map {
                 val arkiveComposable = it.getAnnotationsByType(ArkiveComposable::class).first()
                 val name = arkiveComposable.name.ifEmpty { it.simpleName.getShortName() }
-                UiComponentHolder(
+                ComposeHolder(
                     function = it,
                     functionName = it.simpleName.getShortName(),
                     name = name,

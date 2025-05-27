@@ -5,15 +5,15 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
-import com.infinum.arkive.processor.models.UiComponentHolder
+import com.infinum.arkive.processor.models.ComposeHolder
 
 class PreviewCollector(
     private val resolver: Resolver,
     private val logger: KSPLogger,
-) : Collector<UiComponentHolder> {
+) : Collector<ComposeHolder> {
 
     @Suppress("LabeledExpression")
-    override fun collect(): Set<UiComponentHolder> {
+    override fun collect(): Set<ComposeHolder> {
         return resolver.getSymbolsWithAnnotation(COMPOSABLE_ANNOTATION)
             .filterIsInstance<KSFunctionDeclaration>()
             .mapNotNull {
@@ -21,7 +21,7 @@ class PreviewCollector(
                     ?: it.getVariantsAnnotation()
                     ?: return@mapNotNull null
 
-                UiComponentHolder(
+                ComposeHolder(
                     function = it,
                     functionName = it.simpleName.getShortName(),
                     name = previewAnnotation.getStringArgument("name").orEmpty(),
