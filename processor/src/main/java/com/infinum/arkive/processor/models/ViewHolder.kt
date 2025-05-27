@@ -3,7 +3,7 @@ package com.infinum.arkive.processor.models
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 
-data class ComposeHolder(
+data class ViewHolder(
     override val name: String,
     override val functionName: String,
     override val packageName: String,
@@ -25,7 +25,7 @@ data class ComposeHolder(
         if (this === other) {
             return true
         }
-        if (other !is ComposeHolder) {
+        if (other !is ViewHolder) {
             return false
         }
         return functionId == other.functionId
