@@ -5,12 +5,12 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.infinum.arkive.metadata.model.Component
 import com.infinum.arkive.metadata.model.ComponentsMetaData
 import com.infinum.arkive.metadata.toJson
-import com.infinum.arkive.processor.models.UiComponentHolder
+import com.infinum.arkive.processor.models.Holder
 import java.io.File
 
-class UiComponentMetaDataSpec(
+class MetaDataSpec(
     private val codeGenerator: CodeGenerator,
-    private val holders: Set<UiComponentHolder>,
+    private val holders: Set<Holder>,
 ) : Spec {
     override fun write() {
         val writer = codeGenerator.createNewFileByPath(

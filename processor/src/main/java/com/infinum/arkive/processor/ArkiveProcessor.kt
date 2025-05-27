@@ -8,7 +8,10 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.infinum.arkive.processor.models.ArkiveOptions
+import com.infinum.arkive.processor.repository.ComponentRepository
 import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
+import com.infinum.arkive.processor.subprocessors.MetaDataSubprocessor
+import com.infinum.arkive.processor.subprocessors.ViewSubprocessor
 
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
@@ -23,6 +26,10 @@ class ArkiveProcessor(
         processed = true
 
         ComposeSubprocessor().process(resolver, codeGenerator, logger, options)
+        ViewSubprocessor().process(resolver, codeGenerator, logger, options)
+        MetaDataSubprocessor().process(resolver, codeGenerator, logger, options)
+
+        ComponentRepository.clearComposeAndViewHolders()
         return emptyList()
     }
 }
