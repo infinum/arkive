@@ -25,11 +25,13 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor().process(resolver, codeGenerator, logger, options)
-        ViewSubprocessor().process(resolver, codeGenerator, logger, options)
-        MetaDataSubprocessor().process(resolver, codeGenerator, logger, options)
+        val componentRepository = ComponentRepository()
 
-        ComponentRepository.clearComposeAndViewHolders()
+        ComposeSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
+        ViewSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
+        MetaDataSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
+
+        componentRepository.clearComposeAndViewHolders()
         return emptyList()
     }
 }

@@ -65,7 +65,7 @@ class ViewSpec(
                 ),
             )
             .addCode(
-                holders.filter { it.tags.contains(TAG_VIEW) }.joinToString(separator = "\n") { holder ->
+                holders.joinToString(separator = "\n") { holder ->
                     getRunnerFunction(holder)
                 },
             )

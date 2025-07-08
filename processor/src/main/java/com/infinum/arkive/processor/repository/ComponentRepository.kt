@@ -11,7 +11,7 @@ import com.infinum.arkive.processor.models.ViewHolder
 import com.infinum.arkive.processor.validators.ComposeValidator
 import com.infinum.arkive.processor.validators.ViewValidator
 
-object ComponentRepository {
+class ComponentRepository {
     private var composeHolders: Set<ComposeHolder> = emptySet()
     private var viewHolders: Set<ViewHolder> = emptySet()
 

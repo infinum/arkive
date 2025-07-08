@@ -7,14 +7,16 @@ import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.repository.ComponentRepository
 import com.infinum.arkive.processor.specs.ViewSpec
 
-class ViewSubprocessor : Subprocessor {
+class ViewSubprocessor(
+    private val componentRepository: ComponentRepository,
+) : Subprocessor {
     override fun process(
         resolver: Resolver,
         codeGenerator: CodeGenerator,
         logger: KSPLogger,
         options: ArkiveOptions,
     ) {
-        val viewHolders = ComponentRepository.getViewHolders(resolver, logger, options)
+        val viewHolders = componentRepository.getViewHolders(resolver, logger, options)
         ViewSpec(codeGenerator, viewHolders, logger).write()
     }
 }

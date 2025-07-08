@@ -66,7 +66,7 @@ class ComposeSpec(
                 ),
             )
             .addCode(
-                holders.filter { it.tags.contains(TAG_COMPOSABLE) }.joinToString(separator = "\n") { holder ->
+                holders.joinToString(separator = "\n") { holder ->
                     getRunnerFunction(holder)
                 },
             )
