@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.SampleApptheme
@@ -47,6 +49,25 @@ fun Card(
 
 enum class RoundDirection {
     UP, DOWN
+}
+
+class CardPreviewParameterProvider: PreviewParameterProvider<RoundDirection> {
+    override val values = RoundDirection.entries.asSequence()
+}
+
+@Preview
+@ArkiveComposable(name = "Card", group = "Card", tags = ["parameterized"])
+@Composable
+internal fun PreviewCard(@PreviewParameter(CardPreviewParameterProvider::class) roundDirection: RoundDirection) {
+    SampleApptheme {
+        Card(roundDirection = roundDirection) {
+            Column(Modifier.align(Alignment.Center)) {
+                Text(text = "First")
+                Text(text = "Second")
+                Text(text = "third")
+            }
+        }
+    }
 }
 
 @Preview
