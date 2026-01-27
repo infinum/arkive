@@ -12,6 +12,7 @@ import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
 class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
+    private val disablePreviewParameters: Boolean,
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -20,7 +21,7 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor().process(resolver, codeGenerator, logger)
+        ComposeSubprocessor(disablePreviewParameters).process(resolver, codeGenerator, logger)
         return emptyList()
     }
 }
@@ -28,5 +29,12 @@ class ArkiveProcessor(
 class ArkiveProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
-    ): SymbolProcessor = ArkiveProcessor(environment.codeGenerator, environment.logger)
+    ): SymbolProcessor {
+        val disablePreviewParameters = environment.options[DISABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: false
+        return ArkiveProcessor(environment.codeGenerator, environment.logger, disablePreviewParameters)
+    }
+
+    companion object {
+        private const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
+    }
 }

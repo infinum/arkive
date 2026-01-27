@@ -22,7 +22,10 @@ class ComposeVariantSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
     private val logger: KSPLogger,
+    disablePreviewParameters: Boolean,
 ) : KotlinSpec {
+    private val enablePreviewParameters = !disablePreviewParameters
+
     override fun write() {
         val fileSpec = getFileSpec()
         holders.forEach { holder ->
@@ -53,8 +56,10 @@ class ComposeVariantSpec(
         val id = holder.functionId
         builder.addCode(generateBaseVariant(id, functionComponent, holder))
 
-        generatePreviewVariants(holder, id, functionComponent)?.let {
-            builder.addCode(it)
+        if (enablePreviewParameters) {
+            generatePreviewVariants(holder, id, functionComponent)?.let {
+                builder.addCode(it)
+            }
         }
 
         generateFontVariants(id, functionComponent, holder).forEach {

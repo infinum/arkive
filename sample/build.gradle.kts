@@ -17,8 +17,8 @@ apply(plugin = "com.infinum.arkive")
 
 configure<ArkiveExtension>{
     multiModuleVariant.set("uatDebug")
+    disablePreviewParameters.set(true)
 }
-
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
@@ -87,11 +87,9 @@ dependencies {
 //    testImplementation(libs.junit)
 //    testRuntimeOnly(libs.junit.vintage.engine)
 
-
     implementation(libs.androidx.appcompat)
 
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
-
 }

@@ -9,4 +9,11 @@ open class ArkiveExtension @Inject constructor(
 ) {
     val multiModuleVariant: Property<String> = objects.property(String::class.java)
         .convention("")
+
+    val disablePreviewParameters: Property<Boolean> = objects.property(Boolean::class.java)
+        .convention(false)
+
+    companion object {
+        const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
+    }
 }
