@@ -1,8 +1,8 @@
 package com.infinum.arkive.plugin.generators
 
-import com.inifnum.arkive.metadata.model.ArkiveShowcase
-import com.inifnum.arkive.metadata.model.ComponentsMetaData
-import com.inifnum.arkive.metadata.model.ShowcaseItem
+import com.infinum.arkive.metadata.model.ArkiveShowcase
+import com.infinum.arkive.metadata.model.ComponentsMetaData
+import com.infinum.arkive.metadata.model.ShowcaseItem
 
 interface ShowcaseGenerator {
     fun generateShowcase(snapshots: List<String>, metadata: ComponentsMetaData): ArkiveShowcase

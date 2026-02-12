@@ -1,4 +1,4 @@
-package com.inifnum.arkive.metadata.model
+package com.infinum.arkive.metadata.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
