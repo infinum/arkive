@@ -8,7 +8,7 @@ pluginManagement {
 
 include(":processor")
 include(":testprocessor")
-include(":annotaions")
+include(":annotations")
 include(":sample")
 include(":metadata")
 include(":plugin")

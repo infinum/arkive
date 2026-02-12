@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.detekt.plugin)
-    alias(libs.plugins.ksp)
+   // alias(libs.plugins.ksp)
 }
 
 buildscript {
@@ -17,7 +17,7 @@ buildscript {
         classpath(libs.tools.gradle)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
-        classpath(libs.paparazzi.plugin)
+       // classpath(libs.paparazzi.plugin)
         classpath(libs.arkive.plugin)
     }
 }

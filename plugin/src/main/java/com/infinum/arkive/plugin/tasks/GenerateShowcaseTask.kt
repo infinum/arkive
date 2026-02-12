@@ -22,6 +22,7 @@ import org.gradle.api.tasks.TaskAction
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
 
+    // Property<File>
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
         get() = project.layout.buildDirectory.dir(
@@ -73,7 +74,7 @@ internal open class GenerateShowcaseTask : SourceTask() {
         const val NAME = "generateShowcase"
         const val DESCRIPTION = "Generates arkive showcase json file"
         val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
-        const val RECORDING_TASK = "recordPaparazziDebug"
+        const val RECORDING_TASK = "recordPaparazzi"
         const val IMAGES_OUTPUT_PATH = "images"
     }
 }
