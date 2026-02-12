@@ -1,7 +1,6 @@
 plugins {
-    id("java-library")
+    id("java-gradle-plugin")
     id("kotlin")
-    kotlin("plugin.serialization") version "2.0.20"
 }
 
 apply {
@@ -19,12 +18,26 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+afterEvaluate {
+    gradlePlugin {
+        plugins {
+            create("arkivePlugin") {
+                id = "com.infinum.arkive"
+                displayName = "Arkive plugin"
+                description = "Arkive plugin for generating web showcase"
+                implementationClass = "com.infinum.arkive.plugin.ArkivePlugin"
+                version = "0.0.1"
+            }
+        }
+    }
+}
+
 // specify per module - mostly needed due to different artifactIds, names, descriptions
 extra["mavenPublishProperties"] = mapOf(
     "group" to releaseConfig["group"],
     "version" to releaseConfig["version"],
     // TODO - <YOUR-LIBRARY-ARTIFACTID>
-    "artifactId" to "metadata",
+    "artifactId" to "arkive-plugin",
     "repository" to mapOf(
         "url" to sonatype["url"],
         "username" to sonatype["username"],
@@ -45,6 +58,8 @@ extra["mavenPublishProperties"] = mapOf(
 )
 
 
+
 dependencies {
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.arkive.metadata)
 }
+

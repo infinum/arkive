@@ -8,6 +8,7 @@ buildscript {
 
     repositories {
         google()
+        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
     }
@@ -17,6 +18,7 @@ buildscript {
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
         classpath(libs.paparazzi.plugin)
+        classpath(libs.arkive.plugin)
     }
 }
 

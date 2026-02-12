@@ -1,11 +1,10 @@
 package com.inifnum.arkive.metadata
 
-import com.inifnum.arkive.metadata.model.ComponentsMetaData
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 val json = Json { encodeDefaults = true }
 
-fun ComponentsMetaData.toJson(): String = json.encodeToString(this)
+inline fun <reified T> toJson(model: T): String = json.encodeToString(model)
 
-fun String.ComponentsMetaData(): ComponentsMetaData = json.decodeFromString(this)
+inline fun <reified T> fromJson(data: String): T = json.decodeFromString(data)
