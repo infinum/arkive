@@ -58,12 +58,12 @@ class ArkiveTestProcessor(
             )
             .build()
 
-        val testFunction = FunSpec.builder("testAllComposableFunctions")
-            .addAnnotation(ClassName("org.junit", "Test"))
+        val composableTestFunction = FunSpec.builder("testAllComposableFunctions")
+            .addAnnotation(getTestAnnotation())
             .addCode(
                 """
-                val shooter = ArkiveShoot()
-                shooter.runTests { name, function ->
+                val shooter = ArkiveComposeShoot()
+                shooter.runComposableTests { name, function ->
                     paparazzi.snapshot(name = name) {
                         function()
                     }
@@ -72,12 +72,34 @@ class ArkiveTestProcessor(
             )
             .build()
 
+        val frameLayoutClass = ClassName("android.widget", "FrameLayout")
+        val layoutInflaterClass = ClassName("android.view", "LayoutInflater")
+
+        val viewTestFunction = FunSpec.builder("testAllViewFunctions")
+            .addAnnotation(getTestAnnotation())
+            .addCode(
+                """
+                val shooter = ArkiveViewShoot()
+                shooter.runViewTests { name, function ->
+                    val viewId = function()
+                    val view = %T.from(paparazzi.context).inflate(viewId, %T(paparazzi.context))
+                    paparazzi.snapshot(view = view, name = name)
+                }
+                """.trimIndent(),
+                layoutInflaterClass,
+                frameLayoutClass,
+            )
+            .build()
+
         return TypeSpec.classBuilder(FILE_NAME)
             .addModifiers(KModifier.PUBLIC)
             .addProperty(ruleProperty)
-            .addFunction(testFunction)
+            .addFunction(composableTestFunction)
+            .addFunction(viewTestFunction)
             .build()
     }
+
+    private fun getTestAnnotation() = ClassName("org.junit", "Test")
 }
 
 class ArkiveTestProcessorProvider : SymbolProcessorProvider {
