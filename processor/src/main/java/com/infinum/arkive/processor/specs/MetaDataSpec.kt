@@ -2,15 +2,15 @@ package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
-import com.infinum.arkive.processor.models.ComposeHolder
-import com.inifnum.arkive.metadata.model.Component
-import com.inifnum.arkive.metadata.model.ComponentsMetaData
-import com.inifnum.arkive.metadata.toJson
+import com.infinum.arkive.metadata.model.Component
+import com.infinum.arkive.metadata.model.ComponentsMetaData
+import com.infinum.arkive.metadata.toJson
+import com.infinum.arkive.processor.models.Holder
 import java.io.File
 
-class ComposeMetaDataSpec(
+class MetaDataSpec(
     private val codeGenerator: CodeGenerator,
-    private val holders: Set<ComposeHolder>,
+    private val holders: Set<Holder>,
 ) : Spec {
     override fun write() {
         val writer = codeGenerator.createNewFileByPath(

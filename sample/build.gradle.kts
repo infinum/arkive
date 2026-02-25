@@ -89,6 +89,8 @@ dependencies {
 //    testRuntimeOnly(libs.junit.vintage.engine)
 
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.cardview)
+    implementation(libs.androidx.constraintlayout)
 
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))

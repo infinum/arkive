@@ -26,6 +26,9 @@ class ComposeValidator(
     override fun validate(elements: Set<ComposeHolder>) = elements.filter {
         it.skip.not() && verifyParameters(it) && it.function.hasValidScope
     }.toSet()
+        .also {
+            logger.info("Validated composable to only ${it.size}")
+        }
 
     /**
      * Check if there is no parameters or only one parameter with annotation `@PreviewParameter`

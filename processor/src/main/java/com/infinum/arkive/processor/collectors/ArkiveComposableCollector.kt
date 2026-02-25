@@ -19,24 +19,26 @@ class ArkiveComposableCollector(
             .filterIsInstance<KSFunctionDeclaration>()
             .map {
                 val arkiveComposable = it.getAnnotationsByType(ArkiveComposable::class).first()
-                val name =
-                    arkiveComposable.name.ifEmpty { it.simpleName.getShortName() }
+                val name = arkiveComposable.name.ifEmpty { it.simpleName.getShortName() }
                 ComposeHolder(
                     function = it,
                     functionName = it.simpleName.getShortName(),
                     name = name,
                     group = arkiveComposable.group,
                     skip = arkiveComposable.skip,
-                    tags = arkiveComposable.tags.toList(),
+                    tags = arkiveComposable.tags.toList().plus(TAG_COMPOSABLE),
                     extraMetadata = arkiveComposable.extraMetadata.toList(),
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
                 )
             }
-            .toSet()
+            .toSet().also {
+                logger.info("Collected ${it.size} @ArkiveComposable")
+            }
     }
 
     companion object {
         val ANNOTATION_ARKIVE_COMPOSABLE = ArkiveComposable::class.qualifiedName.toString()
+        const val TAG_COMPOSABLE = "composable"
     }
 }
