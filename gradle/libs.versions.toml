@@ -14,6 +14,12 @@ junitJupiter = "5.9.1"
 junit = "4.13.2"
 jetbrainsKotlinJvm = "2.0.20"
 plugin = "0.0.1"
+agp = "8.6.0"
+agpVersion = "8.6.0"
+coreKtx = "1.15.0"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+material = "1.12.0"
 cardview = "1.0.0"
 constraintlayout = "2.2.1"
 
@@ -24,6 +30,8 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 arkive = { id = "com.infinum.arkive.plugin.gradle.plugin", version.ref = "plugin" }
+android-library = { id = "com.android.library", version.ref = "agpVersion" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -46,6 +54,11 @@ junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", vers
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 paparazzi-plugin = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
 ksp-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+gradle-android = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 

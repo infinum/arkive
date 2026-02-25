@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.ir.backend.js.compile
+
 plugins {
     id("java-gradle-plugin")
     id("kotlin")
@@ -57,11 +59,10 @@ extra["mavenPublishProperties"] = mapOf(
     )
 )
 
-
-
 dependencies {
     implementation(libs.arkive.metadata)
     implementation(libs.paparazzi.plugin)
-    implementation(libs.ksp.plugin)
+    compileOnly(libs.gradle.android)
+
 }
 

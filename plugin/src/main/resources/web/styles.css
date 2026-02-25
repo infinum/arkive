@@ -8,6 +8,7 @@
 body {
   font-family: 'Arial', sans-serif;
   background-color: #f9f9f9;
+  color: #333;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -18,16 +19,23 @@ body {
 .container {
   width: 95%;
   max-width: 1200px;
+  padding: 20px;
   text-align: center;
 }
 
 h1 {
   margin-bottom: 20px;
   font-size: 2rem;
-  color: #333;
+  color: #D8252B;
 }
 
-/* Filters Section */
+p {
+  margin: 10px 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Filters Section (Used on Index and Module Pages) */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -40,7 +48,6 @@ h1 {
   margin-bottom: 20px;
 }
 
-/* Search Bar */
 .search-bar {
   flex: 1;
   min-width: 200px;
@@ -79,7 +86,7 @@ h1 {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Grid Layout */
+/* Grid Layout (Used on Index and Module Pages) */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -90,7 +97,6 @@ h1 {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Card Design */
 .grid-item {
   background: linear-gradient(135deg, #fff, #f9f9f9);
   border-radius: 12px;
@@ -110,17 +116,15 @@ h1 {
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Image Styling */
 .grid-item img {
   max-width: 100%;
   max-height: 150px;
   object-fit: contain;
-  margin-bottom: auto; /* Push the image to the top */
+  margin-bottom: auto;
 }
 
-/* Name Styling */
 .grid-item .name {
-  margin-top: auto; /* Push the name to the bottom */
+  margin-top: auto;
   padding: 10px 0;
   font-size: 1.1rem;
   font-weight: bold;
@@ -131,4 +135,111 @@ h1 {
   width: 100%;
   text-align: center;
   border-top: 1px solid #ddd;
+}
+
+/* Component Page Layout */
+.categories-variants-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Single Row (Category and Variants) */
+.category-row {
+  display: flex;
+  align-items: center;
+  padding: 15px 10px;
+  border-bottom: 1px solid #ddd; /* Separator between rows */
+}
+
+.category-row:last-child {
+  border-bottom: none; /* Remove separator for the last row */
+}
+
+/* Category Name */
+.category-name {
+  flex: 1;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  margin-right: 15px;
+}
+
+/* Variants Wrapper */
+.variants {
+  flex: 5;
+  display: flex;
+  gap: 20px;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  padding: 10px;
+}
+
+.variants::-webkit-scrollbar {
+  height: 8px;
+}
+
+.variants::-webkit-scrollbar-thumb {
+  background: #D8252B;
+  border-radius: 4px;
+}
+
+.variants::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+
+.variant {
+  flex: 0 0 auto; /* Prevent shrinking */
+  text-align: center;
+  max-width: 300px; /* Container matches the image's maximum width */
+  display: flex; /* Use flexbox for alignment */
+  flex-direction: column; /* Stack the image and text vertically */
+  justify-content: center; /* Center the image vertically */
+  align-items: center; /* Center the image horizontally */
+}
+
+.variant img {
+  max-width: 300px; /* Scaled-down width */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: contain; /* Ensure the image fits within its container */
+  margin-bottom: 10px; /* Space between the image and the text */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.variant img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.variant p {
+  font-size: 1rem;
+  color: #444;
+  margin-top: auto; /* Ensure text aligns consistently below all images */
+  text-align: center;
+}
+.component-info {
+  text-align: left;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.component-info p {
+  margin: 5px 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.component-info p strong {
+  color: #333;
 }

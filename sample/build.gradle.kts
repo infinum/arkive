@@ -1,7 +1,11 @@
+import com.infinum.arkive.plugin.extensions.ArkiveExtension
+
 plugins {
+    alias(libs.plugins.ksp)
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
     kotlin("android")
+//    id("app.cash.paparazzi")
 }
 
 apply {
@@ -10,6 +14,12 @@ apply {
 }
 
 apply(plugin = "com.infinum.arkive")
+
+configure<ArkiveExtension>{
+    multiModuleVariant.set("uatDebug")
+    disablePreviewParameters.set(false)
+    enableVariants.set(true)
+}
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
@@ -52,17 +62,31 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    flavorDimensions += "api"
+
+    productFlavors {
+        create("staging") {
+            dimension = "api"
+        }
+        create("uat"){
+            dimension = "api"
+        }
+        create("production"){
+            dimension = "api"
+        }
+    }
 }
 
 dependencies {
 
+    //implementation(project(":composeUtils"))
     // uncomment if you want to test without the plugin
-//    debugImplementation(project(":annotaions"))
+//    implementation(project(":annotations"))
 //    kspDebug(project(":processor"))
 //    kspTestDebug(project(":testprocessor"))
 //    testImplementation(libs.junit)
 //    testRuntimeOnly(libs.junit.vintage.engine)
-
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.cardview)
@@ -71,5 +95,4 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
-
 }

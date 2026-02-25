@@ -3,8 +3,9 @@ package com.infinum.arkive.plugin.tasks
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
+import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
-import java.io.File
+import com.infinum.arkive.metadata.model.ArkiveModule
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -18,11 +19,10 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 @CacheableTask
 internal open class GenerateShowcaseTask : SourceTask() {
-
-    // Property<File>
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
         get() = project.layout.buildDirectory.dir(
@@ -36,8 +36,19 @@ internal open class GenerateShowcaseTask : SourceTask() {
         get() = project.objects.property(String::class.java)
             .convention("0.0.1") // TODO automate this
 
+    @get:Input
+    var variant = ""
+
     init {
-        dependsOn(RECORDING_TASK)
+        project.gradle.projectsEvaluated {
+            val variantText = variant
+
+            if (variantText.isEmpty()) {
+                dependsOn(RECORDING_TASK)
+            } else {
+                dependsOn("$RECORDING_TASK${variantText.capFirst}")
+            }
+        }
     }
 
     @TaskAction
@@ -51,13 +62,16 @@ internal open class GenerateShowcaseTask : SourceTask() {
             snapshotsGrabber.grabAndMoveSnapshots(
                 outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
             )
-        val metadata = metadataLoader.loadMetaData()
 
-        val arkiveShowcase = generator.generateShowcase(snapshots, metadata)
-        logger.warn("Showcase generated: $arkiveShowcase")
+        val vrr = variant
+        logger.warn("Loading metadata for variant: $vrr")
+        val metadata = metadataLoader.loadMetaData(vrr)
+
+        val moduleItems = generator.generateShowcase(snapshots, metadata)
+        logger.warn("Showcase generated: $moduleItems")
         writer.write(
             outputDir = outputDirectory.get().asFile,
-            showcase = arkiveShowcase,
+            module = ArkiveModule(project.name, moduleItems),
         )
 
         logger.warn("Showcase written")

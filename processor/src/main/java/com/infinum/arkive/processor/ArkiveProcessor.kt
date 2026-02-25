@@ -17,6 +17,8 @@ class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val options: ArkiveOptions,
+    private val disablePreviewParameters: Boolean,
+    private val enableVariants: Boolean,
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -27,7 +29,11 @@ class ArkiveProcessor(
 
         val componentRepository = ComponentRepository()
 
-        ComposeSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
+        ComposeSubprocessor(
+            componentRepository = componentRepository,
+            disablePreviewParameters = disablePreviewParameters,
+            enableVariants = enableVariants,
+        ).process(resolver, codeGenerator, logger, options)
         ViewSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
         MetaDataSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
 
@@ -42,6 +48,21 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
     ): SymbolProcessor {
         val skipPreviews: Boolean = environment.options["skipPreviews"]?.toBooleanStrict() ?: false
         val options = ArkiveOptions(skipPreviews)
-        return ArkiveProcessor(environment.codeGenerator, environment.logger, options)
+
+        val disablePreviewParameters = environment.options[DISABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: false
+        val enableVariants = environment.options[ENABLE_VARIANTS]?.toBoolean() ?: false
+
+        return ArkiveProcessor(
+            codeGenerator = environment.codeGenerator,
+            logger = environment.logger,
+            options = options,
+            disablePreviewParameters = disablePreviewParameters,
+            enableVariants = enableVariants,
+        )
+    }
+
+    companion object {
+        private const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
+        private const val ENABLE_VARIANTS = "enableVariants"
     }
 }
