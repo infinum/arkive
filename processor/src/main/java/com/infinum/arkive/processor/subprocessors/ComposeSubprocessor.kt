@@ -3,14 +3,10 @@ package com.infinum.arkive.processor.subprocessors
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
-import com.infinum.arkive.processor.collectors.ArkiveComposableCollector
 import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.repository.ComponentRepository
-import com.infinum.arkive.processor.specs.ComposeMetaDataSpec
 import com.infinum.arkive.processor.specs.ComposeRunnerSpec
-import com.infinum.arkive.processor.specs.ComposeSpec
 import com.infinum.arkive.processor.specs.ComposeVariantSpec
-import com.infinum.arkive.processor.validators.ComposeValidator
 
 class ComposeSubprocessor(
     private val componentRepository: ComponentRepository,
@@ -24,14 +20,7 @@ class ComposeSubprocessor(
         options: ArkiveOptions,
     ) {
         val composeHolders = componentRepository.getComposeHolders(resolver, logger, options)
-        ComposeSpec(codeGenerator, composeHolders, logger).write()
-        val collector = ArkiveComposableCollector(resolver, logger)
-        val validator = ComposeValidator(logger)
-
-        with(validator.validate(collector.collect())) {
-            ComposeVariantSpec(codeGenerator, this, logger, disablePreviewParameters, enableVariants).write()
-            ComposeRunnerSpec(codeGenerator, this, logger).write()
-            ComposeMetaDataSpec(codeGenerator, this).write()
-        }
+        ComposeVariantSpec(codeGenerator, composeHolders, logger, disablePreviewParameters, enableVariants).write()
+        ComposeRunnerSpec(codeGenerator, composeHolders, logger).write()
     }
 }

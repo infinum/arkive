@@ -3,7 +3,7 @@ package com.infinum.arkive.plugin.tasks
 import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
 import com.infinum.arkive.plugin.services.ModuleLoaderImpl
 import com.infinum.arkive.plugin.writers.ShowcaseMultiModuleWriterImpl
-import com.inifnum.arkive.metadata.model.ArkiveShowcase
+import com.infinum.arkive.metadata.model.ArkiveShowcase
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property

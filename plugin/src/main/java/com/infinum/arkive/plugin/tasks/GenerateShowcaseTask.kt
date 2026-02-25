@@ -5,7 +5,7 @@ import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
-import com.inifnum.arkive.metadata.model.ArkiveModule
+import com.infinum.arkive.metadata.model.ArkiveModule
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property

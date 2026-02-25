@@ -27,7 +27,6 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor(disablePreviewParameters, enableVariants).process(resolver, codeGenerator, logger)
         val componentRepository = ComponentRepository()
 
         ComposeSubprocessor(
@@ -49,8 +48,10 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
     ): SymbolProcessor {
         val skipPreviews: Boolean = environment.options["skipPreviews"]?.toBooleanStrict() ?: false
         val options = ArkiveOptions(skipPreviews)
+
         val disablePreviewParameters = environment.options[DISABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: false
         val enableVariants = environment.options[ENABLE_VARIANTS]?.toBoolean() ?: false
+
         return ArkiveProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
