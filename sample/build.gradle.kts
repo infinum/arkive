@@ -17,7 +17,8 @@ apply(plugin = "com.infinum.arkive")
 
 configure<ArkiveExtension>{
     multiModuleVariant.set("uatDebug")
-    disablePreviewParameters.set(true)
+    disablePreviewParameters.set(false)
+    enableVariants.set(true)
 }
 
 val buildConfig: Map<String, Any> by project

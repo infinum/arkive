@@ -13,6 +13,7 @@ class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val disablePreviewParameters: Boolean,
+    private val enableVariants: Boolean,
 ) : SymbolProcessor {
     private var processed = false
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -21,7 +22,7 @@ class ArkiveProcessor(
         }
         processed = true
 
-        ComposeSubprocessor(disablePreviewParameters).process(resolver, codeGenerator, logger)
+        ComposeSubprocessor(disablePreviewParameters, enableVariants).process(resolver, codeGenerator, logger)
         return emptyList()
     }
 }
@@ -31,10 +32,17 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor {
         val disablePreviewParameters = environment.options[DISABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: false
-        return ArkiveProcessor(environment.codeGenerator, environment.logger, disablePreviewParameters)
+        val enableVariants = environment.options[ENABLE_VARIANTS]?.toBoolean() ?: false
+        return ArkiveProcessor(
+            codeGenerator = environment.codeGenerator,
+            logger = environment.logger,
+            disablePreviewParameters = disablePreviewParameters,
+            enableVariants = enableVariants,
+        )
     }
 
     companion object {
         private const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
+        private const val ENABLE_VARIANTS = "enableVariants"
     }
 }

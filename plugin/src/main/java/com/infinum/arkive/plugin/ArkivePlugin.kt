@@ -5,6 +5,7 @@ import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.DISABLE_PREVIEW_PARAMETERS
+import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.ENABLE_VARIANTS
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
@@ -37,6 +38,7 @@ class ArkivePlugin : Plugin<Project> {
 
             project.afterEvaluate {
                 val disablePreviewParameters = extension.disablePreviewParameters.get()
+                val enableVariants = extension.enableVariants.get()
 
                 project.extensions.findByName("ksp")?.let { kspExt ->
                     try {
@@ -44,6 +46,13 @@ class ArkivePlugin : Plugin<Project> {
                         argMethod.invoke(kspExt, DISABLE_PREVIEW_PARAMETERS, disablePreviewParameters.toString())
                     } catch (e: Exception) {
                         project.logger.warn("Failed to pass $DISABLE_PREVIEW_PARAMETERS to KSP: ${e.message}")
+                    }
+
+                    try {
+                        val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
+                        argMethod.invoke(kspExt, ENABLE_VARIANTS, enableVariants.toString())
+                    } catch (e: Exception) {
+                        project.logger.warn("Failed to pass enableVariants to KSP: ${e.message}")
                     }
                 }
             }
