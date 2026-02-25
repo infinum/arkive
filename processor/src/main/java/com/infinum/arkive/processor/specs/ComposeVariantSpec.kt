@@ -23,6 +23,7 @@ class ComposeVariantSpec(
     private val holders: Set<ComposeHolder>,
     private val logger: KSPLogger,
     disablePreviewParameters: Boolean,
+    private val enableVariants: Boolean,
 ) : KotlinSpec {
     private val enablePreviewParameters = !disablePreviewParameters
 
@@ -62,16 +63,18 @@ class ComposeVariantSpec(
             }
         }
 
-        generateFontVariants(id, functionComponent, holder).forEach {
-            builder.addCode(it)
-        }
+        if (enableVariants) {
+            generateFontVariants(id, functionComponent, holder).forEach {
+                builder.addCode(it)
+            }
 
-        generateDensityVariants(id, functionComponent, holder).forEach {
-            builder.addCode(it)
-        }
+            generateDensityVariants(id, functionComponent, holder).forEach {
+                builder.addCode(it)
+            }
 
-        generateLayoutDirectionVariants(id, functionComponent, holder).forEach {
-            builder.addCode(it)
+            generateLayoutDirectionVariants(id, functionComponent, holder).forEach {
+                builder.addCode(it)
+            }
         }
 
         return builder.build()
