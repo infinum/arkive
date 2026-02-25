@@ -9,13 +9,13 @@ import com.infinum.arkive.processor.specs.ComposeRunnerSpec
 import com.infinum.arkive.processor.specs.ComposeVariantSpec
 import com.infinum.arkive.processor.validators.ComposeValidator
 
-class ComposeSubprocessor : Subprocessor {
+class ComposeSubprocessor(private val disablePreviewParameters: Boolean) : Subprocessor {
     override fun process(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger) {
         val collector = ArkiveComposableCollector(resolver, logger)
         val validator = ComposeValidator(logger)
 
         with(validator.validate(collector.collect())) {
-            ComposeVariantSpec(codeGenerator, this, logger).write()
+            ComposeVariantSpec(codeGenerator, this, logger, disablePreviewParameters).write()
             ComposeRunnerSpec(codeGenerator, this, logger).write()
             ComposeMetaDataSpec(codeGenerator, this).write()
         }

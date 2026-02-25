@@ -4,6 +4,7 @@ import app.cash.paparazzi.gradle.PaparazziPlugin
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension
+import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.DISABLE_PREVIEW_PARAMETERS
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
@@ -27,10 +28,25 @@ class ArkivePlugin : Plugin<Project> {
 
     private fun addExtensions(project: Project) {
         project.plugins.withId("com.android.base") {
-            project.extensions.create(
+            val extension = project.extensions.create(
                 "arkive",
                 ArkiveExtension::class.java,
             )
+
+            extension.disablePreviewParameters.convention(false)
+
+            project.afterEvaluate {
+                val disablePreviewParameters = extension.disablePreviewParameters.get()
+
+                project.extensions.findByName("ksp")?.let { kspExt ->
+                    try {
+                        val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
+                        argMethod.invoke(kspExt, DISABLE_PREVIEW_PARAMETERS, disablePreviewParameters.toString())
+                    } catch (e: Exception) {
+                        project.logger.warn("Failed to pass $DISABLE_PREVIEW_PARAMETERS to KSP: ${e.message}")
+                    }
+                }
+            }
         }
     }
 
@@ -112,7 +128,6 @@ class ArkivePlugin : Plugin<Project> {
                 addTaskWithVariant(project, it.name)
             }
         }
-
     }
 
     private fun addTaskWithVariant(project: Project, variant: String) {
@@ -149,7 +164,6 @@ class ArkivePlugin : Plugin<Project> {
                     module.tasks.findByName("${GenerateShowcaseTask.NAME}${variant.capFirst}")?.path
                 }
 
-
             rootProject.tasks.register(
                 GenerateWebShowcaseTask.NAME,
                 GenerateWebShowcaseTask::class.java,
@@ -162,8 +176,5 @@ class ArkivePlugin : Plugin<Project> {
                 task.setSource(rootProject.projectDir)
             }
         }
-
-
     }
-
 }
