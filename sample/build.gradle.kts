@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     kotlin("android")
 //    id("app.cash.paparazzi")
+    id("com.infinum.arkive" )  version "0.0.1"
 }
 
 apply {
@@ -13,13 +14,19 @@ apply {
     from("$rootDir/detekt.gradle")
 }
 
-apply(plugin = "com.infinum.arkive")
-
-configure<ArkiveExtension>{
+arkive {
     multiModuleVariant.set("uatDebug")
+    enableVariants.set(false)
     disablePreviewParameters.set(false)
-    enableVariants.set(true)
 }
+
+//apply(plugin = "com.infinum.arkive")
+
+//configure<ArkiveExtension>{
+//    multiModuleVariant.set("uatDebug")
+//    disablePreviewParameters.set(false)
+//    enableVariants.set(true)
+//}
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project

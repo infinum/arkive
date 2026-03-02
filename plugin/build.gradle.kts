@@ -20,16 +20,13 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-afterEvaluate {
-    gradlePlugin {
-        plugins {
-            create("arkivePlugin") {
-                id = "com.infinum.arkive"
-                displayName = "Arkive plugin"
-                description = "Arkive plugin for generating web showcase"
-                implementationClass = "com.infinum.arkive.plugin.ArkivePlugin"
-                version = "0.0.1"
-            }
+gradlePlugin {
+    plugins {
+        create("arkive") {
+            id = "com.infinum.arkive"
+            displayName = "Arkive plugin"
+            description = "Arkive plugin for generating web showcase"
+            implementationClass = "com.infinum.arkive.plugin.ArkivePlugin"
         }
     }
 }
