@@ -11,7 +11,9 @@ interface Holder {
     val group: String
     val tags: List<String>
     val extraMetadata: List<String>
+    val figmaNodeId: String?
     val function: KSFunctionDeclaration
     val parameters: List<KSValueParameter>
     val functionId: String
+    val fileName: String
 }

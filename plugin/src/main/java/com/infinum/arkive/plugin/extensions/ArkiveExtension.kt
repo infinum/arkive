@@ -16,6 +16,9 @@ open class ArkiveExtension @Inject constructor(
     val enableVariants: Property<Boolean> = objects.property(Boolean::class.java)
         .convention(false)
 
+    val designFileKey: Property<String> = objects.property(String::class.java)
+        .convention("")
+
     companion object {
         const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
         const val ENABLE_VARIANTS = "enableVariants"

@@ -28,8 +28,10 @@ class ArkiveComposableCollector(
                     skip = arkiveComposable.skip,
                     tags = arkiveComposable.tags.toList().plus(TAG_COMPOSABLE),
                     extraMetadata = arkiveComposable.extraMetadata.toList(),
+                    figmaNodeId = arkiveComposable.designNodeId.ifEmpty { null },
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
+                    fileName = it.containingFile?.fileName.orEmpty()
                 )
             }
             .toSet().also {

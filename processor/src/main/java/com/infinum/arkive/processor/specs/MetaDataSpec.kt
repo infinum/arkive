@@ -28,6 +28,8 @@ class MetaDataSpec(
                 group = holder.group,
                 tags = holder.tags,
                 extraMetadata = holder.extraMetadata,
+                designNodeId = holder.figmaNodeId,
+                fileName = holder.fileName
             )
         }
 

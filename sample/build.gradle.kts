@@ -18,6 +18,7 @@ arkive {
     multiModuleVariant.set("uatDebug")
     enableVariants.set(false)
     disablePreviewParameters.set(false)
+    designFileKey.set("fileKey")
 }
 
 //apply(plugin = "com.infinum.arkive")

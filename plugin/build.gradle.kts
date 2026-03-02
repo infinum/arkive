@@ -57,6 +57,7 @@ extra["mavenPublishProperties"] = mapOf(
 )
 
 dependencies {
+//    implementation(project(":metadata"))
     implementation(libs.arkive.metadata)
     implementation(libs.paparazzi.plugin)
     compileOnly(libs.gradle.android)

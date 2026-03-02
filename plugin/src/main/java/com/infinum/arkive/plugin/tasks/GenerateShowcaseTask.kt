@@ -39,6 +39,9 @@ internal open class GenerateShowcaseTask : SourceTask() {
     @get:Input
     var variant = ""
 
+    @get:Input
+    var designFileKey = ""
+
     init {
         project.gradle.projectsEvaluated {
             val variantText = variant
@@ -68,13 +71,13 @@ internal open class GenerateShowcaseTask : SourceTask() {
         val metadata = metadataLoader.loadMetaData(vrr)
 
         val moduleItems = generator.generateShowcase(snapshots, metadata)
-        logger.warn("Showcase generated: $moduleItems")
+        //logger.warn("Showcase: $moduleItems")
         writer.write(
             outputDir = outputDirectory.get().asFile,
-            module = ArkiveModule(project.name, moduleItems),
+            module = ArkiveModule(project.name, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
         )
 
-        logger.warn("Showcase written")
+        logger.warn("Showcase written to ${outputDirectory.get().asFile.resolve("arkive-showcase.json").absolutePath}")
     }
 
     @InputFiles

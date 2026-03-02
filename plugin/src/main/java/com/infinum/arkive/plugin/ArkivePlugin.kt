@@ -148,6 +148,8 @@ class ArkivePlugin : Plugin<Project> {
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
                 task.variant = variant
+                task.designFileKey = project.extensions.findByType(ArkiveExtension::class.java)
+                    ?.designFileKey?.get().orEmpty()
                 if (variant.isEmpty()) {
                     task.dependsOn(RECORDING_TASK)
                 } else {
