@@ -3,9 +3,9 @@ apply plugin: "signing"
 
 // Dokka is optional but recommended.
 // Sonatype will not accept a published artifact without at least an empty Javadoc JAR.
-task javadocsJar(type: Jar, dependsOn: "dokkaJavadoc") {
+task javadocsJar(type: Jar, dependsOn: "dokkaGeneratePublicationJavadoc") {
     getArchiveClassifier().set("javadoc")
-    from dokkaJavadoc.outputDirectory
+    from dokkaGeneratePublicationJavadoc.outputDirectory
 }
 
 task sourcesJar(type: Jar) {
