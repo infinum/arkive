@@ -20,7 +20,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @CacheableTask
-internal open class GenerateWebShowcaseTask : SourceTask() {
+internal abstract class GenerateWebShowcaseTask : SourceTask() {
 
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>

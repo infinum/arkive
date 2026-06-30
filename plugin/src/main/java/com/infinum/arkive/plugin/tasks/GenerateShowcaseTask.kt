@@ -22,7 +22,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @CacheableTask
-internal open class GenerateShowcaseTask : SourceTask() {
+internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:OutputDirectory
     val outputDirectory: Provider<Directory>
         get() = project.layout.buildDirectory.dir(

@@ -4,7 +4,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import org.gradle.api.Project
-import org.gradle.internal.cc.base.logger
 
 interface SnapshotsGrabber {
     fun grabAndMoveSnapshots(outputDir: File): List<String>
@@ -31,7 +30,7 @@ class SnapshotsGrabberImpl(
             File(it)
         }
 
-        logger.warn("Moving snapshots to ${outputDir.absolutePath}")
+        project.logger.warn("Moving snapshots to ${outputDir.absolutePath}")
 
         return snapshotsFiles.map {
             val destinationFile = File(outputDir, it.name)

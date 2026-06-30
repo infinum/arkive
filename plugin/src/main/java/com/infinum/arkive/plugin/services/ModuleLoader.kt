@@ -3,7 +3,6 @@ package com.infinum.arkive.plugin.services
 import com.infinum.arkive.metadata.fromJson
 import com.infinum.arkive.metadata.model.ArkiveModule
 import org.gradle.api.Project
-import org.gradle.internal.cc.base.logger
 import java.io.File
 
 
@@ -23,9 +22,9 @@ class ModuleLoaderImpl(
                 it.pluginManager.hasPlugin("com.infinum.arkive")
             }
             .map { module ->
-                logger.warn("Loading module")
+                project.logger.warn("Loading module")
                 val moduleDir = module.layout.buildDirectory.file(MODULE_ARKIVE_DIR).get().asFile
-                logger.warn("Module output path: ${moduleDir.path}")
+                project.logger.warn("Module output path: ${moduleDir.path}")
                 val destinationDir = File(outputDir, module.name)
                 project.copy { spec ->
                     spec.from(moduleDir)

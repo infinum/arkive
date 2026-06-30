@@ -4,7 +4,6 @@ import com.infinum.arkive.metadata.fromJson
 import com.infinum.arkive.metadata.model.ComponentsMetaData
 import java.io.File
 import org.gradle.api.Project
-import org.gradle.internal.cc.base.logger
 
 interface MetadataLoader {
     fun loadMetaData(variant: String): ComponentsMetaData
@@ -26,9 +25,9 @@ class KSPMetaDataLoader(
 ) : ProcessorMetadataLoader {
 
     override fun getMetaDataFile(variant: String): File {
-        logger.warn("variant: $variant")
+        project.logger.warn("variant: $variant")
         val variantSegment = "${File.separator}$variant".takeIf { variant.isNotEmpty() }
-        logger.warn("variantSegment: $variantSegment")
+        project.logger.warn("variantSegment: $variantSegment")
 
         return project.layout.buildDirectory.get().asFile.resolve(
             KSP_META_DATA_PATH.format(
