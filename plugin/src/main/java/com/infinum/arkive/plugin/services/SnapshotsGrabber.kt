@@ -9,33 +9,33 @@ interface SnapshotsGrabber {
     fun grabAndMoveSnapshots(outputDir: File): List<String>
 }
 
-private val SCREEN_SHOTS_PATH =
-    "src${File.separator}test${File.separator}snapshots${File.separator}images"
+private val SNAPSHOTS_PATH =
+    "src${File.separator}test${File.separator}snapshots"
 
 class SnapshotsGrabberImpl(
     private val project: Project,
 ) : SnapshotsGrabber {
 
-    private val screenshotDir: File
-        get() = project.projectDir.resolve(SCREEN_SHOTS_PATH)
+    private val snapshotsDir: File
+        get() = project.projectDir.resolve(SNAPSHOTS_PATH)
 
     override fun grabAndMoveSnapshots(outputDir: File): List<String> {
-        val originalSnapshots = screenshotDir.listFiles().orEmpty().map { it.path }
+        val originalSnapshots = snapshotsDir
+            .walkTopDown()
+            .filter { it.isFile && it.extension.equals("png", ignoreCase = true) }
+            .toList()
         return moveSnapshots(outputDir, originalSnapshots)
     }
 
-    private fun moveSnapshots(outputDir: File, snapshots: List<String>): List<String> {
+    private fun moveSnapshots(outputDir: File, snapshots: List<File>): List<String> {
         outputDir.mkdirs()
-        val snapshotsFiles = snapshots.map {
-            File(it)
-        }
 
-        project.logger.warn("Moving snapshots to ${outputDir.absolutePath}")
+        project.logger.warn("Moving ${snapshots.size} snapshot(s) to ${outputDir.absolutePath}")
 
-        return snapshotsFiles.map {
-            val destinationFile = File(outputDir, it.name)
-            Files.move(it.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-            "${outputDir.name}${File.separatorChar}${it.name}"
+        return snapshots.map { snapshot ->
+            val destinationFile = File(outputDir, snapshot.name)
+            Files.move(snapshot.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            "${outputDir.name}${File.separatorChar}${snapshot.name}"
         }
     }
 }
