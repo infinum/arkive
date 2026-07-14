@@ -3,7 +3,6 @@ package com.infinum.arkive.processor.validators
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Modifier
-import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.models.ViewHolder
 
 class ViewValidator(

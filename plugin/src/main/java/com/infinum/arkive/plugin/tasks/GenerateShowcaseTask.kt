@@ -1,11 +1,12 @@
 package com.infinum.arkive.plugin.tasks
 
+import com.infinum.arkive.metadata.model.ArkiveModule
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
-import com.infinum.arkive.metadata.model.ArkiveModule
+import java.io.File
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Property
@@ -19,7 +20,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 @CacheableTask
 internal abstract class GenerateShowcaseTask : SourceTask() {

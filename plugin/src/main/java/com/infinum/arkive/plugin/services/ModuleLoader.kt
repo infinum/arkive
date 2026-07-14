@@ -2,9 +2,8 @@ package com.infinum.arkive.plugin.services
 
 import com.infinum.arkive.metadata.fromJson
 import com.infinum.arkive.metadata.model.ArkiveModule
-import org.gradle.api.Project
 import java.io.File
-
+import org.gradle.api.Project
 
 private val MODULE_ARKIVE_DIR = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
 private const val ARKIVE_SHOWCASE_FILE = "arkive-showcase.json"
@@ -34,5 +33,4 @@ class ModuleLoaderImpl(
                 fromJson(File(destinationDir, ARKIVE_SHOWCASE_FILE).readText())
             }
     }
-
 }

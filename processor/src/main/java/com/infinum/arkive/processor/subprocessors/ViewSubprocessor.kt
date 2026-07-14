@@ -16,7 +16,7 @@ class ViewSubprocessor(
         logger: KSPLogger,
         options: ArkiveOptions,
     ) {
-        val viewHolders = componentRepository.getViewHolders(resolver, logger, options)
+        val viewHolders = componentRepository.getViewHolders(resolver, logger)
         ViewSpec(codeGenerator, viewHolders, logger).write()
     }
 }

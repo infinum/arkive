@@ -13,7 +13,7 @@ data class ComposeHolder(
     override val extraMetadata: List<String>,
     override val function: KSFunctionDeclaration,
     override val parameters: List<KSValueParameter>,
-): Holder {
+) : Holder {
     // This id should be used in the generated json file to include more info about the component
     override val functionId: String
         get() {

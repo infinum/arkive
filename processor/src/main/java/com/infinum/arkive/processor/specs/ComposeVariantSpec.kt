@@ -1,7 +1,6 @@
 package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -21,7 +20,6 @@ import com.squareup.kotlinpoet.ksp.writeTo
 class ComposeVariantSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
-    private val logger: KSPLogger,
     disablePreviewParameters: Boolean,
     private val enableVariants: Boolean,
 ) : KotlinSpec {
@@ -50,7 +48,6 @@ class ComposeVariantSpec(
     }
 
     private fun generatePreviewFunction(holder: ComposeHolder): FunSpec {
-
         val builder = FunSpec.builder(holder.functionName)
             .addParameter(createRunnerParameter())
 
@@ -117,11 +114,12 @@ class ComposeVariantSpec(
             )
 
             CodeBlock.builder().apply {
-                addStatement("runner(%S) { %M(%M().values.first()) }",
+                addStatement(
+                    "runner(%S) { %M(%M().values.first()) }",
                     id,
                     componentMember,
                     providerFunctionMember,
-                    )
+                )
             }.build()
         } else {
             CodeBlock.builder().apply {
@@ -191,10 +189,10 @@ class ComposeVariantSpec(
     }
 
     private fun generateFontVariants(id: String, componentMember: MemberName, holder: ComposeHolder): List<CodeBlock> {
-        val fontScales = listOf(1.0f, 1.5f, 2.0f)
+        val fontScales = listOf(FONT_SCALE_NORMAL, FONT_SCALE_LARGE, FONT_SCALE_LARGEST)
         val fontVariantMember = MemberName(
-            packageName = "com.infinum.arkive.composeutils",
-            simpleName = "FontVariant"
+            packageName = COMPOSE_UTILS_PACKAGE,
+            simpleName = "FontVariant",
         )
 
         val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
@@ -209,7 +207,7 @@ class ComposeVariantSpec(
                 CodeBlock.builder().apply {
                     addStatement(
                         "runner(%S) { %M(scale = %Lf) { %M(%M().values.first()) } }",
-                        "${id}_font_${scale}",
+                        "${id}_font_$scale",
                         fontVariantMember,
                         scale,
                         componentMember,
@@ -222,7 +220,7 @@ class ComposeVariantSpec(
                 CodeBlock.builder().apply {
                     addStatement(
                         "runner(%S) { %M(scale = %Lf) { %M() } }",
-                        "${id}_font_${scale}",
+                        "${id}_font_$scale",
                         fontVariantMember,
                         scale,
                         componentMember,
@@ -234,16 +232,16 @@ class ComposeVariantSpec(
 
     private fun generateDensityVariants(id: String, componentMember: MemberName, holder: ComposeHolder): List<CodeBlock> {
         val densities = mapOf(
-            "ldpi" to 0.75f,
-            "mdpi" to 1.0f,
-            "hdpi" to 1.5f,
-            "xhdpi" to 2.0f,
-            "xxhdpi" to 3.0f,
-            "xxxhdpi" to 4.0f
+            "ldpi" to DENSITY_LDPI,
+            "mdpi" to DENSITY_MDPI,
+            "hdpi" to DENSITY_HDPI,
+            "xhdpi" to DENSITY_XHDPI,
+            "xxhdpi" to DENSITY_XXHDPI,
+            "xxxhdpi" to DENSITY_XXXHDPI,
         )
         val fontDensityMember = MemberName(
-            packageName = "com.infinum.arkive.composeutils",
-            simpleName = "DensityVariant"
+            packageName = COMPOSE_UTILS_PACKAGE,
+            simpleName = "DensityVariant",
         )
         val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
         return if (providerInfo != null) {
@@ -286,8 +284,8 @@ class ComposeVariantSpec(
     ): List<CodeBlock> {
         val layoutDirections = mapOf("LTR" to true, "RTL" to false)
         val layoutDirectionMember = MemberName(
-            packageName = "com.infinum.arkive.composeutils",
-            simpleName = "LayoutDirectionVariant"
+            packageName = COMPOSE_UTILS_PACKAGE,
+            simpleName = "LayoutDirectionVariant",
         )
         val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
         return if (providerInfo != null) {
@@ -327,6 +325,18 @@ class ComposeVariantSpec(
         private const val SIMPLE_NAME = "ComposeVariants"
         private const val RUNNER_FUNCTION = "runner"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
+        private const val COMPOSE_UTILS_PACKAGE = "com.infinum.arkive.composeutils"
         const val PREVIEW_PARAMETER_ANNOTATION_NAME = "androidx.compose.ui.tooling.preview.PreviewParameter"
+
+        private const val FONT_SCALE_NORMAL = 1.0f
+        private const val FONT_SCALE_LARGE = 1.5f
+        private const val FONT_SCALE_LARGEST = 2.0f
+
+        private const val DENSITY_LDPI = 0.75f
+        private const val DENSITY_MDPI = 1.0f
+        private const val DENSITY_HDPI = 1.5f
+        private const val DENSITY_XHDPI = 2.0f
+        private const val DENSITY_XXHDPI = 3.0f
+        private const val DENSITY_XXXHDPI = 4.0f
     }
 }

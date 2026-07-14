@@ -17,7 +17,7 @@ class ShowcaseGeneratorImpl : ShowcaseGenerator {
             ShowcaseItem(
                 component = component,
                 snapshotPath = snapshots.findSnapshot(component.id),
-                variants = snapshots.findVariants(component.id)
+                variants = snapshots.findVariants(component.id),
             )
         }
         return items
@@ -42,17 +42,8 @@ class ShowcaseGeneratorImpl : ShowcaseGenerator {
             ComponentVariant(
                 category = category,
                 variant = variant,
-                snapshotPath = snapshot
+                snapshotPath = snapshot,
             )
         }
     }
-}
-
-
-fun main() {
-    val path =
-        "images/com.infinum.arkive_ArkiveSnapshotTestGenerator_testAllComposableFunctions_com_infinum_arkive_sample_composables_previewwideroundedbutton_density_3.0.png"
-
-    val id = "com_infinum_arkive_sample_composables_previewwideroundedbutton"
-    println(path)
 }

@@ -103,8 +103,8 @@ class ArkivePlugin : Plugin<Project> {
 
             val dependencyExists = configuration.dependencies.any { dependency ->
                 dependency.group == dependencyNotation.substringBefore(":") &&
-                        dependency.name == dependencyNotation.substringAfter(":")
-                    .substringBefore(":")
+                    dependency.name == dependencyNotation.substringAfter(":")
+                        .substringBefore(":")
             }
 
             if (!dependencyExists) {
@@ -114,7 +114,6 @@ class ArkivePlugin : Plugin<Project> {
     }
 
     private fun addTasks(project: Project) {
-
         project.logger.warn("Arkive: Adding tasks")
 
         project.plugins.withId("com.android.application") {
@@ -142,7 +141,7 @@ class ArkivePlugin : Plugin<Project> {
         with(project) {
             tasks.register(
                 "${GenerateShowcaseTask.NAME}${variant.capFirst}",
-                GenerateShowcaseTask::class.java
+                GenerateShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
@@ -178,9 +177,7 @@ class ArkivePlugin : Plugin<Project> {
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION
-                task.dependsOn(
-                    *subTasks.toTypedArray()
-                )
+                task.dependsOn(subTasks)
                 task.setSource(rootProject.projectDir)
             }
         }

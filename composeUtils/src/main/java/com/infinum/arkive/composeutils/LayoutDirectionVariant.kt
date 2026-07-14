@@ -11,14 +11,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 
-
 @Composable
 fun LayoutDirectionVariant(
     isLtr: Boolean,
-    component: @Composable () -> Unit
+    component: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
-        LocalLayoutDirection provides if (isLtr) LayoutDirection.Ltr else LayoutDirection.Rtl
+        LocalLayoutDirection provides if (isLtr) LayoutDirection.Ltr else LayoutDirection.Rtl,
     ) {
         component()
     }
@@ -32,7 +31,7 @@ fun PreviewEnglishLtrLayoutDirectionVariant() {
             Text(
                 "Hello, World",
                 textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -46,7 +45,7 @@ fun PreviewEnglishRtlLayoutDirectionVariant() {
             Text(
                 "Hello, World",
                 textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -60,7 +59,7 @@ fun PreviewArabicLtrLayoutDirectionVariant() {
             Text(
                 "اهلا, بالعالم",
                 textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -74,7 +73,7 @@ fun PreviewArabicRtlLayoutDirectionVariant() {
             Text(
                 "اهلا, بالعالم",
                 textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

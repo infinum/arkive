@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.SampleApptheme
 
+private const val CARD_TEXT_FIRST = "First"
+private const val CARD_TEXT_SECOND = "Second"
+private const val CARD_TEXT_THIRD = "third"
+
 @Composable
 fun Card(
     modifier: Modifier = Modifier,
@@ -51,7 +55,7 @@ enum class RoundDirection {
     UP, DOWN
 }
 
-class CardPreviewParameterProvider: PreviewParameterProvider<RoundDirection> {
+class CardPreviewParameterProvider : PreviewParameterProvider<RoundDirection> {
     override val values = RoundDirection.entries.asSequence()
 }
 
@@ -62,9 +66,9 @@ internal fun PreviewCard(@PreviewParameter(CardPreviewParameterProvider::class) 
     SampleApptheme {
         Card(roundDirection = roundDirection) {
             Column(Modifier.align(Alignment.Center)) {
-                Text(text = "First")
-                Text(text = "Second")
-                Text(text = "third")
+                Text(text = CARD_TEXT_FIRST)
+                Text(text = CARD_TEXT_SECOND)
+                Text(text = CARD_TEXT_THIRD)
             }
         }
     }
@@ -77,9 +81,9 @@ internal fun PreviewUpCard() {
     SampleApptheme {
         Card(roundDirection = RoundDirection.UP) {
             Column(Modifier.align(Alignment.Center)) {
-                Text(text = "First")
-                Text(text = "Second")
-                Text(text = "third")
+                Text(text = CARD_TEXT_FIRST)
+                Text(text = CARD_TEXT_SECOND)
+                Text(text = CARD_TEXT_THIRD)
             }
         }
     }
@@ -92,9 +96,9 @@ internal fun PreviewDownCard() {
     SampleApptheme {
         Card(roundDirection = RoundDirection.DOWN) {
             Column(Modifier.align(Alignment.Center)) {
-                Text(text = "First")
-                Text(text = "Second")
-                Text(text = "third")
+                Text(text = CARD_TEXT_FIRST)
+                Text(text = CARD_TEXT_SECOND)
+                Text(text = CARD_TEXT_THIRD)
             }
         }
     }
