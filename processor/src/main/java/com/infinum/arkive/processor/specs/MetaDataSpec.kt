@@ -13,8 +13,9 @@ class MetaDataSpec(
     private val holders: Set<Holder>,
 ) : Spec {
     override fun write() {
+        val originatingFiles = holders.mapNotNull { it.function.containingFile }.distinct().toTypedArray()
         val writer = codeGenerator.createNewFileByPath(
-            dependencies = Dependencies(false),
+            dependencies = Dependencies(true, *originatingFiles),
             path = META_DATA_RESOURCES_PATH,
             extensionName = META_DATA_FILE_EXTENSION,
         ).bufferedWriter()

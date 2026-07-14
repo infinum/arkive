@@ -37,7 +37,8 @@ class ComposeVariantSpec(
             .build()
             .writeTo(
                 codeGenerator = codeGenerator,
-                aggregating = false,
+                aggregating = true,
+                originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
             )
     }
 
