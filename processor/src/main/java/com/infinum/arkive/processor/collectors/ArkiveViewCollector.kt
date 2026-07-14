@@ -28,7 +28,7 @@ class ArkiveViewCollector(
                     skip = arkiveView.skip,
                     tags = arkiveView.tags.toList().plus(TAG_VIEW),
                     extraMetadata = arkiveView.extraMetadata.toList(),
-                    figmaNodeId = null,
+                    figmaNodeId = arkiveView.designNodeId.ifEmpty { null },
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
                     fileName = it.containingFile?.fileName.orEmpty()
