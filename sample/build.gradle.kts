@@ -1,12 +1,10 @@
-import com.infinum.arkive.plugin.extensions.ArkiveExtension
-
 plugins {
     alias(libs.plugins.ksp)
     id("com.android.application")
     alias(libs.plugins.compose.compiler)
     kotlin("android")
 //    id("app.cash.paparazzi")
-    id("com.infinum.arkive" )  version "0.0.1"
+    alias(libs.plugins.arkive)
 }
 
 apply {
@@ -20,14 +18,6 @@ arkive {
     disablePreviewParameters.set(false)
     designFileKey.set("fileKey")
 }
-
-//apply(plugin = "com.infinum.arkive")
-
-//configure<ArkiveExtension>{
-//    multiModuleVariant.set("uatDebug")
-//    disablePreviewParameters.set(false)
-//    enableVariants.set(true)
-//}
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project

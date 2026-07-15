@@ -15,6 +15,12 @@ apply {
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
 
+// Drive the publication coordinates (incl. the auto-generated plugin marker) from a
+// single source of truth. Without these, the marker publishes at "unspecified" and its
+// dependency resolves to the raw Gradle defaults ("Arkive:plugin:unspecified").
+group = releaseConfig["group"] as String
+version = releaseConfig["version"] as String
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
@@ -59,6 +65,9 @@ extra["mavenPublishProperties"] = mapOf(
 dependencies {
 //    implementation(project(":metadata"))
     implementation(libs.arkive.metadata)
+    // implementation (runtime scope) keeps Paparazzi off the consumer's compile classpath.
+    // The plugin applies it by id at runtime (see ArkivePlugin.addPlugins), and the DSL
+    // plugin classloader includes runtime deps, so it resolves without being `api`.
     implementation(libs.paparazzi.plugin)
     compileOnly(libs.gradle.android)
 
