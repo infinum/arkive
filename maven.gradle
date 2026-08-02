@@ -25,20 +25,21 @@ if (propsFile.exists()) {
 * */
 ext.sonatype = [
 
-        // If going with Option 3 the properties file will not exist and will fallback to the specified hardcoded value
-        url     : properties["sonatype.url"] ?: "https://oss.sonatype.org/service/local/staging/deploy/maven2",
+    // If going with Option 3 the properties file will not exist and will fallback to the specified hardcoded value
+    url     : properties["sonatype.url"] ?: "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/",
 
-                  // Option 1
-        username: findProperty("sonatypeUsername")?.toString()
-                  // Option 2
-                ?: properties["sonatype.user"]
-                  // Option 3
-                ?: System.getenv("SONATYPE_USERNAME"),
 
-                  // Option 1
-        password: findProperty("sonatypePassword")?.toString()
-                  // Option 2
-                ?: properties["sonatype.password"]
-                  // Option 3
-                ?: System.getenv("SONATYPE_PASS")
+    // Option 1
+    username: findProperty("sonatypeUsername")?.toString()
+        // Option 2
+        ?: properties["sonatype.user"]
+        // Option 3
+        ?: System.getenv("SONATYPE_USERNAME"),
+
+    // Option 1
+    password: findProperty("sonatypePassword")?.toString()
+        // Option 2
+        ?: properties["sonatype.password"]
+        // Option 3
+        ?: System.getenv("SONATYPE_PASS")
 ]

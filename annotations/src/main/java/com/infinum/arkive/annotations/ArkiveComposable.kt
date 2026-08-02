@@ -9,4 +9,5 @@ annotation class ArkiveComposable(
     val skip: Boolean = false,
     val tags: Array<String> = [],
     val extraMetadata: Array<String> = [],
+    val designNodeId: String = "",
 )

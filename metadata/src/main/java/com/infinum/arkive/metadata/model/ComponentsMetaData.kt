@@ -9,9 +9,11 @@ data class Component(
     @SerialName("name") val name: String,
     @SerialName("functionName") val functionName: String,
     @SerialName("packageName") val packageName: String,
+    @SerialName("fileName") val fileName: String,
     @SerialName("group") val group: String,
     @SerialName("tags") val tags: List<String>,
     @SerialName("extraMetadata") val extraMetadata: List<String>,
+    @SerialName("designNodeId") val designNodeId: String? = null,
 )
 
 @Serializable

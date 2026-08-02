@@ -1,6 +1,5 @@
 package com.infinum.arkive.plugin
 
-import app.cash.paparazzi.gradle.PaparazziPlugin
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension
@@ -62,7 +61,9 @@ class ArkivePlugin : Plugin<Project> {
     private fun addPlugins(project: Project) {
         logger.info("Adding plugins")
         if (!project.pluginManager.hasPlugin("app.cash.paparazzi")) {
-            project.pluginManager.apply(PaparazziPlugin::class.java)
+            // Apply by id (not class reference) so Paparazzi need not be on the compile
+            // classpath — it can stay an `implementation` dep, hidden from consumers.
+            project.pluginManager.apply("app.cash.paparazzi")
         }
 
 //        if (!project.pluginManager.hasPlugin("com.google.devtools.ksp")) {
@@ -148,6 +149,8 @@ class ArkivePlugin : Plugin<Project> {
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
                 task.variant = variant
+                task.designFileKey = project.extensions.findByType(ArkiveExtension::class.java)
+                    ?.designFileKey?.get().orEmpty()
                 if (variant.isEmpty()) {
                     task.dependsOn(RECORDING_TASK)
                 } else {
