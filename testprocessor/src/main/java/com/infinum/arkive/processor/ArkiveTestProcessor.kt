@@ -44,15 +44,20 @@ class ArkiveTestProcessor(
     }
 
     private fun generateTestClass(): TypeSpec {
-        val ruleProperty = PropertySpec.builder(
+        return TypeSpec.classBuilder(FILE_NAME)
+            .addModifiers(KModifier.PUBLIC)
+            .addProperty(paparazziProperty())
+            .addProperty(ruleChainProperty())
+            .addFunction(composableTestFunction())
+            .addFunction(viewTestFunction())
+            .build()
+    }
+
+    private fun paparazziProperty(): PropertySpec {
+        return PropertySpec.builder(
             "paparazzi",
             ClassName("app.cash.paparazzi", "Paparazzi"),
         )
-            .addAnnotation(
-                AnnotationSpec.builder(ClassName("org.junit", "Rule"))
-                    .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
-                    .build(),
-            )
             .initializer(
                 // Translucent theme keeps the window background transparent, so snapshots
                 // carry an alpha channel instead of the default dark Material backdrop.
@@ -62,8 +67,45 @@ class ArkiveTestProcessor(
                     ")",
             )
             .build()
+    }
 
-        val composableTestFunction = FunSpec.builder("testAllComposableFunctions")
+    private fun ruleChainProperty(): PropertySpec {
+        // Paparazzi re-throws snapshot errors at rule teardown even when the test body
+        // swallowed them. The outer rule absorbs that, so one broken preview (already
+        // logged and skipped) never fails the snapshot test as a whole.
+        return PropertySpec.builder(
+            "arkiveRule",
+            ClassName("org.junit.rules", "RuleChain"),
+        )
+            .addAnnotation(
+                AnnotationSpec.builder(ClassName("org.junit", "Rule"))
+                    .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
+                    .build(),
+            )
+            .initializer(
+                """
+                org.junit.rules.RuleChain
+                    .outerRule(
+                        org.junit.rules.TestRule { base, _ ->
+                            object : org.junit.runners.model.Statement() {
+                                override fun evaluate() {
+                                    try {
+                                        base.evaluate()
+                                    } catch (e: Throwable) {
+                                        println("Arkive: snapshot session finished with errors: " + e.message)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                    .around(paparazzi)
+                """.trimIndent(),
+            )
+            .build()
+    }
+
+    private fun composableTestFunction(): FunSpec {
+        return FunSpec.builder("testAllComposableFunctions")
             .addAnnotation(getTestAnnotation())
             .addCode(
                 """
@@ -76,11 +118,13 @@ class ArkiveTestProcessor(
                 """.trimIndent(),
             )
             .build()
+    }
 
+    private fun viewTestFunction(): FunSpec {
         val frameLayoutClass = ClassName("android.widget", "FrameLayout")
         val layoutInflaterClass = ClassName("android.view", "LayoutInflater")
 
-        val viewTestFunction = FunSpec.builder("testAllViewFunctions")
+        return FunSpec.builder("testAllViewFunctions")
             .addAnnotation(getTestAnnotation())
             .addCode(
                 """
@@ -94,13 +138,6 @@ class ArkiveTestProcessor(
                 layoutInflaterClass,
                 frameLayoutClass,
             )
-            .build()
-
-        return TypeSpec.classBuilder(FILE_NAME)
-            .addModifiers(KModifier.PUBLIC)
-            .addProperty(ruleProperty)
-            .addFunction(composableTestFunction)
-            .addFunction(viewTestFunction)
             .build()
     }
 

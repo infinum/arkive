@@ -44,7 +44,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     var designFileKey = ""
 
     @get:Input
-    var keepSnapshots = true
+    var keepSnapshots = false
 
     init {
         project.gradle.projectsEvaluated {
@@ -62,7 +62,11 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     fun doOnRun() {
         val snapshotsGrabber = SnapshotsGrabberImpl(project)
         val metadataLoader = KSPMetaDataLoader(project)
-        val generator = ShowcaseGeneratorImpl()
+        val generator = ShowcaseGeneratorImpl(
+            onMissingSnapshot = { id ->
+                logger.warn("Arkive: no snapshot recorded for component '$id' — excluded from the showcase")
+            },
+        )
         val writer = ShowcaseWriterImpl()
 
         val snapshots =

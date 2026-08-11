@@ -15,6 +15,28 @@ import org.gradle.api.Project
 
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        if (project == project.rootProject) {
+            // Root application hosts the aggregate task. It must be registered eagerly:
+            // with org.gradle.configureondemand, task-name resolution happens right after
+            // the root project configures — before any projectsEvaluated callback fires —
+            // so callback-time registration is invisible to it. Children are forced from
+            // afterEvaluate (not mid-script, which would reorder root-side configuration),
+            // and the module task dependencies resolve lazily once they exist.
+            project.afterEvaluate {
+                project.evaluationDependsOnChildren()
+            }
+            project.tasks.register(
+                GenerateWebShowcaseTask.NAME,
+                GenerateWebShowcaseTask::class.java,
+            ) { task ->
+                task.group = GenerateWebShowcaseTask.GROUP
+                task.description = GenerateWebShowcaseTask.DESCRIPTION
+                task.setSource(project.projectDir)
+                task.dependsOn(project.provider { moduleShowcaseTaskPaths(project) })
+            }
+            return
+        }
+
         with(project) {
             addExtensions(this)
             addPlugins(this)
@@ -147,7 +169,7 @@ class ArkivePlugin : Plugin<Project> {
                 task.variant = variant
                 val extension = project.extensions.findByType(ArkiveExtension::class.java)
                 task.designFileKey = extension?.designFileKey?.get().orEmpty()
-                task.keepSnapshots = extension?.keepSnapshots?.get() ?: true
+                task.keepSnapshots = extension?.keepSnapshots?.get() ?: false
                 if (variant.isEmpty()) {
                     task.dependsOn(RECORDING_TASK)
                 } else {
@@ -163,25 +185,32 @@ class ArkivePlugin : Plugin<Project> {
             return
         }
         rootProject.gradle.projectsEvaluated {
-            val subTasks = rootProject.subprojects
-                .filter {
-                    it.pluginManager.hasPlugin("com.infinum.arkive")
-                }.mapNotNull { module ->
-                    val variant = module.extensions.findByType(ArkiveExtension::class.java)
-                        ?.multiModuleVariant?.get().orEmpty()
-
-                    module.tasks.findByName("${GenerateShowcaseTask.NAME}${variant.capFirst}")?.path
+            // Root and module applications may both schedule this; only register once.
+            if (rootProject.tasks.findByName(GenerateWebShowcaseTask.NAME) == null) {
+                rootProject.tasks.register(
+                    GenerateWebShowcaseTask.NAME,
+                    GenerateWebShowcaseTask::class.java,
+                ) { task ->
+                    task.group = GenerateWebShowcaseTask.GROUP
+                    task.description = GenerateWebShowcaseTask.DESCRIPTION
+                    task.dependsOn(moduleShowcaseTaskPaths(rootProject))
+                    task.setSource(rootProject.projectDir)
                 }
-
-            rootProject.tasks.register(
-                GenerateWebShowcaseTask.NAME,
-                GenerateWebShowcaseTask::class.java,
-            ) { task ->
-                task.group = GenerateWebShowcaseTask.GROUP
-                task.description = GenerateWebShowcaseTask.DESCRIPTION
-                task.dependsOn(subTasks)
-                task.setSource(rootProject.projectDir)
             }
         }
+    }
+
+    private fun moduleShowcaseTaskPaths(rootProject: Project): List<String> {
+        return rootProject.subprojects
+            .filter { it.pluginManager.hasPlugin(PLUGIN_ID) }
+            .mapNotNull { module ->
+                val variant = module.extensions.findByType(ArkiveExtension::class.java)
+                    ?.multiModuleVariant?.get().orEmpty()
+                module.tasks.findByName("${GenerateShowcaseTask.NAME}${variant.capFirst}")?.path
+            }
+    }
+
+    companion object {
+        private const val PLUGIN_ID = "com.infinum.arkive"
     }
 }

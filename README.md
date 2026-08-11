@@ -37,6 +37,13 @@ plugins {
 }
 ```
 
+Requirements: Kotlin 2.0 or newer (the published libraries are compiled with a
+Kotlin 2.0 language floor).
+
+If your build sets `org.gradle.configureondemand=true`, also apply the plugin to the
+**root** project — otherwise `generateWebShowcase` is never registered, because the
+modules that create it are not configured when you invoke a root task.
+
 To publish all artifacts locally from this repo:
 
 ```

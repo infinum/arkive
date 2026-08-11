@@ -47,7 +47,9 @@ class ComposeVariantSpec(
     }
 
     private fun generatePreviewFunction(holder: ComposeHolder): FunSpec {
-        val builder = FunSpec.builder(holder.functionName)
+        // Named by the unique component id, not the bare function name — previews with the
+        // same name in different packages would otherwise generate clashing overloads.
+        val builder = FunSpec.builder(holder.functionId)
             .addParameter(createRunnerParameter())
 
         val functionComponent = getComponentMember(holder)

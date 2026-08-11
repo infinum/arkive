@@ -33,6 +33,7 @@ class PreviewCollector(
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
                     fileName = it.containingFile?.fileName.orEmpty(),
+                    fromArkive = false,
                 )
             }
             .toSet().also {

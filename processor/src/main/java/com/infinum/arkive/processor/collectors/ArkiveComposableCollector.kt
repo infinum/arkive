@@ -32,6 +32,7 @@ class ArkiveComposableCollector(
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
                     fileName = it.containingFile?.fileName.orEmpty(),
+                    fromArkive = true,
                 )
             }
             .toSet().also {

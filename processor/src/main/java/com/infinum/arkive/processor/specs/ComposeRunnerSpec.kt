@@ -47,10 +47,19 @@ class ComposeRunnerSpec(
     private fun getRunnerFunction(holder: ComposeHolder): CodeBlock {
         val functionRunner = MemberName(
             packageName = "com.infinum.arkive",
-            simpleName = holder.functionName,
+            simpleName = holder.functionId,
         )
+        // Each component (base + its variants) is isolated: a preview that fails to render
+        // logs and is dropped from the showcase instead of aborting the whole snapshot run.
         return CodeBlock.builder().apply {
+            beginControlFlow("try")
             addStatement("%M(runner)", functionRunner)
+            nextControlFlow("catch (e: %T)", ClassName("kotlin", "Throwable"))
+            addStatement(
+                "println(%S + e.message)",
+                "Arkive: skipping component ${holder.functionId}, snapshot failed: ",
+            )
+            endControlFlow()
         }.build()
     }
 

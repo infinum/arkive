@@ -20,11 +20,12 @@ open class ArkiveExtension @Inject constructor(
         .convention("")
 
     /**
-     * When true (default), snapshots are copied out of Paparazzi's `src/test/snapshots`
-     * directory instead of moved, so the golden files stay in place for `verifyPaparazzi`.
+     * When true, snapshots are copied out of Paparazzi's `src/test/snapshots` directory
+     * instead of moved, so the golden files stay in place for `verifyPaparazzi`.
+     * Defaults to false (snapshots are consumed by the showcase).
      */
     val keepSnapshots: Property<Boolean> = objects.property(Boolean::class.java)
-        .convention(true)
+        .convention(false)
 
     companion object {
         const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"

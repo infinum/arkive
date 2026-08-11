@@ -8,25 +8,34 @@ interface ShowcaseGenerator {
     fun generateShowcase(snapshots: List<String>, metadata: ComponentsMetaData): List<ShowcaseItem>
 }
 
-class ShowcaseGeneratorImpl : ShowcaseGenerator {
+class ShowcaseGeneratorImpl(
+    private val onMissingSnapshot: (String) -> Unit = {},
+) : ShowcaseGenerator {
     override fun generateShowcase(
         snapshots: List<String>,
         metadata: ComponentsMetaData,
     ): List<ShowcaseItem> {
-        val items = metadata.components.map { component ->
-            ShowcaseItem(
-                component = component,
-                snapshotPath = snapshots.findSnapshot(component.id),
-                variants = snapshots.findVariants(component.id),
-            )
+        // A component whose snapshot never materialized (e.g. its preview failed to render
+        // and was skipped at test time) is dropped with a warning instead of failing the task.
+        return metadata.components.mapNotNull { component ->
+            val snapshotPath = snapshots.findSnapshot(component.id)
+            if (snapshotPath == null) {
+                onMissingSnapshot(component.id)
+                null
+            } else {
+                ShowcaseItem(
+                    component = component,
+                    snapshotPath = snapshotPath,
+                    variants = snapshots.findVariants(component.id),
+                )
+            }
         }
-        return items
     }
 
-    private fun List<String>.findSnapshot(id: String): String {
+    private fun List<String>.findSnapshot(id: String): String? {
         return find {
             it.endsWith("$id.png")
-        } ?: error("Cant find component with id: $id")
+        }
     }
 
     private fun List<String>.findVariants(id: String): List<ComponentVariant> {

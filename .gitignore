@@ -99,3 +99,4 @@ publish.properties
 .idea/firebender/chat_history.db-shm
 
 .idea/firebender/chat_history.db-wal
+sample/src/test/snapshots/
