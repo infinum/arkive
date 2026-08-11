@@ -45,6 +45,8 @@ ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.re
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "koltinpoet" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+# Pinned: material-icons is no longer shipped with the Compose BOM; 1.7.8 is its final release.
+compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version = "1.7.8" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
