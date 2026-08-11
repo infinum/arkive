@@ -72,7 +72,7 @@ class ArkivePlugin : Plugin<Project> {
 
     private fun addDependencies(project: Project) {
         // TODO: automate version
-        val arkiveVersion = "0.0.1"
+        val arkiveVersion = "0.0.2"
         with(project) {
             dependencies.add(
                 "implementation",

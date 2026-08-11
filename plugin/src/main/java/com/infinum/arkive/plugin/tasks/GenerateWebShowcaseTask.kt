@@ -33,7 +33,7 @@ internal abstract class GenerateWebShowcaseTask : SourceTask() {
     @get:Input
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
-            .convention("0.0.1") // TODO automate this
+            .convention("0.0.2") // TODO automate this
 
     @TaskAction
     fun doOnRun() {

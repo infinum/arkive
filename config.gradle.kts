@@ -7,5 +7,5 @@ extra["buildConfig"] = mapOf(
 extra["releaseConfig"] = mapOf(
     // TODO - com.infinum.<YOUR-AWESOME-LIBRARY-NAME>
     "group" to "com.infinum.arkive",
-    "version" to "0.0.1"
+    "version" to "0.0.2"
 )

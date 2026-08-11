@@ -17,7 +17,7 @@ apply {
 
 arkive {
     multiModuleVariant.set("uatDebug")
-    enableVariants.set(false)
+    enableVariants.set(true)
     disablePreviewParameters.set(false)
     designFileKey.set("fileKey")
 }

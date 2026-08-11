@@ -34,7 +34,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
-            .convention("0.0.1") // TODO automate this
+            .convention("0.0.2") // TODO automate this
 
     @get:Input
     var variant = ""
@@ -71,7 +71,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         val metadata = metadataLoader.loadMetaData(vrr)
 
         val moduleItems = generator.generateShowcase(snapshots, metadata)
-        //logger.warn("Showcase: $moduleItems")
+        // logger.warn("Showcase: $moduleItems")
         writer.write(
             outputDir = outputDirectory.get().asFile,
             module = ArkiveModule(project.name, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
