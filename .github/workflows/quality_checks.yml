@@ -1,0 +1,85 @@
+name: Quality checks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+concurrency:
+  # Limit concurrency to 1 for PRs. 'main' concurrency isn't limited.
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  JAVA_VERSION: 21
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v4
+        continue-on-error: true
+        timeout-minutes: 5
+        with:
+          cache-overwrite-existing: true
+          gradle-home-cache-cleanup: true
+
+      - name: Check Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      # The sample consumes the published plugin, so bootstrap mavenLocal first.
+      - name: Publish to mavenLocal (bootstrap)
+        run: ./gradlew publishToMavenLocal -PskipSample
+
+      - name: Check detekt
+        run: ./gradlew detekt
+
+  build-and-test:
+    name: Build and test libraries
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v4
+        continue-on-error: true
+        timeout-minutes: 5
+        with:
+          cache-overwrite-existing: true
+          gradle-home-cache-cleanup: true
+
+      - name: Publish to mavenLocal (bootstrap)
+        run: ./gradlew publishToMavenLocal -PskipSample
+
+      - name: Build and test
+        run: ./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build
+
+  build-sample:
+    name: Build sample (plugin consumer)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v4
+        continue-on-error: true
+        timeout-minutes: 5
+        with:
+          cache-overwrite-existing: true
+          gradle-home-cache-cleanup: true
+
+      - name: Publish to mavenLocal (bootstrap)
+        run: ./gradlew publishToMavenLocal -PskipSample
+
+      - name: Build sample against the freshly published plugin
+        run: ./gradlew :sample:assembleStagingDebug

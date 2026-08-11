@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.infinum.arkive.sample.theme
 
 import androidx.compose.ui.graphics.Color

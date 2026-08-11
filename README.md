@@ -39,3 +39,16 @@ To publish all artifacts locally from this repo:
 ```
 ./gradlew publishToMavenLocal
 ```
+
+## Working on this repo
+
+The `:sample` module consumes the *published* plugin, so a fresh checkout can't
+configure until the plugin exists in mavenLocal. Bootstrap once with:
+
+```
+./gradlew publishToMavenLocal -PskipSample
+```
+
+`-PskipSample` drops `:sample` from the build for that invocation. Afterwards the
+full build (including the sample) works normally. Re-run the bootstrap whenever you
+change plugin code the sample should pick up.

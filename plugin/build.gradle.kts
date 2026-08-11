@@ -63,8 +63,9 @@ extra["mavenPublishProperties"] = mapOf(
 )
 
 dependencies {
-//    implementation(project(":metadata"))
-    implementation(libs.arkive.metadata)
+    // Project dependency (not the published artifact) so a fresh checkout can build
+    // without any prior publish; the POM still maps it to com.infinum.arkive:metadata.
+    implementation(project(":metadata"))
     // implementation (runtime scope) keeps Paparazzi off the consumer's compile classpath.
     // The plugin applies it by id at runtime (see ArkivePlugin.addPlugins), and the DSL
     // plugin classloader includes runtime deps, so it resolves without being `api`.
