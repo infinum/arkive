@@ -93,3 +93,9 @@ publish.properties
 
 # general
 **/.DS_Store
+
+.idea/firebender/chat_history.db
+
+.idea/firebender/chat_history.db-shm
+
+.idea/firebender/chat_history.db-wal
