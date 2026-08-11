@@ -20,12 +20,12 @@ open class ArkiveExtension @Inject constructor(
         .convention("")
 
     /**
-     * Which snapshots remain in Paparazzi's `src/test/snapshots` golden directory after
-     * the showcase consumes them: [SnapshotRetention.NONE] (default), [SnapshotRetention.BASE]
-     * for base-only golden testing, or [SnapshotRetention.ALL].
+     * When true, snapshots are copied out of Paparazzi's `src/test/snapshots` directory
+     * instead of moved, so the golden files stay in place for `verifyPaparazzi`.
+     * Defaults to false (snapshots are consumed by the showcase).
      */
-    val snapshotRetention: Property<SnapshotRetention> = objects.property(SnapshotRetention::class.java)
-        .convention(SnapshotRetention.NONE)
+    val keepSnapshots: Property<Boolean> = objects.property(Boolean::class.java)
+        .convention(false)
 
     companion object {
         const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"

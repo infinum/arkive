@@ -5,7 +5,6 @@ import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.ENABLE_PREVIEW_PARAMETERS
 import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.ENABLE_VARIANTS
-import com.infinum.arkive.plugin.extensions.SnapshotRetention
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
@@ -170,8 +169,7 @@ class ArkivePlugin : Plugin<Project> {
                 task.variant = variant
                 val extension = project.extensions.findByType(ArkiveExtension::class.java)
                 task.designFileKey = extension?.designFileKey?.get().orEmpty()
-                task.snapshotRetention =
-                    (extension?.snapshotRetention?.get() ?: SnapshotRetention.NONE).name
+                task.keepSnapshots = extension?.keepSnapshots?.get() ?: false
                 if (variant.isEmpty()) {
                     task.dependsOn(RECORDING_TASK)
                 } else {
