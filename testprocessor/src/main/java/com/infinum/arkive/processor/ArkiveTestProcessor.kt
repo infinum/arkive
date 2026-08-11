@@ -54,7 +54,12 @@ class ArkiveTestProcessor(
                     .build(),
             )
             .initializer(
-                "Paparazzi(renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK)",
+                // Translucent theme keeps the window background transparent, so snapshots
+                // carry an alpha channel instead of the default dark Material backdrop.
+                "Paparazzi(" +
+                    "renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK, " +
+                    "theme = \"android:Theme.Translucent.NoTitleBar\"" +
+                    ")",
             )
             .build()
 
