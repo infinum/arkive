@@ -4,6 +4,7 @@ import com.infinum.arkive.metadata.model.ArkiveModule
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
+import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import java.io.File
@@ -34,7 +35,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
-            .convention("0.0.2") // TODO automate this
+            .convention(ArkiveVersion.current)
 
     @get:Input
     var variant = ""

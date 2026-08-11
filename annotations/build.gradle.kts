@@ -12,6 +12,7 @@ apply {
 
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
+val pomConfig: Map<String, Any> by project
 
 
 java {
@@ -23,23 +24,14 @@ java {
 extra["mavenPublishProperties"] = mapOf(
     "group" to releaseConfig["group"],
     "version" to releaseConfig["version"],
-    // TODO - <YOUR-LIBRARY-ARTIFACTID>
     "artifactId" to "annotations",
     "repository" to mapOf(
         "url" to sonatype["url"],
         "username" to sonatype["username"],
         "password" to sonatype["password"]
     ),
-    // TODO - <YOUR-AWESOME-LIBRARY-NAME>
-    "name" to "ExampleLib LibModule2",
-    // TODO - <YOUR-AWESOME-LIBRARY-DESCRIPTION>
-    "description" to "ExampleLib LibModule2 module",
-    // TODO - https://github.com/infinum/<YOUR-AWESOME-LIBRARY>
-    "url" to "https://github.com/infinum/android-libname",
-    "scm" to mapOf(
-        // TODO - https://github.com/infinum/<YOUR-AWESOME-LIBRARY>.git
-        "connection" to "https://github.com/infinum/android-libname.git",
-        // TODO - https://github.com/infinum/<YOUR-AWESOME-LIBRARY>
-        "url" to "https://github.com/infinum/android-libname"
-    )
+    "name" to "Arkive Annotations",
+    "description" to "Annotations for exposing composables and views to the Arkive showcase",
+    "url" to pomConfig["url"],
+    "scm" to pomConfig["scm"]
 )

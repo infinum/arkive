@@ -16,6 +16,7 @@ apply {
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
+val pomConfig: Map<String, Any> by project
 
 android {
     namespace = "com.infinum.arkive.composeutils"
@@ -75,13 +76,14 @@ extra["mavenPublishProperties"] = mapOf(
         "username" to sonatype["username"],
         "password" to sonatype["password"]
     ),
-    "name" to "ExampleLib LibModule1",
-    "description" to "ExampleLib LibModule1 module",
-    "url" to "https://github.com/infinum/android-libname",
-    "scm" to mapOf(
-        "connection" to "https://github.com/infinum/android-libname.git",
-        "url" to "https://github.com/infinum/android-libname"
-    )
+
+    "name" to "Arkive Compose Utils",
+
+    "description" to "Compose utilities for rendering Arkive preview variants",
+
+    "url" to pomConfig["url"],
+
+    "scm" to pomConfig["scm"]
 )
 
 dependencies {

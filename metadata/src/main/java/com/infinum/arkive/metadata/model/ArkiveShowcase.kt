@@ -21,7 +21,7 @@ data class ShowcaseItem(
 data class ArkiveModule(
     @SerialName("name") val name: String,
     @SerialName("items") val items: List<ShowcaseItem>,
-    @SerialName("designFileKey") val designFileKey: String? = null
+    @SerialName("designFileKey") val designFileKey: String? = null,
 )
 
 @Serializable

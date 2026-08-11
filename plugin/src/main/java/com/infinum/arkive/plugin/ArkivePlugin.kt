@@ -8,6 +8,7 @@ import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.ENABLE_VAR
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
+import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -71,8 +72,7 @@ class ArkivePlugin : Plugin<Project> {
     }
 
     private fun addDependencies(project: Project) {
-        // TODO: automate version
-        val arkiveVersion = "0.0.2"
+        val arkiveVersion = ArkiveVersion.current
         with(project) {
             dependencies.add(
                 "implementation",

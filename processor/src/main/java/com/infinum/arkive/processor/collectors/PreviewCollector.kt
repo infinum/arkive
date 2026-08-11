@@ -32,7 +32,7 @@ class PreviewCollector(
                     figmaNodeId = null,
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
-                    fileName = it.containingFile?.fileName.orEmpty()
+                    fileName = it.containingFile?.fileName.orEmpty(),
                 )
             }
             .toSet().also {

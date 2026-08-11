@@ -14,7 +14,7 @@ data class ViewHolder(
     override val figmaNodeId: String?,
     override val function: KSFunctionDeclaration,
     override val parameters: List<KSValueParameter>,
-    override val fileName: String
+    override val fileName: String,
 ) : Holder {
     // This id should be used in the generated json file to include more info about the component
     override val functionId: String

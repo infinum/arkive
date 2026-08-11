@@ -31,7 +31,7 @@ class MetaDataSpec(
                 tags = holder.tags,
                 extraMetadata = holder.extraMetadata,
                 designNodeId = holder.figmaNodeId,
-                fileName = holder.fileName
+                fileName = holder.fileName,
             )
         }
 

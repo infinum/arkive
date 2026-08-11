@@ -3,6 +3,7 @@ package com.infinum.arkive.plugin.tasks
 import com.infinum.arkive.metadata.model.ArkiveShowcase
 import com.infinum.arkive.plugin.generators.ShowcaseWebGeneratorImpl
 import com.infinum.arkive.plugin.services.ModuleLoaderImpl
+import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.writers.ShowcaseMultiModuleWriterImpl
 import java.io.File
 import org.gradle.api.file.Directory
@@ -33,7 +34,7 @@ internal abstract class GenerateWebShowcaseTask : SourceTask() {
     @get:Input
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
-            .convention("0.0.2") // TODO automate this
+            .convention(ArkiveVersion.current)
 
     @TaskAction
     fun doOnRun() {
