@@ -40,6 +40,28 @@ plugins {
 Requirements: Kotlin 2.0 or newer (the published libraries are compiled with a
 Kotlin 2.0 language floor).
 
+## Snapshot retention and golden testing
+
+The showcase catalogue always receives every recorded snapshot (base + variants).
+`snapshotRetention` controls what *stays* in Paparazzi's `src/test/snapshots` golden
+directory afterwards:
+
+```kotlin
+arkive {
+    enableVariants.set(true)                          // rich catalogue
+    snapshotRetention.set(SnapshotRetention.BASE)     // NONE (default) | BASE | ALL
+}
+```
+
+- `NONE` — snapshots are consumed by the showcase; no goldens kept.
+- `BASE` — only base snapshots stay, so you can commit a small golden set and verify it
+  with `./gradlew verifyPaparazzi<Variant> --tests '*.testAllComposableFunctions'`
+  without committing every font/density/layout-direction variant.
+- `ALL` — everything stays; consider Git LFS for the golden directory.
+
+Arkive only ever touches snapshots recorded by its own generated test class — your own
+Paparazzi goldens in the same directory are ignored.
+
 If your build sets `org.gradle.configureondemand=true`, also apply the plugin to the
 **root** project — otherwise `generateWebShowcase` is never registered, because the
 modules that create it are not configured when you invoke a root task.
