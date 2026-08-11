@@ -1,6 +1,9 @@
 # arkive
 Gradle plugin for generating screenshots of Android UI components
 
+**Live demo:** the sample app's generated showcase is deployed to
+[GitHub Pages](https://infinum.github.io/arkive/) on every merge to `main`.
+
 ## Using a locally published build
 
 The plugin id resolves through Gradle's *plugin repositories*, so consuming a
