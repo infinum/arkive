@@ -17,7 +17,7 @@ class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val options: ArkiveOptions,
-    private val disablePreviewParameters: Boolean,
+    private val enablePreviewParameters: Boolean,
     private val enableVariants: Boolean,
 ) : SymbolProcessor {
     private var processed = false
@@ -31,7 +31,7 @@ class ArkiveProcessor(
 
         ComposeSubprocessor(
             componentRepository = componentRepository,
-            disablePreviewParameters = disablePreviewParameters,
+            enablePreviewParameters = enablePreviewParameters,
             enableVariants = enableVariants,
         ).process(resolver, codeGenerator, logger, options)
         ViewSubprocessor(componentRepository = componentRepository).process(resolver, codeGenerator, logger, options)
@@ -49,20 +49,20 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
         val skipPreviews: Boolean = environment.options["skipPreviews"]?.toBooleanStrict() ?: false
         val options = ArkiveOptions(skipPreviews)
 
-        val disablePreviewParameters = environment.options[DISABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: false
+        val enablePreviewParameters = environment.options[ENABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: true
         val enableVariants = environment.options[ENABLE_VARIANTS]?.toBoolean() ?: false
 
         return ArkiveProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
             options = options,
-            disablePreviewParameters = disablePreviewParameters,
+            enablePreviewParameters = enablePreviewParameters,
             enableVariants = enableVariants,
         )
     }
 
     companion object {
-        private const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
+        private const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
         private const val ENABLE_VARIANTS = "enableVariants"
     }
 }

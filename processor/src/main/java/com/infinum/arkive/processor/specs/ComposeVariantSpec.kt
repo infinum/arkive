@@ -20,10 +20,9 @@ import com.squareup.kotlinpoet.ksp.writeTo
 class ComposeVariantSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
-    disablePreviewParameters: Boolean,
+    private val enablePreviewParameters: Boolean,
     private val enableVariants: Boolean,
 ) : KotlinSpec {
-    private val enablePreviewParameters = !disablePreviewParameters
 
     override fun write() {
         val fileSpec = getFileSpec()

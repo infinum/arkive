@@ -10,7 +10,7 @@ import com.infinum.arkive.processor.specs.ComposeVariantSpec
 
 class ComposeSubprocessor(
     private val componentRepository: ComponentRepository,
-    private val disablePreviewParameters: Boolean,
+    private val enablePreviewParameters: Boolean,
     private val enableVariants: Boolean,
 ) : Subprocessor {
     override fun process(
@@ -20,7 +20,7 @@ class ComposeSubprocessor(
         options: ArkiveOptions,
     ) {
         val composeHolders = componentRepository.getComposeHolders(resolver, logger, options)
-        ComposeVariantSpec(codeGenerator, composeHolders, disablePreviewParameters, enableVariants).write()
+        ComposeVariantSpec(codeGenerator, composeHolders, enablePreviewParameters, enableVariants).write()
         ComposeRunnerSpec(codeGenerator, composeHolders, logger).write()
     }
 }
