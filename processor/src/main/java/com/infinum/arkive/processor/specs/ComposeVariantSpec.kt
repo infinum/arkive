@@ -28,6 +28,7 @@ class ComposeVariantSpec(
         val fileSpec = getFileSpec()
         holders.forEach { holder ->
             fileSpec.addFunction(generatePreviewFunction(holder))
+            fileSpec.addFunction(generatePreviewVariantsFunction(holder))
         }
 
         fileSpec
@@ -46,15 +47,23 @@ class ComposeVariantSpec(
         )
     }
 
+    // Wrappers are named by the unique component id, not the bare function name — previews
+    // with the same name in different packages would otherwise generate clashing overloads.
+    // Base and variants are split so golden testing can run against base snapshots only.
+
     private fun generatePreviewFunction(holder: ComposeHolder): FunSpec {
-        // Named by the unique component id, not the bare function name — previews with the
-        // same name in different packages would otherwise generate clashing overloads.
-        val builder = FunSpec.builder(holder.functionId)
+        return FunSpec.builder(holder.functionId)
+            .addParameter(createRunnerParameter())
+            .addCode(generateBaseVariant(holder.functionId, getComponentMember(holder), holder))
+            .build()
+    }
+
+    private fun generatePreviewVariantsFunction(holder: ComposeHolder): FunSpec {
+        val builder = FunSpec.builder("${holder.functionId}$VARIANTS_SUFFIX")
             .addParameter(createRunnerParameter())
 
         val functionComponent = getComponentMember(holder)
         val id = holder.functionId
-        builder.addCode(generateBaseVariant(id, functionComponent, holder))
 
         if (enablePreviewParameters) {
             generatePreviewVariants(holder, id, functionComponent)?.let {
@@ -324,6 +333,7 @@ class ComposeVariantSpec(
 
     companion object {
         private const val SIMPLE_NAME = "ComposeVariants"
+        const val VARIANTS_SUFFIX = "_variants"
         private const val RUNNER_FUNCTION = "runner"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
         private const val COMPOSE_UTILS_PACKAGE = "com.infinum.arkive.composeutils"

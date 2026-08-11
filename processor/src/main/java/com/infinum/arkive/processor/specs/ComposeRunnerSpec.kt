@@ -23,7 +23,13 @@ class ComposeRunnerSpec(
     override fun write() {
         val fileSpec = getFileSpec()
         val arkiveClass = getArkiveClass()
-        arkiveClass.addFunction(getRunComposableTestsFunction())
+        arkiveClass.addFunction(getRunTestsFunction(RUN_COMPOSABLE_TESTS_FUNCTION, wrapperSuffix = ""))
+        arkiveClass.addFunction(
+            getRunTestsFunction(
+                RUN_COMPOSABLE_VARIANT_TESTS_FUNCTION,
+                wrapperSuffix = ComposeVariantSpec.VARIANTS_SUFFIX,
+            ),
+        )
 
         fileSpec
             .addType(arkiveClass.build())
@@ -44,12 +50,12 @@ class ComposeRunnerSpec(
         )
     }
 
-    private fun getRunnerFunction(holder: ComposeHolder): CodeBlock {
+    private fun getRunnerFunction(holder: ComposeHolder, wrapperSuffix: String): CodeBlock {
         val functionRunner = MemberName(
             packageName = "com.infinum.arkive",
-            simpleName = holder.functionId,
+            simpleName = "${holder.functionId}$wrapperSuffix",
         )
-        // Each component (base + its variants) is isolated: a preview that fails to render
+        // Each component (base or its variants) is isolated: a preview that fails to render
         // logs and is dropped from the showcase instead of aborting the whole snapshot run.
         return CodeBlock.builder().apply {
             beginControlFlow("try")
@@ -57,14 +63,14 @@ class ComposeRunnerSpec(
             nextControlFlow("catch (e: %T)", ClassName("kotlin", "Throwable"))
             addStatement(
                 "println(%S + e.message)",
-                "Arkive: skipping component ${holder.functionId}, snapshot failed: ",
+                "Arkive: skipping component ${holder.functionId}$wrapperSuffix, snapshot failed: ",
             )
             endControlFlow()
         }.build()
     }
 
-    private fun getRunComposableTestsFunction(): FunSpec {
-        return FunSpec.builder(RUN_COMPOSABLE_TESTS_FUNCTION)
+    private fun getRunTestsFunction(functionName: String, wrapperSuffix: String): FunSpec {
+        return FunSpec.builder(functionName)
             .addParameter(
                 RUNNER_FUNCTION,
                 LambdaTypeName.get(
@@ -78,7 +84,7 @@ class ComposeRunnerSpec(
             )
             .addCode(
                 holders.joinToString(separator = "\n") { holder ->
-                    getRunnerFunction(holder).toString()
+                    getRunnerFunction(holder, wrapperSuffix).toString()
                 },
             )
             .build()
@@ -95,6 +101,7 @@ class ComposeRunnerSpec(
         private const val SIMPLE_NAME = "ArkiveComposeShoot"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
         private const val RUN_COMPOSABLE_TESTS_FUNCTION = "runComposableTests"
+        private const val RUN_COMPOSABLE_VARIANT_TESTS_FUNCTION = "runComposableVariantTests"
         private const val RUNNER_FUNCTION = "runner"
     }
 }

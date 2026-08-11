@@ -48,7 +48,8 @@ class ArkiveTestProcessor(
             .addModifiers(KModifier.PUBLIC)
             .addProperty(paparazziProperty())
             .addProperty(ruleChainProperty())
-            .addFunction(composableTestFunction())
+            .addFunction(composableTestFunction("testAllComposableFunctions", "runComposableTests"))
+            .addFunction(composableTestFunction("testAllComposableVariants", "runComposableVariantTests"))
             .addFunction(viewTestFunction())
             .build()
     }
@@ -104,13 +105,15 @@ class ArkiveTestProcessor(
             .build()
     }
 
-    private fun composableTestFunction(): FunSpec {
-        return FunSpec.builder("testAllComposableFunctions")
+    // Base and variant snapshots run as separate tests so golden testing can target just
+    // the base set: ./gradlew verifyPaparazzi<Variant> --tests '*.testAllComposableFunctions'
+    private fun composableTestFunction(testName: String, shooterFunction: String): FunSpec {
+        return FunSpec.builder(testName)
             .addAnnotation(getTestAnnotation())
             .addCode(
                 """
                 val shooter = ArkiveComposeShoot()
-                shooter.runComposableTests { name, function ->
+                shooter.$shooterFunction { name, function ->
                     paparazzi.snapshot(name = name) {
                         function()
                     }
