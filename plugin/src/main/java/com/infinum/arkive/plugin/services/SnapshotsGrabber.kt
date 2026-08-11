@@ -6,7 +6,7 @@ import java.nio.file.StandardCopyOption
 import org.gradle.api.Project
 
 interface SnapshotsGrabber {
-    fun grabAndMoveSnapshots(outputDir: File): List<String>
+    fun grabSnapshots(outputDir: File, keepOriginals: Boolean): List<String>
 }
 
 private val SNAPSHOTS_PATH =
@@ -19,22 +19,24 @@ class SnapshotsGrabberImpl(
     private val snapshotsDir: File
         get() = project.projectDir.resolve(SNAPSHOTS_PATH)
 
-    override fun grabAndMoveSnapshots(outputDir: File): List<String> {
+    override fun grabSnapshots(outputDir: File, keepOriginals: Boolean): List<String> {
         val originalSnapshots = snapshotsDir
             .walkTopDown()
             .filter { it.isFile && it.extension.equals("png", ignoreCase = true) }
             .toList()
-        return moveSnapshots(outputDir, originalSnapshots)
-    }
 
-    private fun moveSnapshots(outputDir: File, snapshots: List<File>): List<String> {
         outputDir.mkdirs()
 
-        project.logger.warn("Moving ${snapshots.size} snapshot(s) to ${outputDir.absolutePath}")
+        val verb = if (keepOriginals) "Copying" else "Moving"
+        project.logger.warn("$verb ${originalSnapshots.size} snapshot(s) to ${outputDir.absolutePath}")
 
-        return snapshots.map { snapshot ->
+        return originalSnapshots.map { snapshot ->
             val destinationFile = File(outputDir, snapshot.name)
-            Files.move(snapshot.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            if (keepOriginals) {
+                Files.copy(snapshot.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            } else {
+                Files.move(snapshot.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
             "${outputDir.name}${File.separatorChar}${snapshot.name}"
         }
     }

@@ -43,6 +43,9 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     var designFileKey = ""
 
+    @get:Input
+    var keepSnapshots = true
+
     init {
         project.gradle.projectsEvaluated {
             val variantText = variant
@@ -63,8 +66,9 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         val writer = ShowcaseWriterImpl()
 
         val snapshots =
-            snapshotsGrabber.grabAndMoveSnapshots(
-                outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
+            snapshotsGrabber.grabSnapshots(
+                outputDir = outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
+                keepOriginals = keepSnapshots,
             )
 
         val vrr = variant
