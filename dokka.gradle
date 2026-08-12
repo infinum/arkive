@@ -9,4 +9,14 @@ dokka {
     dokkaSourceSets.named("main") {
         // TODO add dokka configuration
     }
+
+    // Android modules: the AGP variant source sets ("release", "debug") duplicate the
+    // source roots already owned by "androidJvm", which fails Dokka's pre-generation
+    // validity check ("Every Kotlin source file should belong to only one source set",
+    // https://github.com/Kotlin/dokka/issues/3701). Keep a single owner per root.
+    dokkaSourceSets.configureEach {
+        if (name != "main" && name != "androidJvm") {
+            suppress.set(true)
+        }
+    }
 }
