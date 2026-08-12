@@ -1,4 +1,3 @@
-import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -7,6 +6,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     kotlin("android")
 //    id("app.cash.paparazzi")
+    alias(libs.plugins.arkive)
 }
 
 apply {
@@ -14,12 +14,11 @@ apply {
     from("$rootDir/detekt.gradle")
 }
 
-apply(plugin = "com.infinum.arkive")
-
-configure<ArkiveExtension>{
+arkive {
     multiModuleVariant.set("uatDebug")
+    enableVariants.set(false)
     disablePreviewParameters.set(false)
-    enableVariants.set(true)
+    designFileKey.set("fileKey")
 }
 
 val buildConfig: Map<String, Any> by project

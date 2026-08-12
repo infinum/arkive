@@ -35,7 +35,7 @@ fun RoundedButton(
 }
 
 @Preview
-@ArkiveComposable(name = "Rounded Button", group = "Button", tags = ["Rounded"])
+@ArkiveComposable(name = "Rounded Button", group = "Button", tags = ["Rounded"], designNodeId = "lsjlasalskla")
 @Composable
 internal fun PreviewRoundedButton() {
     SampleApptheme {

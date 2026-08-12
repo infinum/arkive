@@ -16,8 +16,6 @@ buildscript {
         classpath(libs.gradle.android)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
-        classpath(libs.paparazzi.plugin)
-        classpath(libs.arkive.plugin)
     }
 }
 
