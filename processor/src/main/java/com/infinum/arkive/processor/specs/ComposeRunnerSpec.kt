@@ -2,7 +2,6 @@ package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
-import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.shared.Constants
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -31,7 +30,8 @@ class ComposeRunnerSpec(
             .build()
             .writeTo(
                 codeGenerator = codeGenerator,
-                aggregating = false,
+                aggregating = true,
+                originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
             )
 
         logger.info("Generated $SIMPLE_NAME")
@@ -47,7 +47,7 @@ class ComposeRunnerSpec(
     private fun getRunnerFunction(holder: ComposeHolder): CodeBlock {
         val functionRunner = MemberName(
             packageName = "com.infinum.arkive",
-            simpleName = holder.functionName
+            simpleName = holder.functionName,
         )
         return CodeBlock.builder().apply {
             addStatement("%M(runner)", functionRunner)
@@ -76,19 +76,6 @@ class ComposeRunnerSpec(
     }
 
     private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder(SIMPLE_NAME)
-
-    private fun getCodeBody(holder: ComposeHolder): CodeBlock {
-        return CodeBlock.builder().apply {
-            val functionMember = MemberName(
-                packageName = holder.packageName,
-                simpleName = holder.functionName,
-            )
-            addStatement(
-                "%M()",
-                functionMember,
-            )
-        }.build()
-    }
 
     private fun getComposableAnnotation(): AnnotationSpec {
         return AnnotationSpec.builder(ClassName.bestGuess(ANNOTATION_COMPOSABLE))

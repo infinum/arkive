@@ -7,14 +7,14 @@ import kotlinx.serialization.Serializable
 data class ComponentVariant(
     @SerialName("category") val category: String,
     @SerialName("variant") val variant: String,
-    @SerialName("snapshotPath") val snapshotPath: String
+    @SerialName("snapshotPath") val snapshotPath: String,
 )
 
 @Serializable
 data class ShowcaseItem(
     @SerialName("component") val component: Component,
     @SerialName("snapshotPath") val snapshotPath: String,
-    @SerialName("variants") val variants: List<ComponentVariant>
+    @SerialName("variants") val variants: List<ComponentVariant>,
 )
 
 @Serializable
@@ -27,5 +27,5 @@ data class ArkiveModule(
 @Serializable
 data class ArkiveShowcase(
     @SerialName("projectName") val projectName: String,
-    @SerialName("modules") val modules: List<ArkiveModule>
+    @SerialName("modules") val modules: List<ArkiveModule>,
 )

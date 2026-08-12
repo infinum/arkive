@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.ir.backend.js.compile
-
 plugins {
     id("java-gradle-plugin")
     id("kotlin")
@@ -22,8 +20,8 @@ group = releaseConfig["group"] as String
 version = releaseConfig["version"] as String
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 gradlePlugin {

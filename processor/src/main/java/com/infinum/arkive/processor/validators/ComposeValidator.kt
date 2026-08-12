@@ -2,6 +2,7 @@ package com.infinum.arkive.processor.validators
 
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.specs.ComposeVariantSpec.Companion.PREVIEW_PARAMETER_ANNOTATION_NAME
@@ -33,10 +34,14 @@ class ComposeValidator(
     /**
      * Check if there is no parameters or only one parameter with annotation `@PreviewParameter`
      */
-    private fun verifyParameters(composeHolder: ComposeHolder) = composeHolder.parameters.isEmpty() ||
-        (composeHolder.parameters.size == 1 &&
-            composeHolder.parameters[0].annotations.find {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == PREVIEW_PARAMETER_ANNOTATION_NAME
-            } != null
-        )
+    private fun verifyParameters(composeHolder: ComposeHolder): Boolean {
+        val parameters = composeHolder.parameters
+        return parameters.isEmpty() ||
+            (parameters.size == 1 && parameters[0].hasPreviewParameterAnnotation())
+    }
+
+    private fun KSValueParameter.hasPreviewParameterAnnotation(): Boolean =
+        annotations.any {
+            it.annotationType.resolve().declaration.qualifiedName?.asString() == PREVIEW_PARAMETER_ANNOTATION_NAME
+        }
 }

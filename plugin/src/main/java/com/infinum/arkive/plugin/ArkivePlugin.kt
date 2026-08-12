@@ -11,7 +11,6 @@ import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.internal.cc.base.logger
 
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -59,7 +58,7 @@ class ArkivePlugin : Plugin<Project> {
     }
 
     private fun addPlugins(project: Project) {
-        logger.info("Adding plugins")
+        project.logger.info("Adding plugins")
         if (!project.pluginManager.hasPlugin("app.cash.paparazzi")) {
             // Apply by id (not class reference) so Paparazzi need not be on the compile
             // classpath — it can stay an `implementation` dep, hidden from consumers.
@@ -105,8 +104,8 @@ class ArkivePlugin : Plugin<Project> {
 
             val dependencyExists = configuration.dependencies.any { dependency ->
                 dependency.group == dependencyNotation.substringBefore(":") &&
-                        dependency.name == dependencyNotation.substringAfter(":")
-                    .substringBefore(":")
+                    dependency.name == dependencyNotation.substringAfter(":")
+                        .substringBefore(":")
             }
 
             if (!dependencyExists) {
@@ -116,11 +115,10 @@ class ArkivePlugin : Plugin<Project> {
     }
 
     private fun addTasks(project: Project) {
-
-        logger.warn("Arkive: Adding tasks")
+        project.logger.warn("Arkive: Adding tasks")
 
         project.plugins.withId("com.android.application") {
-            logger.warn("Arkive: Android app")
+            project.logger.warn("Arkive: Android app")
 
             val androidComponents =
                 project.extensions.getByType(AndroidComponentsExtension::class.java)
@@ -144,7 +142,7 @@ class ArkivePlugin : Plugin<Project> {
         with(project) {
             tasks.register(
                 "${GenerateShowcaseTask.NAME}${variant.capFirst}",
-                GenerateShowcaseTask::class.java
+                GenerateShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
@@ -182,9 +180,7 @@ class ArkivePlugin : Plugin<Project> {
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION
-                task.dependsOn(
-                    *subTasks.toTypedArray()
-                )
+                task.dependsOn(subTasks)
                 task.setSource(rootProject.projectDir)
             }
         }

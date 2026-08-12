@@ -8,18 +8,18 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 
+private const val PREVIEW_TEXT = "Hello, World"
 
 @Composable
 fun DensityVariant(
     scale: Float,
-    component: @Composable () -> Unit
+    component: @Composable () -> Unit,
 ) {
-
     CompositionLocalProvider(
         LocalDensity provides Density(
             density = scale,
-            fontScale = LocalDensity.current.fontScale
-        )
+            fontScale = LocalDensity.current.fontScale,
+        ),
     ) {
         component()
     }
@@ -30,7 +30,7 @@ fun DensityVariant(
 fun PreviewDensityVariant() {
     DensityVariant(1f) {
         Button(onClick = {}) {
-            Text("Hello, World")
+            Text(PREVIEW_TEXT)
         }
     }
 }
@@ -40,7 +40,7 @@ fun PreviewDensityVariant() {
 fun Preview2xDensityVariant() {
     DensityVariant(2f) {
         Button(onClick = {}) {
-            Text("Hello, World")
+            Text(PREVIEW_TEXT)
         }
     }
 }
@@ -50,7 +50,7 @@ fun Preview2xDensityVariant() {
 fun Preview3xDensityVariant() {
     DensityVariant(3f) {
         Button(onClick = {}) {
-            Text("Hello, World")
+            Text(PREVIEW_TEXT)
         }
     }
 }

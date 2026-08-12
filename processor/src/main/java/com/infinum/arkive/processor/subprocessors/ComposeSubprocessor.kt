@@ -20,7 +20,7 @@ class ComposeSubprocessor(
         options: ArkiveOptions,
     ) {
         val composeHolders = componentRepository.getComposeHolders(resolver, logger, options)
-        ComposeVariantSpec(codeGenerator, composeHolders, logger, disablePreviewParameters, enableVariants).write()
+        ComposeVariantSpec(codeGenerator, composeHolders, disablePreviewParameters, enableVariants).write()
         ComposeRunnerSpec(codeGenerator, composeHolders, logger).write()
     }
 }

@@ -2,7 +2,6 @@ package com.infinum.arkive.processor.specs
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
-import com.infinum.arkive.processor.collectors.ArkiveViewCollector.Companion.TAG_VIEW
 import com.infinum.arkive.processor.models.ViewHolder
 import com.infinum.arkive.processor.shared.Constants
 import com.squareup.kotlinpoet.ClassName
@@ -31,7 +30,8 @@ class ViewSpec(
             .build()
             .writeTo(
                 codeGenerator = codeGenerator,
-                aggregating = false,
+                aggregating = true,
+                originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
             )
 
         logger.info("Generated $SIMPLE_NAME")

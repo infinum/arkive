@@ -27,13 +27,13 @@ class ComponentRepository {
                     if (options.skipPreviews.not()) {
                         addAll(previewCollector.collect())
                     }
-                }
+                },
             )
         }
         return composeHolders
     }
 
-    fun getViewHolders(resolver: Resolver, logger: KSPLogger, options: ArkiveOptions): Set<ViewHolder> {
+    fun getViewHolders(resolver: Resolver, logger: KSPLogger): Set<ViewHolder> {
         if (viewHolders.isEmpty()) {
             val arkiveViewCollector = ArkiveViewCollector(resolver, logger)
             val validator = ViewValidator(logger)
@@ -41,7 +41,7 @@ class ComponentRepository {
             viewHolders = validator.validate(
                 buildSet {
                     addAll(arkiveViewCollector.collect())
-                }
+                },
             )
         }
         return viewHolders

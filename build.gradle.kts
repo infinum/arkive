@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath(libs.tools.gradle)
+        classpath(libs.gradle.android)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
     }

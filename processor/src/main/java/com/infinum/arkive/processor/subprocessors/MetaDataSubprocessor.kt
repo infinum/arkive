@@ -13,7 +13,7 @@ class MetaDataSubprocessor(
     override fun process(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, options: ArkiveOptions) {
         val holders = buildSet {
             addAll(componentRepository.getComposeHolders(resolver, logger, options))
-            addAll(componentRepository.getViewHolders(resolver, logger, options))
+            addAll(componentRepository.getViewHolders(resolver, logger))
         }
 
         MetaDataSpec(codeGenerator, holders).write()

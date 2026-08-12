@@ -12,9 +12,11 @@ class MetaDataSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<Holder>,
 ) : Spec {
+    @Suppress("SpreadOperator") // KSP's Dependencies only exposes a vararg constructor
     override fun write() {
+        val originatingFiles = holders.mapNotNull { it.function.containingFile }.distinct().toTypedArray()
         val writer = codeGenerator.createNewFileByPath(
-            dependencies = Dependencies(false),
+            dependencies = Dependencies(true, *originatingFiles),
             path = META_DATA_RESOURCES_PATH,
             extensionName = META_DATA_FILE_EXTENSION,
         ).bufferedWriter()
