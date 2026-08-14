@@ -15,6 +15,7 @@ Skills for working with [Arkive](https://github.com/infinum/arkive) in Claude Co
 |---|---|
 | `/arkive:setup` | Adds Arkive to every module with previews (latest Maven Central version, pinned), configures flavors via `multiModuleVariant`, fixes private previews and empty test source sets, and ends with the showcase served in a browser |
 | `/arkive:annotate` | Adds/edits `@ArkiveComposable` / `@ArkiveView` following the shared naming, grouping, and tagging conventions — invoked every time a component joins the catalogue |
+| `/arkive:find` | The reuse gate: before implementing a "new" screen or component, searches the catalogue (names, groups, tags, Figma node ids) and the source, visually triages suspects in a subagent, and returns use-it / extend-it / build-new |
 | `/arkive:design-loop` | Implement → regenerate showcase → multimodal compare against Figma (via `designNodeId` annotations, or a pasted URL) or against written intent/specs → fix or stop-and-ask. Screens first, base snapshots only, no goldens involved |
 | `/arkive:snapshot-testing` | Enables `snapshotRetention` (explaining the change), records goldens and confirms they landed, proves `verifyShowcase` green before committing, and diagnoses verify failures. Requires arkive 0.0.3+ |
 

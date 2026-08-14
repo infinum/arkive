@@ -1,7 +1,7 @@
 {
   "name": "arkive",
   "version": "0.1.0",
-  "description": "Skills for working with Arkive (com.infinum.arkive), the Compose/View showcase and snapshot plugin: project setup, catalogue annotation conventions, Figma/spec design validation loop, and golden snapshot testing.",
+  "description": "Skills for working with Arkive (com.infinum.arkive), the Compose/View showcase and snapshot plugin: project setup, catalogue annotation conventions, component reuse discovery, Figma/spec design validation loop, and golden snapshot testing.",
   "author": {
     "name": "Infinum",
     "url": "https://github.com/infinum"

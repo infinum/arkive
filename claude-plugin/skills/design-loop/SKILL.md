@@ -57,28 +57,32 @@ ask what the screen should look like **before** judging; never invent the requir
 
 ## The loop
 
-1. **Implement / update the view** using existing shared components (design tokens,
+1. **New screen or component? Run the reuse check first — this is a gate, not a
+   suggestion.** Follow `/arkive:find` (search the catalogue + source, visually triage
+   suspects) before writing any code; it returns use-it / extend-it / build-new.
+   Implementing a "new" component without it is a red flag.
+2. **Implement / update the view** using existing shared components (design tokens,
    typography, the project's building blocks). If nothing fits, STOP and ask before
    inventing a custom piece.
-2. **Regenerate:** `./gradlew :<module>:generateShowcase<Variant>` (fastest debug
+3. **Regenerate:** `./gradlew :<module>:generateShowcase<Variant>` (fastest debug
    variant). Recording is module-wide and takes minutes — iterate within one module, and
    batch fixes across a screen before regenerating rather than re-running per tweak.
-3. **Locate the snapshot** in `<module>/build/generated/arkive/showcase/images/` by its
+4. **Locate the snapshot** in `<module>/build/generated/arkive/showcase/images/` by its
    component id (see the cheatsheet's filename convention). If it's missing, the preview
    crashed — find the `Arkive: skipping component` log line and fix that first.
-4. **Fetch the design truth** for the tier you're on.
-5. **Compare in a single turn:** Read the snapshot PNG (renders visually), fetch/hold the
+5. **Fetch the design truth** for the tier you're on.
+6. **Compare in a single turn:** Read the snapshot PNG (renders visually), fetch/hold the
    design truth, and enumerate every observable difference — colors, spacing, alignment,
    font weight, corner radii, shadows, icons, missing or extra elements, text content.
    Saying "matches" or "looks close" without listed concrete observations is a rule
    violation: either list the diffs, or state specifically that none are visible. Never
    declare a match from reading your own code.
-6. **Decide** (tolerance table below).
+7. **Decide** (tolerance table below).
 
 | Situation | Action |
 |---|---|
 | No visible diff | Done — go to the handoff |
-| Visible diff, fixable with existing components | Fix, go to step 2 |
+| Visible diff, fixable with existing components | Fix, go to step 3 |
 | Fix needs breaking / duplicating / customizing a shared component | **STOP. Ask.** |
 | Diff is ambiguous (unclear which side is correct) | **STOP. Ask.** |
 | Repeated attempts aren't converging | **STOP. Ask.** |
@@ -95,6 +99,7 @@ ask what the screen should look like **before** judging; never invent the requir
 ## Red flags — STOP and ask
 
 - "Close enough."
+- Starting a new screen or component without the `/arkive:find` reuse check.
 - "I'll build a custom version of the shared component to match the design."
 - "The Figma might be out of date." (Maybe — but that's the user's call, not yours.)
 - Judging a match from code inspection instead of loading both images.

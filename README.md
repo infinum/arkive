@@ -43,6 +43,7 @@ skill/instruction mechanism your agent supports.
 |---|---|
 | `/arkive:setup` | Installs the latest published version (pinned), applies Arkive to every module with previews, configures flavors, fixes the common silent traps (private previews, empty test source sets), generates the first catalogue, and opens it in your browser |
 | `/arkive:annotate` | Adds or edits `@ArkiveComposable` / `@ArkiveView` following consistent naming, grouping, and tagging conventions — so the catalogue sidebar stays clean as the team grows it |
+| `/arkive:find` | The reuse gate: before building a "new" screen or component, searches the catalogue and source for an existing implementation, visually compares the candidates, and answers use-it / extend-it / build-new |
 | `/arkive:design-loop` | Implement → regenerate → visually compare each screen against its Figma frame (or your spec) → fix or stop-and-ask. Uses the `designNodeId` annotations to find the right Figma node automatically |
 | `/arkive:snapshot-testing` | Turns the catalogue into a regression net: enables golden retention, records and verifies goldens, and diagnoses `verifyShowcase` failures |
 
