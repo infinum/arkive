@@ -30,18 +30,24 @@ arkive {
     enablePreviewParameters.set(true)  // expand @PreviewParameter values
     designFileKey.set("...")           // Figma file key — powers per-component Figma links
     snapshotRetention.set(SnapshotRetention.NONE)  // NONE (default) | BASE | ALL — what stays as goldens
-    multiModuleVariant.set("...")      // which variant the root aggregate uses for this module
+    multiModuleVariant.set("uatDebug") // REQUIRED when the module has flavors — the root
+                                       // aggregate defaults to "debug", which doesn't exist
+                                       // in a flavored module; wrong/missing value = module
+                                       // silently absent from generateWebShowcase
 }
 ```
 
 ## Annotations
 
-- Plain `@Preview` composables are collected automatically.
-- `@ArkiveComposable(id, skip, designNodeId)` — control naming, exclusion, and the Figma
-  node mapping. Problems with `@ArkiveComposable` functions are build errors; problems
-  with plain `@Preview`s are silently skipped.
-- `@ArkiveView(id, designNodeId)` — for XML layouts.
-- Private functions are always dropped.
+- Plain `@Preview` composables are collected automatically — including their own
+  `name`/`group` arguments.
+- `@ArkiveComposable(name, group, tags, skip, designNodeId, extraMetadata)` — catalogue
+  curation and the Figma node mapping. Same fields on `@ArkiveView` for XML layouts.
+  Problems with `@ArkiveComposable` functions are build errors; problems with plain
+  `@Preview`s are silently skipped.
+- Private functions are always dropped — raise previews to `internal`.
+- Naming/grouping standard: `references/annotation-conventions.md` (used by
+  `/arkive:annotate`).
 
 ## Output locations (consumer project)
 
@@ -96,6 +102,11 @@ directory afterwards:
   project or `generateWebShowcase` is never registered.
 - The consumer module must apply the KSP plugin (`com.google.devtools.ksp`) — Arkive adds
   the KSP *dependencies* but does not apply the KSP plugin.
+- **Empty test source set = zero snapshots, zero errors.** KSP only runs on a source set
+  with at least one symbol; a module with no test sources never triggers the test
+  processor, so the Paparazzi test is never generated. Fix: add a
+  `src/test/java/ArkiveDummy.kt` containing `class ArkiveDummy { val paparazzi = Paparazzi() }`.
+- Private previews never reach the catalogue — raise them to `internal`.
 - Arkive applies Paparazzi itself — the consumer must not apply a conflicting Paparazzi
   version.
 - Latest published version: `https://repo1.maven.org/maven2/com/infinum/arkive/plugin/maven-metadata.xml`
