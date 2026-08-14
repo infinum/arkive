@@ -39,12 +39,13 @@ arkive {
 
 ## Annotations
 
-- Plain `@Preview` composables are collected automatically — including their own
-  `name`/`group` arguments.
-- `@ArkiveComposable(name, group, tags, skip, designNodeId, extraMetadata)` — catalogue
-  curation and the Figma node mapping. Same fields on `@ArkiveView` for XML layouts.
-  Problems with `@ArkiveComposable` functions are build errors; problems with plain
-  `@Preview`s are silently skipped.
+- Plain `@Preview` composables are collected **by default** (including their own
+  `name`/`group` arguments); opt out with `ksp { arg("skipPreviews", "true") }` for a
+  fully-curated catalogue.
+- `@ArkiveComposable(name, group, tags, skip, designNodeId, extraMetadata)` — **the
+  recommended annotation** for anything staying in the catalogue: richer info than
+  `@Preview` can carry, and problems are build errors while broken plain `@Preview`s are
+  silently skipped. Same fields on `@ArkiveView` for XML layouts.
 - Private functions are always dropped — raise previews to `internal`.
 - Naming/grouping standard: `references/annotation-conventions.md` (used by
   `/arkive:annotate`).

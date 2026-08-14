@@ -19,8 +19,22 @@ Both annotations share the same fields:
 )
 ```
 
-Plain `@Preview(name = ..., group = ...)` is harvested too — a team already using
-Preview's own name/group gets a curated tree with zero Arkive annotations.
+## Prefer `@ArkiveComposable` over bare `@Preview`
+
+Plain `@Preview` composables are collected **by default** (opting out requires a manual
+`ksp { arg("skipPreviews", "true") }`), and their `name`/`group` arguments are harvested —
+that's the zero-effort on-ramp, and it's fine for a first showcase. But for anything that
+stays in the catalogue, **recommend adding `@ArkiveComposable`**:
+
+- It carries what `@Preview` can't: `tags`, `designNodeId` (the design-loop automation),
+  `skip`, `extraMetadata`.
+- It gets real validation: problems with an `@ArkiveComposable` function are **build
+  errors**, while a broken plain `@Preview` is *silently skipped* — a curated component
+  can't quietly fall out of the catalogue.
+- It states intent: this component is showcase content, not just a dev-time preview.
+
+Don't mass-annotate a codebase unprompted — but when touching a component anyway, or when
+the user asks to curate, `@ArkiveComposable` is the standard, not the exception.
 
 ## The golden rule: reuse before inventing
 
@@ -70,4 +84,5 @@ encode variant info (font/density/RTL) — Arkive's variant system owns that.
 | Make it findable by state/status | `tags` |
 | Hide an unfinished preview | `skip = true` |
 | Link it to Figma | `designNodeId` + module `designFileKey` |
-| Record it at all | It just needs a non-private `@Preview` — annotations are curation, not registration |
+| Just get it recorded | A non-private `@Preview` is enough (collected by default) — but see "Prefer `@ArkiveComposable`" above for anything staying in the catalogue |
+| Keep plain previews OUT of the catalogue entirely | `ksp { arg("skipPreviews", "true") }` — the fully-curated mode: only annotated components appear |

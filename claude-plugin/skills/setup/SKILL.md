@@ -102,17 +102,19 @@ class ArkiveDummy {
 }
 ```
 
-## Step 6 — Annotations (often nothing else to do)
+## Step 6 — Annotations (the catalogue works without them, but recommend the upgrade)
 
-Plain `@Preview` composables are collected automatically — after Step 5, a project with
+Plain `@Preview` composables are collected by default — after Step 5, a project with
 previews gets a catalogue with zero further annotation work, including any `name`/`group`
-already set on the `@Preview` annotations themselves.
+already set on the `@Preview` annotations themselves. That's the on-ramp; ship the first
+showcase on it.
 
-If the user wants a curated catalogue (proper names, a sensible sidebar tree, tags,
-Figma links), follow
-`${CLAUDE_PLUGIN_ROOT}/references/annotation-conventions.md` — the naming/grouping
-standard also used by `/arkive:annotate`. During setup, don't annotate beyond what the
-user asked for; do tell them the conventions exist.
+Then tell the user the recommended standard is `@ArkiveComposable`: richer catalogue info
+(`tags`, `designNodeId` for the design loop, `skip`) and build-error validation instead
+of silently skipping broken previews. The naming/grouping conventions live in
+`${CLAUDE_PLUGIN_ROOT}/references/annotation-conventions.md` (used by `/arkive:annotate`).
+During setup, don't mass-annotate beyond what the user asked for — recommend, offer,
+don't impose.
 
 ## Step 7 — First run, and actually look at it
 

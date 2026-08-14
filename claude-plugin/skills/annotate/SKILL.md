@@ -15,10 +15,12 @@ before writing any annotation.
    `tags =` in the module's annotations, or read the latest `arkive-showcase.json`).
    Reuse exact spelling, casing, and pluralization. Only invent a new group when nothing
    existing fits — and say so.
-2. **Annotate minimally.** A non-private `@Preview` is already in the catalogue;
-   annotations are curation. Only add `@ArkiveComposable`/`@ArkiveView` when the user
-   wants a display name, a group, tags, a Figma link, or a skip — don't wrap every
-   preview ceremonially.
+2. **Prefer `@ArkiveComposable` when adding a component to the catalogue.** A non-private
+   `@Preview` is collected by default, but `@ArkiveComposable` carries richer info
+   (`tags`, `designNodeId`, `skip`) and is validated with build errors instead of silent
+   skips — it's the standard for anything that stays in the catalogue. Don't
+   mass-annotate a codebase unprompted, but when the task is "add/curate this component",
+   annotate it properly rather than leaving a bare `@Preview`.
 3. **Check visibility.** The processor drops `private` functions — raise annotated
    previews to `internal` if needed.
 4. **Figma linking:** `designNodeId` takes the `X-Y` node id from the component's Figma
