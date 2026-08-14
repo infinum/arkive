@@ -58,9 +58,21 @@ arkive {
   committing every font/density/layout-direction variant.
 - `ALL` — everything stays; consider Git LFS for the golden directory.
 
-Note: Arkive's generated snapshot tests currently prioritize resilient recording — a
-preview that fails is logged and skipped rather than failing the build. Build-failing
-`verifyPaparazzi` support for the retained goldens is planned for a future release.
+Verify the retained goldens with Arkive's own task:
+
+```
+./gradlew verifyShowcase<Variant>
+```
+
+It runs Paparazzi's verify scoped to Arkive's generated test class only, checks the
+goldens the retention policy kept (base under `BASE`, everything under `ALL`), and fails
+the build with an aggregate report naming every mismatched component. With
+`snapshotRetention = NONE` the task fails fast — there is nothing to verify.
+
+Recording stays resilient either way: a preview that fails to render is logged and
+skipped, never breaking the build, and is likewise excluded from verification (it has no
+golden). Running plain `verifyPaparazzi<Variant>` yourself is also safe — Arkive's tests
+only enforce goldens the retention policy retained.
 
 Arkive only ever touches snapshots recorded by its own generated test class — your own
 Paparazzi goldens in the same directory are ignored.

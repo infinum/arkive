@@ -36,6 +36,8 @@ after republishing the same version.
   `./gradlew generateWebShowcase` → output at `build/generated/arkive/showcase/` (serve it
   with `python3 -m http.server`; the JSON is fetched, so `file://` won't work)
 - Per-variant module task: `./gradlew :sample:generateShowcaseUatDebug`
+- Verify retained goldens: `./gradlew :sample:verifyShowcaseUatDebug` (needs
+  `snapshotRetention` BASE/ALL and previously recorded goldens)
 - Central deploy: `./gradlew deployAll` (needs `SONATYPE_USERNAME`/`SONATYPE_PASS` env vars +
   signing keys in `~/.gradle/gradle.properties`), then the OSSRH staging API dance: GET
   `/manual/search/repositories?state=open`, POST `/manual/upload/repository/<key>`, then
@@ -91,9 +93,13 @@ Modules and how they compose at a consumer's build time:
   (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`); on the consumer's classpath.
 - **plugin** — applies Paparazzi by id (kept off the consumer's compile classpath), injects
   the runtime/KSP dependencies at `ArkiveVersion.current`, forwards extension flags
-  (`enablePreviewParameters`, `enableVariants`, `snapshotRetention`) as KSP args, and
-  registers tasks: per-variant `generateShowcase<Variant>` (depends on
-  `recordPaparazzi<Variant>`) and root `generateWebShowcase`. Applying the plugin to the
+  (`enablePreviewParameters`, `enableVariants`) as KSP args and `snapshotRetention` as the
+  `arkive.snapshot.retention` system property on the consumer's Test tasks (read at test
+  runtime, so changing retention never invalidates KSP codegen), and registers tasks:
+  per-variant `generateShowcase<Variant>` (depends on `recordPaparazzi<Variant>`),
+  per-variant `verifyShowcase<Variant>` (depends on `verifyPaparazzi<Variant>`, scopes the
+  test run to Arkive's generated test class via a `taskGraph.whenReady` filter, and fails
+  fast when retention is NONE), and root `generateWebShowcase`. Applying the plugin to the
   consumer's **root** project registers the aggregate task eagerly — required under
   `org.gradle.configureondemand`, where task-name resolution happens before
   `projectsEvaluated` callbacks fire.
@@ -117,10 +123,22 @@ designed for GitHub Pages (relative paths only). It fetches `arkive-showcase.jso
 resolves images as `<module>/images/<basename(snapshotPath)>`. No build step, no CDN, no
 bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added).
 
-## Known deferred work
+## Golden verification (verifyShowcase)
 
-Build-failing `verifyPaparazzi` for retained goldens is intentionally deferred: the
-generated tests currently swallow failures for record resilience, so verify cannot fail on
-Arkive snapshots. The working design (gating on the `paparazzi.test.verify` system
-property, aggregate failure reporting, marker-aware teardown absorber) lives in PR #16
-history around commits `4054fad`/`261f83f`.
+The failure-swallowing that keeps recording resilient is **mode-aware**, keyed on the
+`paparazzi.test.verify` system property Paparazzi itself sets. Three cooperating layers:
+
+- The generated shooter (`ComposeRunnerSpec`) collects per-component `AssertionError`s in
+  verify mode and throws one aggregate error naming every mismatched component; other
+  `Throwable`s (render crashes) stay skip-logged in both modes — a preview that never
+  recorded has no golden, so verify must not fail on it.
+- The generated test (`ArkiveTestProcessor`) reads `arkive.snapshot.retention` and
+  self-skips verification the retention policy has no goldens for (everything under NONE,
+  the variants test under BASE) — this keeps a consumer's own plain `verifyPaparazzi` runs
+  green instead of failing on golden-less Arkive snapshots. The RuleChain absorber
+  swallows teardown re-throws only in record mode.
+- `verifyShowcase<Variant>` is the public entry point (see plugin bullet above).
+
+Verified end-to-end on the sample (BASE retention, 31 base goldens): corrupted golden →
+aggregate failure naming the component; missing golden → failure; retention NONE → plain
+`verifyPaparazzi` stays green even with goldens missing, `verifyShowcase` fails fast.

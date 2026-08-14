@@ -11,8 +11,11 @@ import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.utils.capFirst
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.testing.Test
+import org.gradle.process.CommandLineArgumentProvider
 
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -43,9 +46,25 @@ class ArkivePlugin : Plugin<Project> {
             addPlugins(this)
             addDependencies(this)
             addTestDependencies(this)
+            forwardRetentionToTests(this)
             addTasks(this)
 
             addRootTasks(rootProject)
+        }
+    }
+
+    private fun forwardRetentionToTests(project: Project) {
+        // The generated snapshot test reads retention at runtime to decide which verify
+        // guards apply (see ArkiveTestProcessor). A lazy argument provider defers reading
+        // the extension until the test JVM is forked, after the consumer's script ran.
+        project.tasks.withType(Test::class.java).configureEach { test ->
+            test.jvmArgumentProviders.add(
+                CommandLineArgumentProvider {
+                    val retention = project.extensions.findByType(ArkiveExtension::class.java)
+                        ?.snapshotRetention?.get() ?: SnapshotRetention.NONE
+                    listOf("-Darkive.snapshot.retention=${retention.name}")
+                },
+            )
         }
     }
 
@@ -180,6 +199,44 @@ class ArkivePlugin : Plugin<Project> {
                 task.setSource(projectDir)
             }
         }
+        addVerifyTaskWithVariant(project, variant)
+    }
+
+    /**
+     * `verifyShowcase<Variant>` is the public verify entry point: it runs Paparazzi's
+     * verify scoped to Arkive's generated test class only, so the consumer's own Paparazzi
+     * tests and goldens are never pulled into an Arkive verification (mirroring the
+     * boundary SnapshotsGrabber keeps on the golden directory).
+     */
+    private fun addVerifyTaskWithVariant(project: Project, variant: String) {
+        val verifyTaskName = "$VERIFY_SHOWCASE_TASK${variant.capFirst}"
+        project.tasks.register(verifyTaskName) { task ->
+            task.group = GenerateShowcaseTask.GROUP
+            task.description = "Verifies Arkive snapshots against the retained goldens"
+            if (variant.isEmpty()) {
+                task.dependsOn(VERIFYING_TASK)
+            } else {
+                task.dependsOn("$VERIFYING_TASK${variant.capFirst}")
+            }
+        }
+
+        project.gradle.taskGraph.whenReady { graph ->
+            val verifyTask = project.tasks.findByName(verifyTaskName)
+            if (verifyTask != null && graph.hasTask(verifyTask)) {
+                val retention = project.extensions.findByType(ArkiveExtension::class.java)
+                    ?.snapshotRetention?.get() ?: SnapshotRetention.NONE
+                if (retention == SnapshotRetention.NONE) {
+                    throw GradleException(
+                        "Arkive: $verifyTaskName has nothing to verify — snapshotRetention is NONE, " +
+                            "so no goldens are retained. Set arkive.snapshotRetention to BASE or ALL " +
+                            "and record goldens with ${GenerateShowcaseTask.NAME}${variant.capFirst} first.",
+                    )
+                }
+                val testTaskName = if (variant.isEmpty()) "test" else "test${variant.capFirst}UnitTest"
+                val testTask = project.tasks.findByName(testTaskName) as? Test
+                testTask?.filter?.includeTestsMatching(GENERATED_TEST_CLASS)
+            }
+        }
     }
 
     private fun addRootTasks(rootProject: Project) {
@@ -214,5 +271,8 @@ class ArkivePlugin : Plugin<Project> {
 
     companion object {
         private const val PLUGIN_ID = "com.infinum.arkive"
+        private const val VERIFY_SHOWCASE_TASK = "verifyShowcase"
+        private const val VERIFYING_TASK = "verifyPaparazzi"
+        private const val GENERATED_TEST_CLASS = "com.infinum.arkive.ArkiveSnapshotTestGenerator"
     }
 }
