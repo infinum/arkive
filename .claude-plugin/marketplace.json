@@ -1,0 +1,14 @@
+{
+  "name": "arkive",
+  "owner": {
+    "name": "Infinum",
+    "url": "https://github.com/infinum"
+  },
+  "plugins": [
+    {
+      "name": "arkive",
+      "source": "./claude-plugin",
+      "description": "AI skills for Arkive: set it up on a new repo, run the design validation loop against Figma or specs, and manage golden snapshot testing."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "arkive",
+  "version": "0.1.0",
+  "description": "Skills for working with Arkive (com.infinum.arkive), the Compose/View showcase and snapshot plugin: project setup, Figma/spec design validation loop, and golden snapshot testing.",
+  "author": {
+    "name": "Infinum",
+    "url": "https://github.com/infinum"
+  },
+  "homepage": "https://github.com/infinum/arkive",
+  "license": "Apache-2.0",
+  "keywords": ["android", "compose", "paparazzi", "snapshot-testing", "figma", "showcase"]
+}
