@@ -130,8 +130,13 @@ Recording every preview takes minutes on a real app — warn the user before run
    trap from Step 5.
 2. Scan the build log for `Arkive: skipping component` lines — each is a preview that
    crashed and was dropped. Report them; don't let them pass silently.
-3. Serve it: `cd build/generated/arkive/showcase && python3 -m http.server` — **`file://`
-   does not work** (the JSON is fetched). Give the user the localhost URL.
+3. Serve it **in the background** so the session isn't blocked:
+   `cd build/generated/arkive/showcase && python3 -m http.server 8090` — **`file://`
+   does not work** (the JSON is fetched).
+4. **Open it for the user** — don't just print the URL: `open http://localhost:8090`
+   (macOS) / `xdg-open http://localhost:8090` (Linux) / `start` (Windows). Setup ends
+   with the catalogue on the user's screen, and tell them the server keeps running so
+   they can keep browsing (and how to stop it).
 
 ## Troubleshooting
 
@@ -148,7 +153,8 @@ Recording every preview takes minutes on a real app — warn the user before run
 ## Red flags — STOP
 
 - Writing any non-pinned version into a build file.
-- Declaring setup done without having generated and served the showcase.
+- Declaring setup done without having generated the showcase and opened it in the
+  user's browser.
 - Guessing a flavor for `multiModuleVariant` when several are plausible — ask.
 - Creating previews for un-previewed composables without asking.
 - Installing a version older than 0.0.3 because "it's what's published".
