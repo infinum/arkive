@@ -137,6 +137,9 @@ Recording every preview takes minutes on a real app — warn the user before run
    (macOS) / `xdg-open http://localhost:8090` (Linux) / `start` (Windows). Setup ends
    with the catalogue on the user's screen, and tell them the server keeps running so
    they can keep browsing (and how to stop it).
+5. Tell the user the no-server way to view it later: in Android Studio, right-click
+   `build/generated/arkive/showcase/index.html` → **Open In → Browser** (the IDE's
+   built-in web server serves it — double-clicking the file in Finder won't work).
 
 ## Troubleshooting
 

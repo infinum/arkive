@@ -68,9 +68,12 @@ Generate and view:
 
 ```
 ./gradlew generateWebShowcase
-cd build/generated/arkive/showcase && python3 -m http.server 8090
-# open http://localhost:8090  (file:// won't work — the catalogue fetches its JSON)
 ```
+
+Then in Android Studio, right-click `build/generated/arkive/showcase/index.html` →
+**Open In → Browser**. (The IDE serves it over its built-in web server; double-clicking
+the file in Finder/Explorer won't work — the catalogue fetches its data, which `file://`
+blocks. Any static file server works too.)
 
 ## Configuration
 
