@@ -1,106 +1,180 @@
-# arkive
-Gradle plugin for generating screenshots of Android UI components
+# Arkive
 
-**Live demo:** the sample app's generated showcase is deployed to
+Arkive turns your Compose previews and XML views into a browsable web catalogue of your
+app's UI — recorded on the JVM with [Paparazzi](https://github.com/cashapp/paparazzi), no
+device or emulator, no test code to write.
+
+**Live demo:** the sample app's catalogue is deployed to
 [GitHub Pages](https://infinum.github.io/arkive/) on every merge to `main`.
 
-## Using a locally published build
+## Install with AI skills (recommended)
 
-The plugin id resolves through Gradle's *plugin repositories*, so consuming a
-`publishToMavenLocal` build requires `mavenLocal()` in the consumer's
-`settings.gradle(.kts)` — in **both** blocks:
+The fastest way to adopt Arkive is to let your coding agent do it. This repo ships a
+Claude Code plugin with skills that install Arkive correctly (right version, every module
+with previews, flavor-aware configuration) and end with the catalogue open in your
+browser.
 
-```kotlin
-pluginManagement {
-    repositories {
-        mavenLocal() // resolves the plugin marker + plugin jar
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
+In [Claude Code](https://claude.com/claude-code):
 
-dependencyResolutionManagement {
-    repositories {
-        mavenLocal() // resolves the runtime artifacts the plugin injects
-        google()
-        mavenCentral()
-    }
-}
+```
+/plugin marketplace add infinum/arkive
+/plugin install arkive@arkive
 ```
 
-Then apply the plugin to an Android module:
+Then just ask for it:
+
+```
+/arkive:setup
+```
+
+**Using another agent?** The skills are plain Markdown — grab them from
+[`claude-plugin/skills/`](claude-plugin/skills/) (and the shared
+[`claude-plugin/references/`](claude-plugin/references/)) and drop them into whatever
+skill/instruction mechanism your agent supports.
+
+## The skills
+
+| Skill | What it does |
+|---|---|
+| `/arkive:setup` | Installs the latest published version (pinned), applies Arkive to every module with previews, configures flavors, fixes the common silent traps (private previews, empty test source sets), generates the first catalogue, and opens it in your browser |
+| `/arkive:annotate` | Adds or edits `@ArkiveComposable` / `@ArkiveView` following consistent naming, grouping, and tagging conventions — so the catalogue sidebar stays clean as the team grows it |
+| `/arkive:design-loop` | Implement → regenerate → visually compare each screen against its Figma frame (or your spec) → fix or stop-and-ask. Uses the `designNodeId` annotations to find the right Figma node automatically |
+| `/arkive:snapshot-testing` | Turns the catalogue into a regression net: enables golden retention, records and verifies goldens, and diagnoses `verifyShowcase` failures |
+
+## Manual installation
+
+Apply the plugin to every Android module whose previews you want in the catalogue:
 
 ```kotlin
 plugins {
-    id("com.infinum.arkive") version "<version>"
+    id("com.google.devtools.ksp") version "<ksp version>"   // required — Arkive runs on KSP
+    id("com.infinum.arkive") version "<latest version>"
 }
 ```
 
-Requirements: Kotlin 2.0 or newer (the published libraries are compiled with a
-Kotlin 2.0 language floor).
+And to the **root** project (this registers the aggregate `generateWebShowcase` task —
+mandatory if your build uses `org.gradle.configureondemand`):
 
-## Snapshot retention and golden testing
+```kotlin
+// root build.gradle.kts
+plugins {
+    id("com.infinum.arkive") version "<latest version>"
+}
+```
 
-The showcase catalogue always receives every recorded snapshot (base + variants).
-`snapshotRetention` controls what *stays* in Paparazzi's `src/test/snapshots` golden
-directory afterwards:
+Requirements: Kotlin 2.0 or newer. Don't apply Paparazzi yourself — Arkive brings its own.
+
+Generate and view:
+
+```
+./gradlew generateWebShowcase
+cd build/generated/arkive/showcase && python3 -m http.server 8090
+# open http://localhost:8090  (file:// won't work — the catalogue fetches its JSON)
+```
+
+## Configuration
+
+Everything lives in the `arkive { }` block, per module:
 
 ```kotlin
 arkive {
-    enableVariants.set(true)                          // rich catalogue
-    snapshotRetention.set(SnapshotRetention.BASE)     // NONE (default) | BASE | ALL
+    multiModuleVariant.set("uatDebug")   // which variant the root task builds for this module —
+                                         // REQUIRED if the module has product flavors (defaults to "debug")
+    enableVariants.set(true)             // also record font-scale / density / RTL variants (slower)
+    enablePreviewParameters.set(true)    // expand @PreviewParameter values (default true)
+    designFileKey.set("AbC123")          // your Figma file key — enables per-component Figma links
+    snapshotRetention.set(SnapshotRetention.NONE) // see Snapshot testing below
 }
 ```
 
-- `NONE` — snapshots are consumed by the showcase; no goldens kept.
-- `BASE` — only base snapshots stay, so a small golden set can live in the repo without
-  committing every font/density/layout-direction variant.
-- `ALL` — everything stays; consider Git LFS for the golden directory.
+### What ends up in the catalogue
 
-Verify the retained goldens with Arkive's own task:
+- Every non-`private` `@Preview` composable is collected automatically — including its
+  `name` and `group`. That's the zero-effort starting point.
+- For components that stay in the catalogue, prefer `@ArkiveComposable`: it carries what
+  `@Preview` can't (`tags`, `skip`, a Figma `designNodeId`, `extraMetadata`) and is
+  validated with build errors, while a broken plain preview is silently skipped.
+- `@ArkiveView` does the same for XML layouts.
+
+```kotlin
+@ArkiveComposable(
+    name = "Primary Button",
+    group = "Buttons",
+    tags = ["cta"],
+    designNodeId = "123-456",
+)
+@Preview
+@Composable
+internal fun PrimaryButtonPreview() { ... }
+```
+
+One gotcha worth knowing: a module with an **empty test source set** records nothing (KSP
+needs at least one symbol there to run). Add a tiny placeholder class referencing
+`Paparazzi` in `src/test/java` — `/arkive:setup` does this for you.
+
+## Snapshot testing
+
+The catalogue always receives every recorded snapshot. `snapshotRetention` controls what
+*stays* in the `src/test/snapshots` golden directory afterwards:
+
+- `NONE` (default) — snapshots are consumed by the catalogue; nothing to verify.
+- `BASE` — one golden per component stays. The recommended mode: a small golden set can
+  live in the repo without committing every font/density/RTL variant.
+- `ALL` — everything stays; consider Git LFS.
+
+Record goldens with `generateShowcase<Variant>`, commit them, then verify in CI:
 
 ```
 ./gradlew verifyShowcase<Variant>
 ```
 
-It runs Paparazzi's verify scoped to Arkive's generated test class only, checks the
-goldens the retention policy kept (base under `BASE`, everything under `ALL`), and fails
-the build with an aggregate report naming every mismatched component. With
-`snapshotRetention = NONE` the task fails fast — there is nothing to verify.
+`verifyShowcase` fails the build with **one aggregate report naming every mismatched
+component**, each with a delta image and an accept command. Missing goldens (new
+components) fail too. With retention `NONE` it fails fast — there's nothing to verify.
+When a change is intentional: re-run `generateShowcase<Variant>` and commit the updated
+goldens.
 
 Run it in its **own Gradle invocation**: the scoping narrows the module's shared
 unit-test task to Arkive's generated class for the whole invocation, so it cannot be
 combined with `check`, `build`, `generateShowcase<Variant>`, or anything else that runs
 those tests — the build fails fast with an explanation if it is.
 
-Recording stays resilient either way: a preview that fails to render is logged and
-skipped, never breaking the build, and is likewise excluded from verification (it has no
-golden). Running plain `verifyPaparazzi<Variant>` yourself is also safe — Arkive's tests
-only enforce goldens the retention policy retained.
+### Already using Paparazzi?
 
-Arkive only ever touches snapshots recorded by its own generated test class — your own
-Paparazzi goldens in the same directory are ignored.
+Arkive coexists with an existing Paparazzi setup — but don't apply the Paparazzi plugin
+yourself alongside Arkive; Arkive applies it (your existing application is detected, just
+keep versions from conflicting):
 
-If your build sets `org.gradle.configureondemand=true`, also apply the plugin to the
-**root** project — otherwise `generateWebShowcase` is never registered, because the
-modules that create it are not configured when you invoke a root task.
+- Your own tests, goldens, and `recordPaparazzi` / `verifyPaparazzi` workflows keep
+  working unchanged. Arkive only ever touches snapshot files recorded by its own
+  generated test class.
+- For Arkive's snapshots, use `verifyShowcase<Variant>` instead of `verifyPaparazzi` —
+  it scopes the run to Arkive's test class and respects the retention policy.
+- Running plain `verifyPaparazzi<Variant>` is still safe: Arkive's generated tests
+  self-skip whatever the retention policy kept no goldens for.
 
-To publish all artifacts locally from this repo:
+Recording is deliberately resilient: a preview that fails to render is logged and skipped
+— it never breaks the build, and it's excluded from verification (it has no golden).
 
-```
-./gradlew publishToMavenLocal
-```
+## Development
 
-## Working on this repo
-
-The `:sample` module consumes the *published* plugin, so a fresh checkout can't
-configure until the plugin exists in mavenLocal. Bootstrap once with:
+The `:sample` module consumes the *published* plugin, so a fresh checkout can't configure
+until the plugin exists in mavenLocal. Bootstrap once:
 
 ```
 ./gradlew publishToMavenLocal -PskipSample
 ```
 
-`-PskipSample` drops `:sample` from the build for that invocation. Afterwards the
-full build (including the sample) works normally. Re-run the bootstrap whenever you
-change plugin code the sample should pick up.
+Afterwards the full build (including the sample) works normally. Re-run the bootstrap
+whenever you change plugin code the sample should pick up.
+
+Consuming a locally published build from another project additionally needs
+`mavenLocal()` in the consumer's `settings.gradle(.kts)` — in **both**
+`pluginManagement.repositories` (plugin marker + jar) and
+`dependencyResolutionManagement.repositories` (the runtime artifacts the plugin injects).
+
+## See it in action
+
+<!-- TODO: embed the catalogue walkthrough video here -->
+
+*Video coming soon — meanwhile, browse the [live demo](https://infinum.github.io/arkive/).*
