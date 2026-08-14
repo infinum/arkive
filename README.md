@@ -4,6 +4,11 @@ Arkive turns your Compose previews and XML views into a browsable web catalogue 
 app's UI — recorded on the JVM with [Paparazzi](https://github.com/cashapp/paparazzi), no
 device or emulator, no test code to write.
 
+## See it in action
+
+https://github.com/user-attachments/assets/8134c6d3-88d0-4c5e-b7b4-badd36761f26
+
+
 **Live demo:** the sample app's catalogue is deployed to
 [GitHub Pages](https://infinum.github.io/arkive/) on every merge to `main`.
 
@@ -175,9 +180,3 @@ Consuming a locally published build from another project additionally needs
 `mavenLocal()` in the consumer's `settings.gradle(.kts)` — in **both**
 `pluginManagement.repositories` (plugin marker + jar) and
 `dependencyResolutionManagement.repositories` (the runtime artifacts the plugin injects).
-
-## See it in action
-
-<!-- TODO: embed the catalogue walkthrough video here -->
-
-*Video coming soon — meanwhile, browse the [live demo](https://infinum.github.io/arkive/).*
