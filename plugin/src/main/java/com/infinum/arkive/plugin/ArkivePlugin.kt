@@ -34,7 +34,7 @@ class ArkivePlugin : Plugin<Project> {
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION
-                task.setSource(project.projectDir)
+                task.setSource(moduleShowcaseOutputDirs(project))
                 task.dependsOn(project.provider { moduleShowcaseTaskPaths(project) })
             }
             return
@@ -249,11 +249,23 @@ class ArkivePlugin : Plugin<Project> {
                     task.group = GenerateWebShowcaseTask.GROUP
                     task.description = GenerateWebShowcaseTask.DESCRIPTION
                     task.dependsOn(moduleShowcaseTaskPaths(rootProject))
-                    task.setSource(rootProject.projectDir)
+                    task.setSource(moduleShowcaseOutputDirs(rootProject))
                 }
             }
         }
     }
+
+    // The task only reads each arkive module's showcase output (see ModuleLoaderImpl).
+    // The source must stay exactly those directories: anything broader (like the root
+    // projectDir) turns every other task's outputs — jacoco reports, lint results — into
+    // undeclared inputs, which strict Gradle validation rejects. Lazy because at
+    // root-apply time the modules haven't been configured yet.
+    private fun moduleShowcaseOutputDirs(rootProject: Project) =
+        rootProject.provider {
+            rootProject.subprojects
+                .filter { it.pluginManager.hasPlugin(PLUGIN_ID) }
+                .map { it.layout.buildDirectory.dir(GenerateWebShowcaseTask.FD_GENERATED) }
+        }
 
     private fun moduleShowcaseTaskPaths(rootProject: Project): List<String> {
         return rootProject.subprojects
