@@ -172,7 +172,7 @@ class ComposeVariantSpec(
     private fun extractPreviewParameterClass(holder: ComposeHolder): Pair<String, String>? {
         for (parameter in holder.parameters) {
             val previewAnnotation = parameter.annotations.find {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == PREVIEW_PARAMETER_ANNOTATION_NAME
+                it.annotationType.resolve().declaration.qualifiedName?.asString() in PREVIEW_PARAMETER_ANNOTATION_NAMES
             }
 
             if (previewAnnotation != null) {
@@ -343,7 +343,13 @@ class ComposeVariantSpec(
         private const val RUNNER_FUNCTION = "runner"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
         private const val COMPOSE_UTILS_PACKAGE = "com.infinum.arkive.composeutils"
-        const val PREVIEW_PARAMETER_ANNOTATION_NAME = "androidx.compose.ui.tooling.preview.PreviewParameter"
+
+        // Compose Multiplatform ships its own PreviewParameter under the jetbrains
+        // namespace; a common preview may use either FQN.
+        val PREVIEW_PARAMETER_ANNOTATION_NAMES = setOf(
+            "androidx.compose.ui.tooling.preview.PreviewParameter",
+            "org.jetbrains.compose.ui.tooling.preview.PreviewParameter",
+        )
 
         private const val FONT_SCALE_NORMAL = 1.0f
         private const val FONT_SCALE_LARGE = 1.5f

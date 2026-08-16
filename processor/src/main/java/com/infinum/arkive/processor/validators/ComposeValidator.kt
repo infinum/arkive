@@ -7,7 +7,7 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import com.infinum.arkive.processor.models.ComposeHolder
-import com.infinum.arkive.processor.specs.ComposeVariantSpec.Companion.PREVIEW_PARAMETER_ANNOTATION_NAME
+import com.infinum.arkive.processor.specs.ComposeVariantSpec.Companion.PREVIEW_PARAMETER_ANNOTATION_NAMES
 
 class ComposeValidator(
     private val logger: KSPLogger,
@@ -72,7 +72,7 @@ class ComposeValidator(
 
     private fun KSValueParameter.previewParameterProvider(): KSClassDeclaration? {
         val annotation = annotations.firstOrNull {
-            it.annotationType.resolve().declaration.qualifiedName?.asString() == PREVIEW_PARAMETER_ANNOTATION_NAME
+            it.annotationType.resolve().declaration.qualifiedName?.asString() in PREVIEW_PARAMETER_ANNOTATION_NAMES
         } ?: return null
         val provider = annotation.arguments.firstOrNull { it.name?.asString() == "provider" }?.value as? KSType
         return provider?.declaration as? KSClassDeclaration
