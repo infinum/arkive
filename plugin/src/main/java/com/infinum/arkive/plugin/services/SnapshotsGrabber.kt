@@ -15,19 +15,22 @@ interface SnapshotsGrabber {
     fun grabSnapshots(outputDir: File): List<GrabbedSnapshot>
 }
 
-private val SNAPSHOTS_PATH =
-    "src${File.separator}test${File.separator}snapshots"
-
 // Only snapshots recorded by the generated Arkive test class are grabbed (and later
 // subject to retention cleanup) — a consumer's own Paparazzi goldens are never touched.
 private const val ARKIVE_SNAPSHOT_PREFIX = "com.infinum.arkive_"
 
+/**
+ * Copies Arkive-recorded goldens out of Paparazzi's snapshot directory. Where that
+ * directory lives differs per project flavor, so the path (relative to the module dir)
+ * comes from the ConsumerAdapter through the task.
+ */
 class SnapshotsGrabberImpl(
     private val project: Project,
+    private val snapshotsPath: String,
 ) : SnapshotsGrabber {
 
     private val snapshotsDir: File
-        get() = project.projectDir.resolve(SNAPSHOTS_PATH)
+        get() = project.projectDir.resolve(snapshotsPath)
 
     override fun grabSnapshots(outputDir: File): List<GrabbedSnapshot> {
         val originalSnapshots = snapshotsDir

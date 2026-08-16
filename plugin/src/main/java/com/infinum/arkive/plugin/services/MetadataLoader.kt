@@ -6,33 +6,32 @@ import java.io.File
 import org.gradle.api.Project
 
 interface MetadataLoader {
-    fun loadMetaData(variant: String): ComponentsMetaData
+    fun loadMetaData(): ComponentsMetaData
 }
 
 interface ProcessorMetadataLoader : MetadataLoader {
-    fun getMetaDataFile(variant: String): File
-    override fun loadMetaData(variant: String): ComponentsMetaData =
-        fromJson(getMetaDataFile(variant).readText())
+    fun getMetaDataFile(): File
+    override fun loadMetaData(): ComponentsMetaData =
+        fromJson(getMetaDataFile().readText())
 }
 
 // TODO: Support for KAPT
-@SuppressWarnings("MaximumLineLength")
-private val KSP_META_DATA_PATH =
-    "generated${File.separator}ksp%s${File.separator}resources${File.separator}arkive${File.separator}components_meta_data.json"
+private val ARKIVE_METADATA_FILE =
+    "arkive${File.separator}components_meta_data.json"
 
+/**
+ * Reads the metadata JSON the processor emits as a KSP resource. Where KSP puts its
+ * output differs per project flavor, so the resources dir (relative to the build dir)
+ * comes from the ConsumerAdapter through the task.
+ */
 class KSPMetaDataLoader(
     private val project: Project,
+    private val kspResourcesPath: String,
 ) : ProcessorMetadataLoader {
 
-    override fun getMetaDataFile(variant: String): File {
-        project.logger.warn("variant: $variant")
-        val variantSegment = "${File.separator}$variant".takeIf { variant.isNotEmpty() }
-        project.logger.warn("variantSegment: $variantSegment")
-
-        return project.layout.buildDirectory.get().asFile.resolve(
-            KSP_META_DATA_PATH.format(
-                variantSegment.orEmpty(),
-            ),
-        )
+    override fun getMetaDataFile(): File {
+        return project.layout.buildDirectory.get().asFile
+            .resolve(kspResourcesPath)
+            .resolve(ARKIVE_METADATA_FILE)
     }
 }

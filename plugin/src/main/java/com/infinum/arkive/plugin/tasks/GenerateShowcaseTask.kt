@@ -8,7 +8,6 @@ import com.infinum.arkive.plugin.services.GrabbedSnapshot
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.utils.ArkiveVersion
-import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import java.io.File
 import org.gradle.api.file.Directory
@@ -43,28 +42,29 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     var variant = ""
 
+    /** KSP-generated resources dir, relative to the build dir; set from the ConsumerAdapter. */
+    @get:Input
+    var kspResourcesPath = ""
+
+    /** Paparazzi's golden dir, relative to the module dir; set from the ConsumerAdapter. */
+    @get:Input
+    var snapshotsPath = ""
+
     @get:Input
     var designFileKey = ""
 
     @get:Input
     var snapshotRetention = SnapshotRetention.NONE.name
 
-    init {
-        project.gradle.projectsEvaluated {
-            val variantText = variant
-
-            if (variantText.isEmpty()) {
-                dependsOn(RECORDING_TASK)
-            } else {
-                dependsOn("$RECORDING_TASK${variantText.capFirst}")
-            }
-        }
-    }
+    // NOTE: the recordPaparazzi dependency is wired at registration (ArkivePlugin.
+    // addTaskWithVariant). Never register listeners from this class's init — tasks can
+    // be realized lazily from guarded contexts (e.g. findByName inside a projectsEvaluated
+    // callback when several modules apply the plugin), where that is illegal.
 
     @TaskAction
     fun doOnRun() {
-        val snapshotsGrabber = SnapshotsGrabberImpl(project)
-        val metadataLoader = KSPMetaDataLoader(project)
+        val snapshotsGrabber = SnapshotsGrabberImpl(project, snapshotsPath)
+        val metadataLoader = KSPMetaDataLoader(project, kspResourcesPath)
         val generator = ShowcaseGeneratorImpl(
             onMissingSnapshot = { id ->
                 logger.warn("Arkive: no snapshot recorded for component '$id' — excluded from the showcase")
@@ -79,9 +79,8 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
             outputDir = outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
         )
 
-        val vrr = variant
-        logger.warn("Loading metadata for variant: $vrr")
-        val metadata = metadataLoader.loadMetaData(vrr)
+        logger.warn("Loading metadata for variant: $variant")
+        val metadata = metadataLoader.loadMetaData()
 
         val moduleItems = generator.generateShowcase(grabbed.map { it.relativePath }, metadata)
         applyRetention(grabbed, moduleItems)
