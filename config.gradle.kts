@@ -6,7 +6,7 @@ extra["buildConfig"] = mapOf(
 
 extra["releaseConfig"] = mapOf(
     "group" to "com.infinum.arkive",
-    "version" to "0.0.3"
+    "version" to "0.0.4"
 )
 
 // Shared POM values; per-module name/description/artifactId live in each module's
