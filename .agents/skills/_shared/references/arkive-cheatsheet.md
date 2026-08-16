@@ -71,17 +71,22 @@ What's collected from `commonMain`:
   androidx or the jetbrains namespace.
 - Plus anything in `androidMain`, same as a plain android module.
 
-Requirements and differences vs a plain android module:
+Both KMP layouts are supported; requirements and differences vs a plain android module:
 
-| Thing | Android | KMP |
-|---|---|---|
-| Module plugin | `com.android.application`/`.library` | `com.android.kotlin.multiplatform.library` (AGP 9+; the legacy `androidTarget()` setup is **unsupported** — the plugin warns) |
-| KSP version | any recent | **2.3.6+** (older KSP can't attach to the new plugin) |
-| Variants / tasks | per build variant | single `androidMain` → `generateShowcaseAndroidMain`; `multiModuleVariant` defaults correctly, leave unset |
-| Unit tests live in | `src/test` | `src/androidHostTest` ("host tests"; need `isIncludeAndroidResources = true` in `withHostTestBuilder {}.configure { }`) |
-| Golden directory | `src/test/snapshots` | `src/androidHostTest/snapshots` |
-| Android resources | on by default | the plugin force-enables `androidResources` (Paparazzi needs the module's `R` class) |
-| Empty-test-set placeholder | `src/test/java/ArkivePlaceholder.kt` | `src/androidHostTest/kotlin/ArkivePlaceholder.kt` |
+| Thing | Android | Classic KMP (`androidTarget()`) | New KMP plugin (`com.android.kotlin.multiplatform.library`) |
+|---|---|---|---|
+| Module plugins | `com.android.application`/`.library` | `kotlin.multiplatform` + `com.android.library` (any AGP 8+) | the KMP library plugin (AGP 9+) |
+| KSP version | any recent | any recent (verified down to `2.2.0-2.0.2`) | **2.3.6+** (older KSP can't attach to this plugin) |
+| Variants / tasks | per build variant | per build variant (`generateShowcaseDebug`, …); `multiModuleVariant` defaults to `debug` | single `androidMain` → `generateShowcaseAndroidMain`; `multiModuleVariant` defaults correctly |
+| Unit tests live in | `src/test` | `src/androidUnitTest` | `src/androidHostTest` ("host tests"; need `isIncludeAndroidResources = true` in `withHostTestBuilder {}.configure { }`) |
+| Golden directory | `src/test/snapshots` | `src/androidUnitTest/snapshots` | `src/androidHostTest/snapshots` |
+| Android resources | on by default | on by default | the plugin force-enables `androidResources` (Paparazzi needs the module's `R` class) |
+| Empty-test-set placeholder | `src/test/java/` | `src/androidUnitTest/kotlin/` | `src/androidHostTest/kotlin/` |
+
+**`@ArkiveComposable` in commonMain requires the consumer's Kotlin ≥ the Kotlin the
+annotations were built with** — klibs aren't forward-compatible, so on older Kotlin the
+plugin wires the annotations into androidMain instead (with a warning). Plain `@Preview`
+in commonMain needs no Arkive dependency and is collected regardless of Kotlin version.
 
 ## Output locations (consumer project)
 

@@ -140,16 +140,37 @@ Everything flavor-specific lives behind `ConsumerAdapter`
   goldens `src/test/snapshots`, test task `test<Variant>UnitTest`.
 - **KmpConsumerAdapter** (`com.android.kotlin.multiplatform.library`, AGP 9+): single
   variant `androidMain`, deps deferred until the KMP configurations exist
-  (`commonMainImplementation` ← annotations, `androidMainImplementation` ← composeUtils,
-  `kspAndroid` ← processor, `kspAndroidHostTest` ← testprocessor; junit pair in
-  afterEvaluate), KSP output `build/generated/ksp/android/androidMain/resources`, goldens
+  (`androidMainImplementation` ← composeUtils, `kspAndroid` ← processor,
+  `kspAndroidHostTest` ← testprocessor; junit pair in afterEvaluate), KSP output
+  `build/generated/ksp/android/androidMain/resources`, goldens
   `src/androidHostTest/snapshots`, test task `testAndroidHostTest`. It also force-enables
   the library's `androidResources` (reflection — Paparazzi needs the `R` class; without it
   every shot dies in a way the resilient recording swallows) and defaults
   `multiModuleVariant` to `androidMain`. Deferred deps must be added **at configuration
   creation** (`matching{}.all{}`), never via `withDependencies` — KSP resolves the derived
   `*ProcessorClasspath` configs, whose extendsFrom edge doesn't fire the parent's hooks.
-  Legacy KMP (`com.android.library` + `androidTarget()`) is unsupported; the plugin warns.
+  Requires KSP 2.3.6+ (google/ksp#2476).
+- **LegacyKmpConsumerAdapter** (`kotlin.multiplatform` + `com.android.library`/
+  `.application` with `androidTarget()`, any AGP 8+): per-build-variant like plain
+  android but target-prefixed — `kspAndroidDebug`/`kspAndroidTestDebug`, KSP output
+  `build/generated/ksp/android/android<Variant>/resources`, goldens
+  `src/androidUnitTest/snapshots`, test task `test<Variant>UnitTest`,
+  `multiModuleVariant` defaults to `debug`. Verified on the EdgePOS-era toolchain
+  (Gradle 8.13, AGP 8.11, Kotlin 2.2.0, KSP 2.2.0-2.0.2, CMP 1.9.3). Selection: the
+  android plugin id alone is ambiguous, so `select` arms both Kotlin hooks
+  (`kotlin-android` → plain, `kotlin.multiplatform` → legacy) with an afterEvaluate
+  fallback to plain (built-in Kotlin / java-only).
+
+**klib forward-compatibility (both KMP adapters):** annotations klibs are built with the
+repo's Kotlin and are NOT readable by consumers on older Kotlin — merely being on the
+commonMain classpath breaks their iOS/js compiles. `wireAnnotationsWhereConsumable`
+compares the consumer's KGP version against `ArkiveVersion.builtWithKotlin` (stamped into
+arkive.properties) and wires annotations into commonMain only when safe, androidMain
+otherwise (warned). Plain `@Preview` in commonMain needs no dependency and always works.
+
+`GenerateShowcaseTask.setSource` must stay narrow (snapshots dir + KSP resources dir) —
+declaring the project dir makes every unrelated task output an undeclared input, which
+strict Gradle validation rejects when tasks share an invocation.
 
 Two KMP consumer gotchas (documented in README, baked into `:sampleCmp`): the host-test
 source set needs ≥1 own source file (KSP NO-SOURCE skip), and

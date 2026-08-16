@@ -38,11 +38,9 @@ internal class KmpConsumerAdapter(
     override fun wireDependencies() {
         val arkiveVersion = ArkiveVersion.current
         with(project) {
-            // annotations is multiplatform — commonMain so common previews can use it.
-            addDependencyWhenConfigurationExists(
-                "commonMainImplementation",
-                "com.infinum.arkive:annotations:$arkiveVersion",
-            )
+            // annotations is multiplatform — commonMain when the consumer's Kotlin can
+            // read our klibs, androidMain otherwise (see wireAnnotationsWhereConsumable).
+            wireAnnotationsWhereConsumable("com.infinum.arkive:annotations:$arkiveVersion")
             // Everything else only ever runs in the android compilation.
             addDependencyWhenConfigurationExists(
                 "androidMainImplementation",

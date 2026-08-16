@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
+
 plugins {
     id("java-gradle-plugin")
     id("kotlin")
@@ -10,24 +12,27 @@ apply {
     from("$rootDir/detekt.gradle")
 }
 
-// The publish plugin only sets publication coordinates, NOT the project's own
-// group/version — but processResources below stamps ArkiveVersion from project.version
-// (a wrong value ships "unspecified" dependency coordinates inside the plugin jar).
-group = property("GROUP") as String
-version = property("VERSION_NAME") as String
+// group/version come from maven-publish.gradle (GROUP/VERSION_NAME properties);
+// processResources below stamps ArkiveVersion from project.version.
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-// Stamp the plugin version into arkive.properties so runtime code (injected dependency
-// coordinates, task cache keys) never hardcodes it. See ArkiveVersion.kt.
+// Stamp the plugin version and the Kotlin it was built with into arkive.properties so
+// runtime code (injected dependency coordinates, klib-compatibility checks, task cache
+// keys) never hardcodes them. See ArkiveVersion.kt.
 tasks.processResources {
     val arkiveVersion = version.toString()
+    val arkiveKotlinVersion = project.getKotlinPluginVersion()
     inputs.property("arkiveVersion", arkiveVersion)
+    inputs.property("arkiveKotlinVersion", arkiveKotlinVersion)
     filesMatching("arkive.properties") {
-        expand("arkiveVersion" to arkiveVersion)
+        expand(
+            "arkiveVersion" to arkiveVersion,
+            "arkiveKotlinVersion" to arkiveKotlinVersion,
+        )
     }
 }
 

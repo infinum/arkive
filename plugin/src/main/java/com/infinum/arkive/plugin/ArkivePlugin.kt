@@ -135,7 +135,15 @@ class ArkivePlugin : Plugin<Project> {
                 } else {
                     task.dependsOn("$RECORDING_TASK${variant.capFirst}")
                 }
-                task.setSource(projectDir)
+                // Only what the task actually reads. Declaring a broader tree (e.g. the
+                // project dir) makes every unrelated task's output an undeclared input,
+                // which strict Gradle validation rejects when they share an invocation.
+                task.setSource(
+                    files(
+                        layout.projectDirectory.dir(adapter.snapshotsPath()),
+                        layout.buildDirectory.dir(adapter.kspResourcesPath(variant)),
+                    ),
+                )
             }
         }
         // The generated test class only exists where the test-source KSP ran — debug

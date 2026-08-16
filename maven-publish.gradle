@@ -9,6 +9,13 @@
 // central.sonatype.com/publishing) or ./gradlew publishAndReleaseToMavenCentral.
 apply plugin: "com.vanniktech.maven.publish"
 
+// The publish plugin sets publication coordinates but NOT the project's own
+// group/version — and several things derive from the project ones: the KMP klib
+// artifact names inside Gradle module metadata (a version-less name breaks the KLIB
+// resolver on consumers), and :plugin's ArkiveVersion stamping via processResources.
+group = project.findProperty("GROUP")
+version = project.findProperty("VERSION_NAME")
+
 mavenPublishing {
     pom {
         organization {

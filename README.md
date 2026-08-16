@@ -95,10 +95,14 @@ Requirements: Kotlin 2.0 or newer. Don't apply Paparazzi yourself — Arkive bri
 
 ### Kotlin Multiplatform / Compose Multiplatform
 
-Arkive works on KMP modules that use the **`com.android.kotlin.multiplatform.library`**
-plugin (the Android KMP library plugin, AGP 9+). Previews in `commonMain` — plain CMP
-`@Preview`s, `@ArkiveComposable`, and `@PreviewParameter` in either the androidx or
-jetbrains namespace — are recorded through the android target, exactly like android ones:
+Arkive works on both KMP module layouts — the classic `com.android.library` +
+`androidTarget()` setup (any AGP 8+), and the newer
+**`com.android.kotlin.multiplatform.library`** plugin (AGP 9+). Previews in `commonMain`
+— plain CMP `@Preview`s, `@ArkiveComposable`, and `@PreviewParameter` in either the
+androidx or jetbrains namespace — are recorded through the android target, exactly like
+android ones. On the classic layout nothing else changes: apply the plugin next to KSP
+and you get the usual per-variant tasks (`generateShowcaseDebug`, …) with goldens in
+`src/androidUnitTest/snapshots`. The newer plugin needs a couple of extra lines:
 
 ```kotlin
 plugins {
@@ -130,14 +134,15 @@ module's `R` class) and wires all KSP/test dependencies.
 
 Two constraints:
 
-- The host-test source set needs at least **one source file of its own** — KSP skips
+- The unit-test source set needs at least **one source file of its own** — KSP skips
   empty compilations, and Arkive's generated snapshot test with them. Any real test
   works, or drop an `internal object ArkivePlaceholder` into
-  `src/androidHostTest/kotlin` (see `sampleCmp`).
-- The **legacy** KMP setup (`com.android.library` + `androidTarget()`, which AGP 9 gates
-  behind `android.newDsl=false` and AGP 10 removes) is *not* supported — Arkive's
-  processors can't reach the android compilation there, and the plugin logs a warning
-  telling you to migrate.
+  `src/androidHostTest/kotlin` (new plugin) / `src/androidUnitTest/kotlin` (classic
+  layout) — see `sampleCmp`.
+- Using `@ArkiveComposable` in `commonMain` requires the project's Kotlin to be at least
+  the Kotlin the annotations were built with (klibs are not forward-compatible). On older
+  Kotlin the plugin wires the annotations into `androidMain` instead and logs it — plain
+  `@Preview`s in `commonMain` are still collected, since they need no Arkive dependency.
 
 See [`sampleCmp`](sampleCmp) for a complete working module.
 

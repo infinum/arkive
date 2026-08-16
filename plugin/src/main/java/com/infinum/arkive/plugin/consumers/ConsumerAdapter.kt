@@ -36,11 +36,20 @@ internal interface ConsumerAdapter {
         private const val ANDROID_LIBRARY_PLUGIN_ID = "com.android.library"
         private const val ANDROID_KMP_LIBRARY_PLUGIN_ID = "com.android.kotlin.multiplatform.library"
         private const val KOTLIN_MULTIPLATFORM_PLUGIN_ID = "org.jetbrains.kotlin.multiplatform"
+        private const val KOTLIN_ANDROID_PLUGIN_ID = "org.jetbrains.kotlin.android"
 
         /**
-         * Picks the adapter matching the consumer's Android plugin, deferring until that
-         * plugin is applied (the order of the consumer's plugins block is arbitrary).
-         * [onSelected] runs at most once.
+         * Picks the adapter matching the consumer's plugin combination, deferring until
+         * the plugins are applied (the order of the consumer's plugins block is
+         * arbitrary). [onSelected] runs at most once.
+         *
+         * `com.android.application`/`com.android.library` alone don't identify the
+         * flavor — the same android plugin appears in plain Android modules (with
+         * `kotlin-android` or AGP's built-in Kotlin) and in legacy KMP modules (with
+         * `kotlin.multiplatform` + `androidTarget()`), and those need different wiring.
+         * So the android plugin arms both Kotlin hooks and the first Kotlin plugin to
+         * appear decides; a module with neither (built-in Kotlin, java-only) falls back
+         * to the plain android adapter after evaluation.
          */
         fun select(project: Project, onSelected: (ConsumerAdapter) -> Unit) {
             val chooser = AdapterChooser(onSelected)
@@ -49,31 +58,26 @@ internal interface ConsumerAdapter {
                 chooser.choose(KmpConsumerAdapter(project))
             }
             project.pluginManager.withPlugin(ANDROID_APPLICATION_PLUGIN_ID) {
-                chooser.choose(AndroidConsumerAdapter(project, AndroidConsumerAdapter.Kind.APPLICATION))
+                chooseByKotlinFlavor(project, chooser, AndroidConsumerAdapter.Kind.APPLICATION)
             }
             project.pluginManager.withPlugin(ANDROID_LIBRARY_PLUGIN_ID) {
-                chooser.choose(AndroidConsumerAdapter(project, AndroidConsumerAdapter.Kind.LIBRARY))
-            }
-
-            project.afterEvaluate {
-                warnOnLegacyKmp(project)
+                chooseByKotlinFlavor(project, chooser, AndroidConsumerAdapter.Kind.LIBRARY)
             }
         }
 
-        /**
-         * The legacy KMP setup (`kotlin.multiplatform` + `com.android.library` +
-         * `androidTarget()`) selects the plain android adapter, whose `ksp<Variant>`
-         * configurations exist there but feed no compilation — Arkive silently no-ops.
-         */
-        private fun warnOnLegacyKmp(project: Project) {
-            val isLegacyKmp = project.pluginManager.hasPlugin(KOTLIN_MULTIPLATFORM_PLUGIN_ID) &&
-                project.pluginManager.hasPlugin(ANDROID_LIBRARY_PLUGIN_ID)
-            if (isLegacyKmp) {
-                project.logger.warn(
-                    "Arkive: legacy KMP setup detected (kotlin.multiplatform + com.android.library). " +
-                        "Arkive's processors cannot reach the android compilation there — migrate the " +
-                        "module to the com.android.kotlin.multiplatform.library plugin.",
-                )
+        private fun chooseByKotlinFlavor(
+            project: Project,
+            chooser: AdapterChooser,
+            kind: AndroidConsumerAdapter.Kind,
+        ) {
+            project.pluginManager.withPlugin(KOTLIN_ANDROID_PLUGIN_ID) {
+                chooser.choose(AndroidConsumerAdapter(project, kind))
+            }
+            project.pluginManager.withPlugin(KOTLIN_MULTIPLATFORM_PLUGIN_ID) {
+                chooser.choose(LegacyKmpConsumerAdapter(project, kind))
+            }
+            project.afterEvaluate {
+                chooser.choose(AndroidConsumerAdapter(project, kind))
             }
         }
     }

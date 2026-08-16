@@ -46,8 +46,7 @@ Check before touching build files; each miss is a confusing failure later:
 |---|---|
 | Kotlin 2.0+ | Published libraries have a Kotlin 2.0 language floor |
 | KSP plugin (`com.google.devtools.ksp`) applied to the module | Arkive adds KSP *dependencies* but does not apply the KSP plugin |
-| Android application/library module, or a KMP module on `com.android.kotlin.multiplatform.library` | Tasks are registered per Android variant (KMP has a single one, `androidMain`) |
-| KMP: NOT the legacy `com.android.library` + `androidTarget()` setup | Arkive's processors can't reach the android compilation there — the plugin logs a warning; the module must migrate to the new AGP KMP library plugin first |
+| Android application/library module, or a KMP module (either the classic `androidTarget()` layout or `com.android.kotlin.multiplatform.library`) | Tasks are registered per Android variant (the new KMP plugin has a single one, `androidMain`) |
 | No explicitly-applied Paparazzi | Arkive applies its own; a second version conflicts |
 | `org.gradle.configureondemand` in `gradle.properties`? | If true, the plugin must ALSO be applied to the **root** project |
 
@@ -94,12 +93,12 @@ never reach the catalogue. Find them in each target module and raise their visib
 sources of its own (NO-SOURCE). A module whose test source set is empty never triggers
 Arkive's test processor, so the Paparazzi test is never generated and the module produces
 zero snapshots with no error anywhere. If a target module has no test sources, add the
-placeholder — same file for android and KMP, only the directory differs
-(`src/test/java` on android, `src/androidHostTest/kotlin` on KMP):
+placeholder — same file everywhere, only the directory differs:
 
 ```kotlin
-// android: src/test/java/ArkivePlaceholder.kt
-// KMP:     src/androidHostTest/kotlin/ArkivePlaceholder.kt
+// android:     src/test/java/ArkivePlaceholder.kt
+// classic KMP: src/androidUnitTest/kotlin/ArkivePlaceholder.kt
+// new KMP:     src/androidHostTest/kotlin/ArkivePlaceholder.kt
 
 // KSP skips a compilation with zero sources (NO-SOURCE), which would prevent Arkive's
 // test processor from generating the snapshot test. Any real test serves the same purpose.
@@ -127,8 +126,19 @@ The full mechanics live in `references/arkive-cheatsheet.md`; what changes for s
   (The plugin enables the library's `androidResources` itself — don't add that.)
 - **The placeholder goes in `src/androidHostTest/kotlin`** (see Step 5) — KMP modules
   rarely have host-test sources, so this is almost always needed.
-- **Legacy KMP (`com.android.library` + `androidTarget()`) is not supported** — the
-  plugin warns and records nothing; the module must migrate to the new plugin first.
+
+**Classic KMP layout** (`com.android.library` + `androidTarget()`, any AGP 8+) is also
+supported and is even simpler: apply the plugin next to KSP and that's it — the usual
+per-variant tasks appear (`generateShowcaseDebug`, …), goldens live in
+`src/androidUnitTest/snapshots`, and the placeholder goes in
+`src/androidUnitTest/kotlin`. `multiModuleVariant` defaults to `debug` there; set it
+only when the module has flavors.
+
+**`@ArkiveComposable` in commonMain needs the consumer's Kotlin ≥ the Kotlin Arkive was
+built with** (klibs aren't forward-compatible). On older Kotlin the plugin wires the
+annotations into androidMain instead and logs a warning — write commonMain previews as
+plain `@Preview` in that case (collected all the same) and use `@ArkiveComposable` in
+androidMain only.
 
 ## Step 6 — Annotations (the catalogue works without them, but recommend the upgrade)
 
@@ -178,7 +188,7 @@ Recording every preview takes minutes on a real app — warn the user before run
 | `generateWebShowcase` not found | `configureondemand=true` without the plugin on the root project; or plugin applied to a non-Android module |
 | A flavored module is missing from the aggregated showcase | `multiModuleVariant` unset or naming a variant that doesn't exist — set it to the exact `<flavor><BuildType>` |
 | A module generates no test and no snapshots at all, no errors | Empty test source set — KSP never triggered; add the `ArkivePlaceholder.kt` from Step 5 (on KMP: in `src/androidHostTest/kotlin`) |
-| KMP module: plugin applies but nothing records, warning about legacy KMP in the log | Module uses `com.android.library` + `androidTarget()` — migrate it to `com.android.kotlin.multiplatform.library` |
+| KMP module: `@ArkiveComposable` unresolved in commonMain, log mentions Kotlin being older | Consumer's Kotlin predates the annotations' build Kotlin — plugin wired annotations to androidMain; use plain `@Preview` in commonMain |
 | KMP module: every snapshot missing, log shows `snapshot session finished with errors: <ns>.R` | Host tests can't see android resources — add `isIncludeAndroidResources = true` to `withHostTestBuilder {}.configure { }` |
 | Showcase has no components | Previews are `private` (Step 5), or annotations are in a source set the debug variant doesn't compile |
 | Change to arkive version "didn't take" | Stale Gradle module cache — re-sync with `--refresh-dependencies` once |
