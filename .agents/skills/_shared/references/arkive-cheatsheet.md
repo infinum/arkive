@@ -53,7 +53,7 @@ arkive {
 - Naming/grouping standard: `references/annotation-conventions.md` (used by
   `/arkive:annotate`).
 
-## KMP / Compose Multiplatform (arkive 0.0.4+)
+## KMP / Compose Multiplatform
 
 How Arkive works on a CMP module: **everything renders through the android target.**
 The KSP processors run in the module's android compilation, which compiles `commonMain`

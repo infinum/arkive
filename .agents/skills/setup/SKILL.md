@@ -22,8 +22,6 @@ take the `<latest>` element. That concrete version is what goes in the build fil
 - Arkive requires **0.0.3 or newer** (earlier versions have consumer-compat bugs and no
   `verifyShowcase`). If `<latest>` is older than 0.0.3, STOP and tell the user Arkive
   isn't ready to install yet.
-- **KMP/CMP modules require 0.0.4 or newer** (earlier versions can't wire the KMP
-  configurations at all).
 - **Upgrading:** compare the project's pinned version against `<latest>`, bump the pin,
   then re-sync with `--refresh-dependencies` once.
 
@@ -111,7 +109,7 @@ internal object ArkivePlaceholder
 ## KMP / Compose Multiplatform modules
 
 Arkive works on KMP modules that use the **`com.android.kotlin.multiplatform.library`**
-plugin (AGP 9+, arkive 0.0.4+, KSP 2.3.6+). Previews in `commonMain` — plain CMP
+plugin (AGP 9+, KSP 2.3.6+). Previews in `commonMain` — plain CMP
 `@Preview`s, `@ArkiveComposable`, `@PreviewParameter` in either the androidx or the
 jetbrains namespace — are recorded through the android target like any android preview.
 The full mechanics live in `references/arkive-cheatsheet.md`; what changes for setup:

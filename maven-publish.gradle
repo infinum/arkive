@@ -1,4 +1,4 @@
-// Publishing via the vanniktech maven-publish plugin (the Infinum handbook standard).
+// Publishing via the vanniktech maven-publish plugin.
 // It wires publications, sources/javadoc jars, POM metadata and Central Portal uploads
 // for every module type used here: kotlin-jvm, kotlin-multiplatform, android library,
 // and java-gradle-plugin (including the plugin marker). Configuration comes from
