@@ -5,6 +5,7 @@ dokka = "2.2.0"
 kotlin = "2.4.0"
 kotlinxSerializationJson = "1.11.0"
 ksp = "2.3.11"
+composeMultiplatform = "1.11.1"
 koltinpoet = "2.3.0"
 compose-bom = "2026.06.01"
 arkive = "0.0.4"
@@ -25,6 +26,7 @@ constraintlayout = "2.2.1"
 [plugins]
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }

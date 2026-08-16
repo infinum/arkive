@@ -21,6 +21,7 @@ include(":plugin")
 // after which the full build works. CI uses the same two-step flow.
 if (!providers.gradleProperty("skipSample").isPresent) {
     include(":sample")
+    include(":sampleCmp")
 }
 
 rootProject.name = "Arkive"
