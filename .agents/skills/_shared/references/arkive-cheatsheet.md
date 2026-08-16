@@ -22,6 +22,9 @@ Recording runs on **debug** variants (the KSP processors are wired to `kspDebug`
 `kspTestDebug`). Recording is module-wide — one run re-records every component in the
 module (minutes, not seconds).
 
+On **KMP modules** there is exactly one variant, named `androidMain` — the tasks are
+`generateShowcaseAndroidMain` / `verifyShowcaseAndroidMain` (see the KMP section below).
+
 ## Extension (per module)
 
 ```kotlin
@@ -49,6 +52,36 @@ arkive {
 - Private functions are always dropped — raise previews to `internal`.
 - Naming/grouping standard: `references/annotation-conventions.md` (used by
   `/arkive:annotate`).
+
+## KMP / Compose Multiplatform (arkive 0.0.4+)
+
+How Arkive works on a CMP module: **everything renders through the android target.**
+The KSP processors run in the module's android compilation, which compiles `commonMain`
+sources too — so common previews are collected, wrapped, and recorded by Paparazzi on the
+JVM exactly like android ones, and end up in the same catalogue. Nothing multiplatform
+happens at recording time; `commonMain` only needs the annotations to *resolve* there,
+which they do because `com.infinum.arkive:annotations` is published for all KMP targets.
+
+What's collected from `commonMain`:
+
+- Plain CMP `@Preview`s — both the current androidx FQN (from the multiplatform
+  `ui-tooling-preview` artifact, CMP 1.11+) and the deprecated
+  `org.jetbrains.compose.ui.tooling.preview.Preview`.
+- `@ArkiveComposable` / parameterized previews with `@PreviewParameter` in either the
+  androidx or the jetbrains namespace.
+- Plus anything in `androidMain`, same as a plain android module.
+
+Requirements and differences vs a plain android module:
+
+| Thing | Android | KMP |
+|---|---|---|
+| Module plugin | `com.android.application`/`.library` | `com.android.kotlin.multiplatform.library` (AGP 9+; the legacy `androidTarget()` setup is **unsupported** — the plugin warns) |
+| KSP version | any recent | **2.3.6+** (older KSP can't attach to the new plugin) |
+| Variants / tasks | per build variant | single `androidMain` → `generateShowcaseAndroidMain`; `multiModuleVariant` defaults correctly, leave unset |
+| Unit tests live in | `src/test` | `src/androidHostTest` ("host tests"; need `isIncludeAndroidResources = true` in `withHostTestBuilder {}.configure { }`) |
+| Golden directory | `src/test/snapshots` | `src/androidHostTest/snapshots` |
+| Android resources | on by default | the plugin force-enables `androidResources` (Paparazzi needs the module's `R` class) |
+| Empty-test-set placeholder | `src/test/java/ArkivePlaceholder.kt` | `src/androidHostTest/kotlin/ArkivePlaceholder.kt` |
 
 ## Output locations (consumer project)
 
@@ -108,10 +141,11 @@ directory afterwards:
   project or `generateWebShowcase` is never registered.
 - The consumer module must apply the KSP plugin (`com.google.devtools.ksp`) — Arkive adds
   the KSP *dependencies* but does not apply the KSP plugin.
-- **Empty test source set = zero snapshots, zero errors.** KSP only runs on a source set
-  with at least one symbol; a module with no test sources never triggers the test
-  processor, so the Paparazzi test is never generated. Fix: add a
-  `src/test/java/ArkiveDummy.kt` containing `class ArkiveDummy { val paparazzi = Paparazzi() }`.
+- **Empty test source set = zero snapshots, zero errors.** KSP skips a compilation with
+  zero sources of its own; a module with no test sources never triggers the test
+  processor, so the Paparazzi test is never generated. Fix: add an `ArkivePlaceholder.kt`
+  containing just `internal object ArkivePlaceholder` — in `src/test/java` (android) or
+  `src/androidHostTest/kotlin` (KMP).
 - Private previews never reach the catalogue — raise them to `internal`.
 - Arkive applies Paparazzi itself — the consumer must not apply a conflicting Paparazzi
   version.

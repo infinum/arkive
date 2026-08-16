@@ -130,9 +130,10 @@ module's `R` class) and wires all KSP/test dependencies.
 
 Two constraints:
 
-- The host-test source set needs at least **one source file of its own** (any test or a
-  placeholder object) — KSP skips empty compilations, and Arkive's generated snapshot
-  test with them.
+- The host-test source set needs at least **one source file of its own** — KSP skips
+  empty compilations, and Arkive's generated snapshot test with them. Any real test
+  works, or drop an `internal object ArkivePlaceholder` into
+  `src/androidHostTest/kotlin` (see `sampleCmp`).
 - The **legacy** KMP setup (`com.android.library` + `androidTarget()`, which AGP 9 gates
   behind `android.newDsl=false` and AGP 10 removes) is *not* supported — Arkive's
   processors can't reach the android compilation there, and the plugin logs a warning
@@ -188,8 +189,8 @@ internal fun PrimaryButtonPreview() { ... }
 ```
 
 One gotcha worth knowing: a module with an **empty test source set** records nothing (KSP
-needs at least one symbol there to run). Add a tiny placeholder class referencing
-`Paparazzi` in `src/test/java` — `/arkive:setup` does this for you.
+skips compilations with no sources). Add a tiny `internal object ArkivePlaceholder` in
+`src/test/java` — `/arkive:setup` does this for you.
 
 ## Snapshot testing
 
