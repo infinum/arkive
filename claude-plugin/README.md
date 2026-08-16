@@ -4,8 +4,9 @@ Skills for working with [Arkive](https://github.com/infinum/arkive) in Claude Co
 Codex, and any agent that speaks the open [SKILL.md standard](https://agentskills.io).
 
 The skill folders themselves live at [`.agents/skills/`](../.agents/skills/) (the
-cross-tool standard location); the entries under `skills/` here are symlinks to them, so
-this directory doubles as the Claude Code *and* Codex plugin without duplicating a file.
+cross-tool standard location). This directory is the **Claude Code** plugin package and
+[`codex-plugin/`](../codex-plugin/) is the **Codex** one — both contain only a manifest
+plus `skills/` symlinks into `.agents/skills/`, so no skill content is ever duplicated.
 Installers materialize the symlinks into real copies.
 
 ## Install
