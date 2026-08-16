@@ -8,36 +8,11 @@ plugins {
 apply {
     from("$rootDir/config.gradle.kts")
     // No dokka here: the Dokka javadoc format does not support multiplatform modules;
-    // maven-publish.gradle attaches empty javadoc jars to KMP publications instead
+    // the publish plugin falls back to empty javadoc jars for the KMP publications
     // (the same convention kotlinx libraries use on Central).
     from("$rootDir/maven-publish.gradle")
     from("$rootDir/detekt.gradle")
 }
-
-val releaseConfig: Map<String, Any> by project
-val sonatype: Map<String, Any> by project
-val pomConfig: Map<String, Any> by project
-
-// KMP derives every target publication's coordinates from the project itself
-// (root publication = project name "annotations", targets get a suffix).
-group = releaseConfig["group"] as String
-version = releaseConfig["version"] as String
-
-// specify per module - mostly needed due to different artifactIds, names, descriptions
-extra["mavenPublishProperties"] = mapOf(
-    "group" to releaseConfig["group"],
-    "version" to releaseConfig["version"],
-    "artifactId" to "annotations",
-    "repository" to mapOf(
-        "url" to sonatype["url"],
-        "username" to sonatype["username"],
-        "password" to sonatype["password"]
-    ),
-    "name" to "Arkive Annotations",
-    "description" to "Annotations for exposing composables and views to the Arkive showcase",
-    "url" to pomConfig["url"],
-    "scm" to pomConfig["scm"]
-)
 
 // Multiplatform so @ArkiveComposable/@ArkiveView are usable from commonMain of a KMP
 // module. The JVM target serves plain Android/JVM consumers (Android resolves the jvm

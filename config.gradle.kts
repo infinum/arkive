@@ -4,17 +4,10 @@ extra["buildConfig"] = mapOf(
     "targetSdk" to 35
 )
 
+// Publishing coordinates live in gradle.properties (GROUP / VERSION_NAME — the
+// vanniktech maven-publish plugin reads them there); this map re-exposes them to the
+// sample modules and to version stamping.
 extra["releaseConfig"] = mapOf(
-    "group" to "com.infinum.arkive",
-    "version" to "0.0.4"
-)
-
-// Shared POM values; per-module name/description/artifactId live in each module's
-// mavenPublishProperties block.
-extra["pomConfig"] = mapOf(
-    "url" to "https://github.com/infinum/arkive",
-    "scm" to mapOf(
-        "connection" to "https://github.com/infinum/arkive.git",
-        "url" to "https://github.com/infinum/arkive"
-    )
+    "group" to property("GROUP"),
+    "version" to property("VERSION_NAME")
 )

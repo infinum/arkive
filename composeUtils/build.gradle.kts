@@ -14,9 +14,6 @@ apply {
 }
 
 val buildConfig: Map<String, Any> by project
-val releaseConfig: Map<String, Any> by project
-val sonatype: Map<String, Any> by project
-val pomConfig: Map<String, Any> by project
 
 android {
     namespace = "com.infinum.arkive.composeutils"
@@ -43,11 +40,6 @@ android {
         }
     }
 
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
 
     java {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -65,26 +57,6 @@ kotlin {
         jvmTarget = JvmTarget.JVM_21
     }
 }
-
-// specify per module - mostly needed due to different artifactIds, names, descriptions
-extra["mavenPublishProperties"] = mapOf(
-    "group" to releaseConfig["group"],
-    "version" to releaseConfig["version"],
-    "artifactId" to "composeUtils",
-    "repository" to mapOf(
-        "url" to sonatype["url"],
-        "username" to sonatype["username"],
-        "password" to sonatype["password"]
-    ),
-
-    "name" to "Arkive Compose Utils",
-
-    "description" to "Compose utilities for rendering Arkive preview variants",
-
-    "url" to pomConfig["url"],
-
-    "scm" to pomConfig["scm"]
-)
 
 dependencies {
     debugImplementation(libs.compose.ui.tooling)

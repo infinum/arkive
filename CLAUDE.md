@@ -44,10 +44,14 @@ after republishing the same version.
   `snapshotRetention.set(SnapshotRetention.BASE)` in `sample/build.gradle.kts` and
   recording first — CI does not exercise this path. Run it in its own invocation (a
   guard fails the build when combined with check/build/test/record).
-- Central deploy: `./gradlew deployAll` (needs `SONATYPE_USERNAME`/`SONATYPE_PASS` env vars +
-  signing keys in `~/.gradle/gradle.properties`), then the OSSRH staging API dance: GET
-  `/manual/search/repositories?state=open`, POST `/manual/upload/repository/<key>`, then
-  Publish at central.sonatype.com/publishing. Published versions are immutable.
+- Central deploy (vanniktech maven-publish plugin): `./gradlew publishToMavenCentral`
+  uploads everything, then release manually at central.sonatype.com/publishing — or
+  `./gradlew publishAndReleaseToMavenCentral` for both in one go. Needs
+  `SONATYPE_USERNAME`/`SONATYPE_PASS` env vars (portal user tokens; the root build maps
+  them to `mavenCentralUsername`/`mavenCentralPassword`) + signing keys in
+  `~/.gradle/gradle.properties`. Signing only engages when a key is configured, so the
+  CI bootstrap (`publishToMavenLocal`) works keyless. Published versions are immutable.
+  There is no more `deployAll` and no OSSRH staging API dance.
 
 CI (`.github/workflows/quality_checks.yml`) runs the same bootstrap-then-build flow; the
 sample showcase deploys to GitHub Pages on merges to `main`.
@@ -55,10 +59,15 @@ sample showcase deploys to GitHub Pages on merges to `main`.
 ## Version bumping
 
 The version is declared in **two** places that must move together:
-`config.gradle.kts` (`releaseConfig.version`, the source of truth for publishing) and
-`gradle/libs.versions.toml` (`arkive`, `arkive-plugin`, used by the sample). Kotlin code
-never hardcodes it — `ArkiveVersion` reads `arkive.properties`, stamped by
-`processResources` in `plugin/build.gradle.kts`.
+`gradle.properties` (`VERSION_NAME`, the source of truth — the publish plugin and
+`config.gradle.kts`'s `releaseConfig` both read it) and `gradle/libs.versions.toml`
+(`arkive`, `arkive-plugin`, used by the samples). Kotlin code never hardcodes it —
+`ArkiveVersion` reads `arkive.properties`, stamped by `processResources` from
+`project.version` in `plugin/build.gradle.kts`; that module (alone) must keep its
+explicit `group`/`version` assignment, because the publish plugin only sets
+*publication* coordinates — without it the plugin jar ships "unspecified" dependency
+coordinates. Per-module artifact ids/names live in each module's `gradle.properties`
+(`POM_ARTIFACT_ID`/`POM_NAME`/`POM_DESCRIPTION`); shared POM fields in the root one.
 
 ## Compatibility constraints (do not remove)
 

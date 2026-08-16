@@ -23,7 +23,6 @@ arkive {
 
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
-val sonatype: Map<String, Any> by project
 
 android {
     namespace = "com.infinum.arkive.sample"

@@ -10,15 +10,11 @@ apply {
     from("$rootDir/detekt.gradle")
 }
 
-val releaseConfig: Map<String, Any> by project
-val sonatype: Map<String, Any> by project
-val pomConfig: Map<String, Any> by project
-
-// Drive the publication coordinates (incl. the auto-generated plugin marker) from a
-// single source of truth. Without these, the marker publishes at "unspecified" and its
-// dependency resolves to the raw Gradle defaults ("Arkive:plugin:unspecified").
-group = releaseConfig["group"] as String
-version = releaseConfig["version"] as String
+// The publish plugin only sets publication coordinates, NOT the project's own
+// group/version — but processResources below stamps ArkiveVersion from project.version
+// (a wrong value ships "unspecified" dependency coordinates inside the plugin jar).
+group = property("GROUP") as String
+version = property("VERSION_NAME") as String
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -45,22 +41,6 @@ gradlePlugin {
         }
     }
 }
-
-// specify per module - mostly needed due to different artifactIds, names, descriptions
-extra["mavenPublishProperties"] = mapOf(
-    "group" to releaseConfig["group"],
-    "version" to releaseConfig["version"],
-    "artifactId" to "arkive-plugin",
-    "repository" to mapOf(
-        "url" to sonatype["url"],
-        "username" to sonatype["username"],
-        "password" to sonatype["password"]
-    ),
-    "name" to "Arkive Plugin",
-    "description" to "Gradle plugin that generates a browsable web showcase from Compose preview snapshots",
-    "url" to pomConfig["url"],
-    "scm" to pomConfig["scm"]
-)
 
 dependencies {
     // Project dependency (not the published artifact) so a fresh checkout can build
