@@ -10,15 +10,15 @@ snapshots on the JVM. Published to Maven Central under `com.infinum.arkive`.
 
 ## The bootstrap rule (read first)
 
-`:sample` consumes the **published** plugin from mavenLocal — a fresh checkout cannot
-configure at all until the plugin exists there. Any root-level Gradle invocation
-configures `:sample`, so everything fails until you bootstrap:
+`:sample` and `:sampleCmp` consume the **published** plugin from mavenLocal — a fresh
+checkout cannot configure at all until the plugin exists there. Any root-level Gradle
+invocation configures them, so everything fails until you bootstrap:
 
 ```
 ./gradlew publishToMavenLocal -PskipSample
 ```
 
-`-PskipSample` drops `:sample` from the build for that invocation (see `settings.gradle.kts`).
+`-PskipSample` drops both samples from the build for that invocation (see `settings.gradle.kts`).
 After the bootstrap, the full build works. **Re-run publishToMavenLocal whenever you change
 plugin/processor/testprocessor code** — the sample (and any consumer project) resolves the
 published artifacts, not the source; stale mavenLocal jars are the most common source of
@@ -36,6 +36,8 @@ after republishing the same version.
   `./gradlew generateWebShowcase` → output at `build/generated/arkive/showcase/` (serve it
   with `python3 -m http.server`; the JSON is fetched, so `file://` won't work)
 - Per-variant module task: `./gradlew :sample:generateShowcaseUatDebug`
+- KMP sample (single variant "androidMain"): `./gradlew :sampleCmp:generateShowcaseAndroidMain`,
+  verify via `:sampleCmp:verifyShowcaseAndroidMain`; goldens in `src/androidHostTest/snapshots`
 - Verify retained goldens: `./gradlew :sample:verifyShowcaseUatDebug` (needs
   `snapshotRetention` BASE/ALL and previously recorded goldens). The sample leaves
   retention at the NONE default, so reproducing verification means temporarily setting
@@ -63,7 +65,15 @@ never hardcodes it — `ArkiveVersion` reads `arkive.properties`, stamped by
 - All published modules compile with a **Kotlin 2.0 language/api floor** and
   `coreLibrariesVersion = 2.0.21` (blocks at the bottom of each module's build file).
   The repo builds with a much newer Kotlin; the floor is what lets consumers on
-  Kotlin 2.0+ read the metadata. Removing it silently breaks consumers.
+  Kotlin 2.0+ read the metadata. Removing it silently breaks consumers. Exception inside
+  `:annotations` (multiplatform): the js/wasm compilations get an explicit current-version
+  stdlib on top — their compilers reject the 2.0.x stdlib ABI — while the JVM floor stays.
+- `:annotations` publishes a **full KMP target matrix** (jvm serves plain-Android
+  consumers; the rest exist so a `commonMain` dependency resolves everywhere). Its native
+  targets are annotation-only klibs, cross-compilable from Linux CI via
+  `kotlin.native.enableKlibsCrossCompilation=true` in `gradle.properties`. Dokka javadoc
+  cannot render KMP modules, so `maven-publish.gradle` attaches empty javadoc jars to KMP
+  publications (kotlinx convention) — don't re-apply `dokka.gradle` there.
 - `plugin/build.gradle.kts` sets `group`/`version` on the project itself — required for the
   Gradle plugin marker POM. A deploy without it once published the marker as version
   `unspecified` on Central (visible there forever).
@@ -77,7 +87,8 @@ never hardcodes it — `ArkiveVersion` reads `arkive.properties`, stamped by
 Modules and how they compose at a consumer's build time:
 
 - **annotations** — `@ArkiveComposable` / `@ArkiveView` (SOURCE retention; on the consumer's
-  compile classpath).
+  compile classpath). Multiplatform: sources in `commonMain`, published for every KMP
+  target so KMP consumers can annotate common previews.
 - **processor** (KSP, wired to the consumer's `kspDebug`) — collectors
   (`ArkiveComposableCollector`, `PreviewCollector` for plain `@Preview`s, `ArkiveViewCollector`)
   → validators (drop `skip=true`, private functions, bad parameters; `@ArkiveComposable`
@@ -108,8 +119,39 @@ Modules and how they compose at a consumer's build time:
   `org.gradle.configureondemand`, where task-name resolution happens before
   `projectsEvaluated` callbacks fire.
 
+## Consumer adapters (android vs KMP)
+
+Everything flavor-specific lives behind `ConsumerAdapter`
+(`plugin/.../consumers/`) — the rest of the plugin never branches on project type.
+`ConsumerAdapter.select` picks exactly one adapter per module via `withPlugin` hooks:
+
+- **AndroidConsumerAdapter** (`com.android.application` / `com.android.library`):
+  build-type variants via AndroidComponents `onVariants`, eager deps into
+  `implementation`/`kspDebug`/`kspTestDebug`, KSP output `build/generated/ksp/<variant>/resources`,
+  goldens `src/test/snapshots`, test task `test<Variant>UnitTest`.
+- **KmpConsumerAdapter** (`com.android.kotlin.multiplatform.library`, AGP 9+): single
+  variant `androidMain`, deps deferred until the KMP configurations exist
+  (`commonMainImplementation` ← annotations, `androidMainImplementation` ← composeUtils,
+  `kspAndroid` ← processor, `kspAndroidHostTest` ← testprocessor; junit pair in
+  afterEvaluate), KSP output `build/generated/ksp/android/androidMain/resources`, goldens
+  `src/androidHostTest/snapshots`, test task `testAndroidHostTest`. It also force-enables
+  the library's `androidResources` (reflection — Paparazzi needs the `R` class; without it
+  every shot dies in a way the resilient recording swallows) and defaults
+  `multiModuleVariant` to `androidMain`. Deferred deps must be added **at configuration
+  creation** (`matching{}.all{}`), never via `withDependencies` — KSP resolves the derived
+  `*ProcessorClasspath` configs, whose extendsFrom edge doesn't fire the parent's hooks.
+  Legacy KMP (`com.android.library` + `androidTarget()`) is unsupported; the plugin warns.
+
+Two KMP consumer gotchas (documented in README, baked into `:sampleCmp`): the host-test
+source set needs ≥1 own source file (KSP NO-SOURCE skip), and
+`withHostTestBuilder {}.configure { isIncludeAndroidResources = true }` is required.
+
+Never register Gradle listeners from a task's `init` block (see the note in
+`GenerateShowcaseTask`): with several arkive modules, `findByName` inside a
+`projectsEvaluated` callback realizes tasks in a guarded context where that's illegal.
+
 Showcase pipeline inside `GenerateShowcaseTask`: Paparazzi records into
-`src/test/snapshots` → `SnapshotsGrabber` copies out **only files prefixed
+the adapter's snapshot dir → `SnapshotsGrabber` copies out **only files prefixed
 `com.infinum.arkive_`** (a consumer's own goldens are never touched) → the generator builds
 the JSON, dropping components with no recorded snapshot (a failed preview logs and skips;
 it must not abort the run) → `snapshotRetention` (NONE default/BASE/ALL) decides what

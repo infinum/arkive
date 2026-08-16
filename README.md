@@ -93,6 +93,53 @@ plugins {
 
 Requirements: Kotlin 2.0 or newer. Don't apply Paparazzi yourself — Arkive brings its own.
 
+### Kotlin Multiplatform / Compose Multiplatform
+
+Arkive works on KMP modules that use the **`com.android.kotlin.multiplatform.library`**
+plugin (the Android KMP library plugin, AGP 9+). Previews in `commonMain` — plain CMP
+`@Preview`s, `@ArkiveComposable`, and `@PreviewParameter` in either the androidx or
+jetbrains namespace — are recorded through the android target, exactly like android ones:
+
+```kotlin
+plugins {
+    id("org.jetbrains.kotlin.multiplatform")
+    id("com.android.kotlin.multiplatform.library")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose")
+    id("com.google.devtools.ksp") version "<2.3.6 or newer>"
+    id("com.infinum.arkive") version "<latest version>"
+}
+
+kotlin {
+    androidLibrary {
+        namespace = "com.example.shared"
+        compileSdk = 36
+        minSdk = 24
+        withHostTestBuilder {}.configure {
+            isIncludeAndroidResources = true   // Paparazzi renders in the host tests
+        }
+    }
+}
+```
+
+KMP modules have a single android variant named `androidMain`, so the tasks are
+`generateShowcaseAndroidMain` / `verifyShowcaseAndroidMain`, goldens live in
+`src/androidHostTest/snapshots`, and `multiModuleVariant` needs no configuration.
+Arkive enables the library's android resources itself (snapshot rendering needs the
+module's `R` class) and wires all KSP/test dependencies.
+
+Two constraints:
+
+- The host-test source set needs at least **one source file of its own** (any test or a
+  placeholder object) — KSP skips empty compilations, and Arkive's generated snapshot
+  test with them.
+- The **legacy** KMP setup (`com.android.library` + `androidTarget()`, which AGP 9 gates
+  behind `android.newDsl=false` and AGP 10 removes) is *not* supported — Arkive's
+  processors can't reach the android compilation there, and the plugin logs a warning
+  telling you to migrate.
+
+See [`sampleCmp`](sampleCmp) for a complete working module.
+
 Generate and view:
 
 ```

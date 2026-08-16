@@ -62,7 +62,7 @@ jobs:
         run: ./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build
 
   build-sample:
-    name: Build sample (plugin consumer)
+    name: Showcase e2e (android + KMP consumers)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -81,5 +81,8 @@ jobs:
       - name: Publish to mavenLocal (bootstrap)
         run: ./gradlew publishToMavenLocal -PskipSample
 
-      - name: Build sample against the freshly published plugin
-        run: ./gradlew :sample:assembleStagingDebug
+      # End-to-end over both consumers: the android sample (Peak) and the KMP sample
+      # (Brew) run the full KSP → Paparazzi → showcase pipeline, and the root task
+      # aggregates them into the final catalogue.
+      - name: Generate the full web showcase (android + KMP consumers)
+        run: ./gradlew generateWebShowcase
