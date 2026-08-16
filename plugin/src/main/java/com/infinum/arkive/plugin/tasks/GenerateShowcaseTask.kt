@@ -8,6 +8,7 @@ import com.infinum.arkive.plugin.services.GrabbedSnapshot
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.utils.ArkiveVersion
+import com.infinum.arkive.plugin.utils.showcaseModuleName
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import java.io.File
 import org.gradle.api.file.Directory
@@ -87,7 +88,9 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         // logger.warn("Showcase: $moduleItems")
         writer.write(
             outputDir = outputDirectory.get().asFile,
-            module = ArkiveModule(project.name, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
+            // Path-derived name: bare project names collide in nested layouts (":epos:ui"
+            // vs ":cfs:ui") and this name doubles as the aggregate's module directory.
+            module = ArkiveModule(project.showcaseModuleName, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
         )
 
         logger.warn("Showcase written to ${outputDirectory.get().asFile.resolve("arkive-showcase.json").absolutePath}")

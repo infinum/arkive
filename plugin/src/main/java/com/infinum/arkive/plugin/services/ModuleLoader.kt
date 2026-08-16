@@ -2,6 +2,7 @@ package com.infinum.arkive.plugin.services
 
 import com.infinum.arkive.metadata.fromJson
 import com.infinum.arkive.metadata.model.ArkiveModule
+import com.infinum.arkive.plugin.utils.showcaseModuleName
 import java.io.File
 import org.gradle.api.Project
 
@@ -24,7 +25,9 @@ class ModuleLoaderImpl(
                 project.logger.warn("Loading module")
                 val moduleDir = module.layout.buildDirectory.file(MODULE_ARKIVE_DIR).get().asFile
                 project.logger.warn("Module output path: ${moduleDir.path}")
-                val destinationDir = File(outputDir, module.name)
+                // Must match the name stamped into the module's JSON (the web app
+                // resolves images as <moduleName>/images/...) and stay unique per module.
+                val destinationDir = File(outputDir, module.showcaseModuleName)
                 project.copy { spec ->
                     spec.from(moduleDir)
                     spec.into(destinationDir)
