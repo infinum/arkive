@@ -22,7 +22,7 @@ jobs:
 
       # The sample consumes the published plugin, so bootstrap mavenLocal first.
       - name: Publish to mavenLocal (bootstrap)
-        run: ./gradlew publishToMavenLocal -PskipSample
+        run: ./gradlew publishToMavenLocal
 
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v5

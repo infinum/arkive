@@ -3,16 +3,11 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.ksp)
-    id("com.android.application")
+    alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
-    kotlin("android")
-//    id("app.cash.paparazzi")
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.arkive)
-}
-
-apply {
-    from("$rootDir/config.gradle.kts")
-    from("$rootDir/detekt.gradle")
+    alias(libs.plugins.detekt.plugin)
 }
 
 arkive {
@@ -21,19 +16,16 @@ arkive {
     designFileKey.set("fileKey")
 }
 
-val buildConfig: Map<String, Any> by project
-val releaseConfig: Map<String, Any> by project
-
 android {
     namespace = "com.infinum.arkive.sample"
-    compileSdk = buildConfig["compileSdk"] as Int
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.infinum.arkive.sample"
-        minSdk = buildConfig["minSdk"] as Int
-        targetSdk = buildConfig["targetSdk"] as Int
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
-        versionName = releaseConfig["version"] as String
+        versionName = "1.0"
     }
 
     buildFeatures {
@@ -77,15 +69,6 @@ kotlin {
 }
 
 dependencies {
-
-    //implementation(project(":composeUtils"))
-    // uncomment if you want to test without the plugin
-//    implementation(project(":annotations"))
-//    kspDebug(project(":processor"))
-//    kspTestDebug(project(":testprocessor"))
-//    testImplementation(libs.junit)
-//    testRuntimeOnly(libs.junit.vintage.engine)
-
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.constraintlayout)

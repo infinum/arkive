@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -41,24 +40,13 @@ kotlin {
     mingwX64()
 
     // Publish with a Kotlin 2.0 floor so consumers on older Kotlin versions can read the
-    // metadata; coreLibrariesVersion keeps the kotlin-stdlib dependency at 2.0.x in the POM.
+    // metadata; coreLibrariesVersion keeps the kotlin-stdlib dependency at 2.0.x in the
+    // POM. The library build's own Kotlin IS the floor (see the root build docs), so
+    // compiler, language version, and stdlib all agree — including the emitted klib ABI,
+    // which is what makes @ArkiveComposable usable from commonMain on any 2.0+ consumer.
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
     }
     coreLibrariesVersion = "2.0.21"
-
-    // The JS/wasm compilers require a stdlib klib matching their own ABI, so the 2.0.x
-    // floor above cannot feed those compilations. An explicit current-version stdlib
-    // outranks the floored one on their compile classpaths (highest version wins);
-    // the JVM floor — the one plain-Android consumers depend on — is unaffected.
-    sourceSets {
-        val kotlinCompilerVersion = project.getKotlinPluginVersion()
-        jsMain.dependencies {
-            implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinCompilerVersion")
-        }
-        wasmJsMain.dependencies {
-            implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinCompilerVersion")
-        }
-    }
 }

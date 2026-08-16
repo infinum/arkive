@@ -139,10 +139,11 @@ Two constraints:
   works, or drop an `internal object ArkivePlaceholder` into
   `src/androidHostTest/kotlin` (new plugin) / `src/androidUnitTest/kotlin` (classic
   layout) — see `sampleCmp`.
-- Using `@ArkiveComposable` in `commonMain` requires the project's Kotlin to be at least
-  the Kotlin the annotations were built with (klibs are not forward-compatible). On older
-  Kotlin the plugin wires the annotations into `androidMain` instead and logs it — plain
-  `@Preview`s in `commonMain` are still collected, since they need no Arkive dependency.
+- `@ArkiveComposable` in `commonMain` works on any **Kotlin 2.0.21+** project — the
+  annotations are deliberately built with the oldest supported Kotlin, because klibs are
+  not forward-compatible. On an even older Kotlin the plugin wires the annotations into
+  `androidMain` instead and logs it; plain `@Preview`s in `commonMain` are still
+  collected, since they need no Arkive dependency.
 
 See [`sampleCmp`](sampleCmp) for a complete working module.
 
@@ -243,15 +244,19 @@ Recording is deliberately resilient: a preview that fails to render is logged an
 
 ## Development
 
-The `:sample` module consumes the *published* plugin, so a fresh checkout can't configure
-until the plugin exists in mavenLocal. Bootstrap once:
+The repo is **two Gradle builds**: the root build holds the published modules and is
+deliberately pinned to the *oldest supported toolchain* (its Kotlin is what makes the
+annotations klibs readable by every Kotlin 2.0+ consumer — klibs are not
+forward-compatible); the samples live in `samples/`, a standalone build on the *newest*
+toolchain, simulating real consumers. The samples consume the *published* plugin, so
+bootstrap mavenLocal first:
 
 ```
-./gradlew publishToMavenLocal -PskipSample
+./gradlew publishToMavenLocal          # in the repo root
+cd samples && ./gradlew generateWebShowcase
 ```
 
-Afterwards the full build (including the sample) works normally. Re-run the bootstrap
-whenever you change plugin code the sample should pick up.
+Re-run the bootstrap whenever you change plugin code the samples should pick up.
 
 Consuming a locally published build from another project additionally needs
 `mavenLocal()` in the consumer's `settings.gradle(.kts)` — in **both**

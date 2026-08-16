@@ -34,12 +34,14 @@ jobs:
           cache-overwrite-existing: true
           gradle-home-cache-cleanup: true
 
-      # The sample consumes the published plugin, so bootstrap mavenLocal first.
+      # The samples consume the published plugin, so bootstrap mavenLocal first.
       - name: Publish to mavenLocal (bootstrap)
-        run: ./gradlew publishToMavenLocal -PskipSample
+        run: ./gradlew publishToMavenLocal
 
-      # Records Paparazzi snapshots and generates the showcase site for the sample.
+      # Records Paparazzi snapshots and generates the showcase site for both samples
+      # (a standalone build with its own toolchain — see samples/settings.gradle.kts).
       - name: Generate web showcase
+        working-directory: samples
         run: ./gradlew generateWebShowcase
 
       - name: Configure Pages
@@ -48,7 +50,7 @@ jobs:
       - name: Upload showcase site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/generated/arkive/showcase
+          path: samples/build/generated/arkive/showcase
 
   deploy:
     name: Deploy to GitHub Pages

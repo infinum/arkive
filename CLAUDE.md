@@ -8,22 +8,36 @@ Arkive is a Gradle plugin (`com.infinum.arkive`) that generates a browsable web 
 ("catalogue") of an Android app's Compose previews and views, using Paparazzi to record
 snapshots on the JVM. Published to Maven Central under `com.infinum.arkive`.
 
-## The bootstrap rule (read first)
+## Two builds, two toolchains (read first)
 
-`:sample` and `:sampleCmp` consume the **published** plugin from mavenLocal — a fresh
-checkout cannot configure at all until the plugin exists there. Any root-level Gradle
-invocation configures them, so everything fails until you bootstrap:
+The repo is **two Gradle builds**, deliberately:
+
+- **Root build** — the published modules. Pinned to the **oldest supported toolchain**:
+  Gradle 8.10, Kotlin 2.0.21, AGP 8.7, and matching old dep pins (ksp-api, kotlinpoet,
+  serialization, 2024 Compose BOM). The Kotlin version here IS the public
+  `@ArkiveComposable`-in-commonMain floor: klibs are not forward-compatible, so the
+  annotations klibs are only readable by consumers on Kotlin ≥ the version that built
+  them. **Do not bump this toolchain casually — raising it is a breaking change for
+  KMP consumers.** (JVM artifacts are protected separately by the language floor.)
+- **`samples/`** — a standalone build with its own wrapper on the **newest toolchain**
+  (Gradle 9.x, AGP 9, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
+  samples simulate real consumers and prove the old-library/new-consumer direction.
+
+The samples consume the **published** plugin from mavenLocal, so bootstrap first:
 
 ```
-./gradlew publishToMavenLocal -PskipSample
+./gradlew publishToMavenLocal        # repo root
+cd samples && ./gradlew <task>       # samples always run from samples/ with THEIR wrapper
 ```
 
-`-PskipSample` drops both samples from the build for that invocation (see `settings.gradle.kts`).
-After the bootstrap, the full build works. **Re-run publishToMavenLocal whenever you change
-plugin/processor/testprocessor code** — the sample (and any consumer project) resolves the
-published artifacts, not the source; stale mavenLocal jars are the most common source of
-"my change didn't take effect" confusion. Use `--refresh-dependencies` on the consumer side
-after republishing the same version.
+**Re-run publishToMavenLocal whenever you change plugin/processor/testprocessor code** —
+the samples (and any consumer project) resolve the published artifacts, not the source;
+stale mavenLocal jars are the most common source of "my change didn't take effect"
+confusion. Use `--refresh-dependencies` on the consumer side after republishing the same
+version; if stale-jar symptoms persist (e.g. a FileNotFoundException about a
+`.kotlin_module` entry), also delete `~/.gradle/caches/modules-2/files-2.1/com.infinum.arkive`.
+Never run samples tasks through the root wrapper (`-p samples` would use the wrong
+Gradle).
 
 ## Commands
 
@@ -33,17 +47,20 @@ after republishing the same version.
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
 - Single test: `./gradlew :processor:test --tests 'SomeClass'`
 - Full sample pipeline (records ~350 Paparazzi snapshots, builds the site):
-  `./gradlew generateWebShowcase` → output at `build/generated/arkive/showcase/` (serve it
-  with `python3 -m http.server`; the JSON is fetched, so `file://` won't work)
-- Per-variant module task: `./gradlew :sample:generateShowcaseUatDebug`
-- KMP sample (single variant "androidMain"): `./gradlew :sampleCmp:generateShowcaseAndroidMain`,
-  verify via `:sampleCmp:verifyShowcaseAndroidMain`; goldens in `src/androidHostTest/snapshots`
-- Verify retained goldens: `./gradlew :sample:verifyShowcaseUatDebug` (needs
-  `snapshotRetention` BASE/ALL and previously recorded goldens). The sample leaves
-  retention at the NONE default, so reproducing verification means temporarily setting
-  `snapshotRetention.set(SnapshotRetention.BASE)` in `sample/build.gradle.kts` and
-  recording first — CI does not exercise this path. Run it in its own invocation (a
-  guard fails the build when combined with check/build/test/record).
+  `cd samples && ./gradlew generateWebShowcase` → output at
+  `samples/build/generated/arkive/showcase/` (serve it with `python3 -m http.server`;
+  the JSON is fetched, so `file://` won't work)
+- Per-variant module task (in samples/): `./gradlew :sample:generateShowcaseUatDebug`
+- KMP sample (single variant "androidMain", in samples/):
+  `./gradlew :sampleCmp:generateShowcaseAndroidMain`, verify via
+  `:sampleCmp:verifyShowcaseAndroidMain`; goldens in `src/androidHostTest/snapshots`
+- Verify retained goldens (in samples/): `./gradlew :sample:verifyShowcaseUatDebug`
+  (needs `snapshotRetention` BASE/ALL and previously recorded goldens). The sample
+  leaves retention at the NONE default, so reproducing verification means temporarily
+  setting `snapshotRetention.set(SnapshotRetention.BASE)` in
+  `samples/sample/build.gradle.kts` and recording first — CI does not exercise this
+  path. Run it in its own invocation (a guard fails the build when combined with
+  check/build/test/record).
 - Central deploy (vanniktech maven-publish plugin): `./gradlew publishToMavenCentral`
   uploads everything, then release manually at central.sonatype.com/publishing — or
   `./gradlew publishAndReleaseToMavenCentral` for both in one go. Needs
@@ -60,8 +77,9 @@ sample showcase deploys to GitHub Pages on merges to `main`.
 
 The version is declared in **two** places that must move together:
 `gradle.properties` (`VERSION_NAME`, the source of truth — the publish plugin and
-`config.gradle.kts`'s `releaseConfig` both read it) and `gradle/libs.versions.toml`
-(`arkive`, `arkive-plugin`, used by the samples). Kotlin code never hardcodes it —
+`config.gradle.kts`'s `releaseConfig` both read it) and
+`samples/gradle/libs.versions.toml` (`arkive` — the samples pin the published version
+like any consumer). Kotlin code never hardcodes it —
 `ArkiveVersion` reads `arkive.properties`, stamped by `processResources` from
 `project.version` in `plugin/build.gradle.kts`; that module (alone) must keep its
 explicit `group`/`version` assignment, because the publish plugin only sets
@@ -71,25 +89,28 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
 
 ## Compatibility constraints (do not remove)
 
-- All published modules compile with a **Kotlin 2.0 language/api floor** and
-  `coreLibrariesVersion = 2.0.21` (blocks at the bottom of each module's build file).
-  The repo builds with a much newer Kotlin; the floor is what lets consumers on
-  Kotlin 2.0+ read the metadata. Removing it silently breaks consumers. Exception inside
-  `:annotations` (multiplatform): the js/wasm compilations get an explicit current-version
-  stdlib on top — their compilers reject the 2.0.x stdlib ABI — while the JVM floor stays.
+- The root build's toolchain (Gradle 8.10, Kotlin 2.0.21, AGP 8.7 + old dep pins) is the
+  compatibility mechanism, not staleness — see "Two builds, two toolchains". The
+  **Kotlin 2.0 language/api floor + `coreLibrariesVersion = 2.0.21`** blocks in each
+  module's build file keep the JVM metadata story explicit; with the compiler itself at
+  2.0.21 they also match the emitted klib ABI. Removing any of it silently breaks
+  consumers.
+- Paparazzi must stay `runtimeOnly` in `:plugin` and OFF the root buildscript classpath —
+  it is built with a much newer Kotlin/android-tools than this build compiles with
+  (compile-classpath contamination breaks AGP's version check and Kotlin metadata reading).
 - `:annotations` publishes a **full KMP target matrix** (jvm serves plain-Android
-  consumers; the rest exist so a `commonMain` dependency resolves everywhere). Its native
-  targets are annotation-only klibs, cross-compilable from Linux CI via
-  `kotlin.native.enableKlibsCrossCompilation=true` in `gradle.properties`. Dokka javadoc
-  cannot render KMP modules, so `maven-publish.gradle` attaches empty javadoc jars to KMP
-  publications (kotlinx convention) — don't re-apply `dokka.gradle` there.
+  consumers; the rest exist so a `commonMain` dependency resolves everywhere). Apple
+  targets need a macOS host (KGP 2.0 has no klib cross-compilation) — deploys run from
+  macOS; the Linux CI bootstrap skips them, and the samples only need the jvm artifact.
+  Dokka javadoc cannot render KMP modules, so `maven-publish.gradle` attaches empty
+  javadoc jars to KMP publications (kotlinx convention) — don't re-apply `dokka.gradle`
+  there.
 - `plugin/build.gradle.kts` sets `group`/`version` on the project itself — required for the
   Gradle plugin marker POM. A deploy without it once published the marker as version
   `unspecified` on Central (visible there forever).
 - `:plugin` depends on `project(":metadata")`, not the published artifact (POM coordinates
   map correctly anyway); this keeps fresh checkouts buildable.
-- Root `build.gradle.kts` must NOT put the arkive plugin on the buildscript classpath — it
-  conflicts with the versioned plugins-block request in `:sample`.
+- Root `build.gradle.kts` must NOT put the arkive plugin on the buildscript classpath.
 
 ## Architecture
 

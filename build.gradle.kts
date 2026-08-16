@@ -14,10 +14,10 @@ buildscript {
         classpath(libs.gradle.android)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
-        classpath(libs.paparazzi.plugin)
         classpath(libs.vanniktech.publish.plugin)
-        // Do NOT add the arkive plugin to the buildscript classpath — it conflicts with the
-        // versioned `alias(libs.plugins.arkive)` request in :sample (resolved via pluginManagement).
+        // Do NOT add paparazzi here: nothing in this build applies it (it is :plugin's
+        // implementation dependency only), and its newer com.android.tools jars would
+        // outrank this build's deliberately old AGP on the classpath and break it.
     }
 }
 

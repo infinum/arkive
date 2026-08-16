@@ -134,11 +134,11 @@ per-variant tasks appear (`generateShowcaseDebug`, …), goldens live in
 `src/androidUnitTest/kotlin`. `multiModuleVariant` defaults to `debug` there; set it
 only when the module has flavors.
 
-**`@ArkiveComposable` in commonMain needs the consumer's Kotlin ≥ the Kotlin Arkive was
-built with** (klibs aren't forward-compatible). On older Kotlin the plugin wires the
-annotations into androidMain instead and logs a warning — write commonMain previews as
-plain `@Preview` in that case (collected all the same) and use `@ArkiveComposable` in
-androidMain only.
+**`@ArkiveComposable` in commonMain works on any Kotlin 2.0.21+ project** (the
+annotations are built with the oldest supported Kotlin; klibs aren't
+forward-compatible). On an even older Kotlin the plugin wires the annotations into
+androidMain instead and logs a warning — write commonMain previews as plain `@Preview`
+in that case (collected all the same).
 
 ## Step 6 — Annotations (the catalogue works without them, but recommend the upgrade)
 

@@ -83,10 +83,11 @@ Both KMP layouts are supported; requirements and differences vs a plain android 
 | Android resources | on by default | on by default | the plugin force-enables `androidResources` (Paparazzi needs the module's `R` class) |
 | Empty-test-set placeholder | `src/test/java/` | `src/androidUnitTest/kotlin/` | `src/androidHostTest/kotlin/` |
 
-**`@ArkiveComposable` in commonMain requires the consumer's Kotlin ≥ the Kotlin the
-annotations were built with** — klibs aren't forward-compatible, so on older Kotlin the
-plugin wires the annotations into androidMain instead (with a warning). Plain `@Preview`
-in commonMain needs no Arkive dependency and is collected regardless of Kotlin version.
+**`@ArkiveComposable` in commonMain works on any Kotlin 2.0.21+ project** — the
+annotations are deliberately built with the oldest supported Kotlin (klibs aren't
+forward-compatible). On an even older Kotlin the plugin wires the annotations into
+androidMain instead (with a warning). Plain `@Preview` in commonMain needs no Arkive
+dependency and is collected regardless of Kotlin version.
 
 ## Output locations (consumer project)
 

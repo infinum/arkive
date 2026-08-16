@@ -15,14 +15,10 @@ include(":annotations")
 include(":metadata")
 include(":plugin")
 
-// The sample consumes the *published* plugin, so a fresh checkout (empty mavenLocal,
-// nothing on Central yet) cannot configure it. Bootstrap with:
-//   ./gradlew publishToMavenLocal -PskipSample
-// after which the full build works. CI uses the same two-step flow.
-if (!providers.gradleProperty("skipSample").isPresent) {
-    include(":sample")
-    include(":sampleCmp")
-}
+// The samples live in their own standalone build (samples/) so they can run the newest
+// toolchain while this build stays pinned to the oldest supported one (see
+// samples/settings.gradle.kts). Bootstrap them with `./gradlew publishToMavenLocal`
+// here first — they consume the published plugin from mavenLocal.
 
 rootProject.name = "Arkive"
 
