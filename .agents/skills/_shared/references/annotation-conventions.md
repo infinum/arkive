@@ -36,6 +36,46 @@ stays in the catalogue, **recommend adding `@ArkiveComposable`**:
 Don't mass-annotate a codebase unprompted — but when touching a component anyway, or when
 the user asks to curate, `@ArkiveComposable` is the standard, not the exception.
 
+## One component per preview — never compose instances together
+
+A preview destined for the catalogue renders **exactly one instance of one component**.
+Never lay out several instances in a `Row`/`Column` to show sizes, styles, or an
+enabled/disabled pair side by side — the catalogue entry IS the frame, and a grid of
+variants ruins it. Every axis of variation (style, size, enabled, text, state) becomes a
+field in a preview-state class fed through a single `@PreviewParameter` provider: one
+provider value = one catalogue variant, each rendered alone. A wrapper composable is fine
+only when it's real usage (the app's theme/surface wrapper), never a layout for multiple
+instances.
+
+```kotlin
+// WRONG — a catalogue entry that is a wall of buttons
+@Preview @Composable
+internal fun ButtonSizesPreview() {
+    Column { AppButton("Big", Size.Big); AppButton("Medium", Size.Medium); ... }
+}
+
+// RIGHT — one instance; sizes/styles/disabled are provider values
+internal class AppButtonStateProvider : PreviewParameterProvider<AppButtonPreviewState> {
+    override val values = sequenceOf(
+        AppButtonPreviewState("Primary", Style.Primary),
+        AppButtonPreviewState("Disabled", Style.Primary, isEnabled = false),
+        AppButtonPreviewState("Big", Style.Primary, size = Size.Big),
+    )
+}
+
+@ArkiveComposable(name = "App Button", group = "Buttons")
+@Preview @Composable
+internal fun AppButtonPreview(
+    @PreviewParameter(AppButtonStateProvider::class) state: AppButtonPreviewState,
+) {
+    AppTheme { AppButton(state.label, state.style, state.size, state.isEnabled) }
+}
+```
+
+Where previews live — in the same file as the composable (directly below it) or in
+separate preview files — is the project's decision; follow the existing convention and
+stay consistent with it.
+
 ## The golden rule: reuse before inventing
 
 Before writing any `group` or `tag`, **list what already exists** — grep the codebase for
