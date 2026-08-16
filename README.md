@@ -14,34 +14,43 @@ https://github.com/user-attachments/assets/8134c6d3-88d0-4c5e-b7b4-badd36761f26
 
 ## Install with AI skills (recommended)
 
-The fastest way to adopt Arkive is to let your coding agent do it. This repo ships
-agent skills (the open [SKILL.md standard](https://agentskills.io)) that install Arkive
-correctly (right version, every module with previews, flavor-aware configuration) and end
-with the catalogue open in your browser.
+The fastest way to adopt Arkive is to let your coding agent do it. This repo ships agent
+skills (the open [SKILL.md standard](https://agentskills.io)) that install Arkive
+correctly — right version, every module with previews, flavor-aware configuration — and
+end with the catalogue open in your browser.
 
-In [Claude Code](https://claude.com/claude-code):
+### [Claude Code](https://claude.com/claude-code)
 
 ```
 /plugin marketplace add infinum/arkive
 /plugin install arkive@arkive
 ```
 
-In [Codex](https://developers.openai.com/codex):
+### [Codex](https://developers.openai.com/codex)
 
 ```
 codex plugin marketplace add infinum/arkive
 ```
 
-then `/plugin install arkive@arkive` inside Codex.
+then inside Codex:
 
-For Cursor, Gemini CLI, and [70+ other agents](https://skills.sh), install into your
-project with:
+```
+/plugin install arkive@arkive
+```
+
+### Any other agent
+
+Cursor, Gemini CLI, Copilot, … — one command, works with any agent that supports
+[skills](https://skills.sh):
 
 ```
 npx skills add infinum/arkive
 ```
 
-Then just ask for it:
+### Run the setup
+
+Whichever install option you chose, finish with this step: ask your agent to set up
+Arkive, or call the skill directly:
 
 ```
 /arkive:setup
