@@ -1,0 +1,9 @@
+{
+  "name": "arkive",
+  "plugins": [
+    {
+      "name": "arkive",
+      "source": "./claude-plugin"
+    }
+  ]
+}

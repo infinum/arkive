@@ -1,12 +1,34 @@
-# Arkive Claude Code plugin
+# Arkive agent plugin
 
-Skills for working with [Arkive](https://github.com/infinum/arkive) in Claude Code.
+Skills for working with [Arkive](https://github.com/infinum/arkive) in Claude Code,
+Codex, and any agent that speaks the open [SKILL.md standard](https://agentskills.io).
+
+The skill folders themselves live at [`.agents/skills/`](../.agents/skills/) (the
+cross-tool standard location); the entries under `skills/` here are symlinks to them, so
+this directory doubles as the Claude Code *and* Codex plugin without duplicating a file.
+Installers materialize the symlinks into real copies.
 
 ## Install
+
+Claude Code:
 
 ```
 /plugin marketplace add infinum/arkive
 /plugin install arkive@arkive
+```
+
+Codex:
+
+```
+codex plugin marketplace add infinum/arkive
+```
+
+then `/plugin install arkive@arkive` inside Codex.
+
+Cursor, Gemini CLI, and other agents (installs the bare skills, no plugin wrapper):
+
+```
+npx skills add infinum/arkive
 ```
 
 ## Skills
@@ -26,5 +48,8 @@ development workflow (that lives in the repo's `CLAUDE.md`).
 
 The skills assume `verifyShowcase` and the 0.0.3 consumer-compat fixes — do not announce
 the marketplace until 0.0.3 is live on Maven Central. Shared facts the skills rely on
-(task names, paths, filename conventions, retention semantics) live in
-`references/arkive-cheatsheet.md`; update it when plugin behavior changes.
+(task names, paths, filename conventions, retention semantics) live once in
+`.agents/skills/_shared/references/` — each skill's `references/` is a symlink to it;
+update it there when plugin behavior changes. Skill bodies must reference those docs by
+skill-relative paths (`references/arkive-cheatsheet.md`), never `${CLAUDE_PLUGIN_ROOT}`,
+which only Claude Code understands.

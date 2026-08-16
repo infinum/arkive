@@ -6,7 +6,7 @@ description: 'Use when adding, editing, or reviewing Arkive annotations — @Ark
 # Arkive Annotate
 
 Add or edit Arkive catalogue annotations following the project's conventions. The full
-standard lives in `${CLAUDE_PLUGIN_ROOT}/references/annotation-conventions.md` — read it
+standard lives in `references/annotation-conventions.md` — read it
 before writing any annotation.
 
 ## Procedure

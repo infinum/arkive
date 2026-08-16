@@ -6,7 +6,7 @@ description: 'Use when: (1) adding Arkive (com.infinum.arkive) to a project for 
 # Arkive Setup
 
 Install Arkive on an Android project and get to a **rendered, browsable showcase**. Read
-`${CLAUDE_PLUGIN_ROOT}/references/arkive-cheatsheet.md` first for paths, task names, and
+`references/arkive-cheatsheet.md` first for paths, task names, and
 extension options used below.
 
 **The finish line is the showcase in a browser, not a green build.** Setup that ends at
@@ -112,7 +112,7 @@ showcase on it.
 Then tell the user the recommended standard is `@ArkiveComposable`: richer catalogue info
 (`tags`, `designNodeId` for the design loop, `skip`) and build-error validation instead
 of silently skipping broken previews. The naming/grouping conventions live in
-`${CLAUDE_PLUGIN_ROOT}/references/annotation-conventions.md` (used by `/arkive:annotate`).
+`references/annotation-conventions.md` (used by `/arkive:annotate`).
 During setup, don't mass-annotate beyond what the user asked for — recommend, offer,
 don't impose.
 

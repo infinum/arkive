@@ -8,7 +8,7 @@ description: 'Use BEFORE implementing any new screen or component from a Figma d
 Before building UI, prove it doesn't already exist. The Arkive catalogue is a
 machine-readable inventory of the project's components — names, groups, tags, Figma node
 ids, and a rendered image of each. Read
-`${CLAUDE_PLUGIN_ROOT}/references/arkive-cheatsheet.md` for the showcase JSON shape and
+`references/arkive-cheatsheet.md` for the showcase JSON shape and
 paths.
 
 The outcome is always one of three exits (below). "I searched and found nothing" is only

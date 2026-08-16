@@ -7,7 +7,7 @@ description: 'Use when: (1) implementing UI from a Figma design in a project tha
 
 Validate UI against its design using Arkive's showcase output plus a **multimodal visual
 comparison** — view the rendered snapshot and the design truth in the same turn and judge
-whether they match. Read `${CLAUDE_PLUGIN_ROOT}/references/arkive-cheatsheet.md` for
+whether they match. Read `references/arkive-cheatsheet.md` for
 paths, filename conventions, and the showcase JSON shape.
 
 This loop compares against the **freshly generated showcase**, never against goldens.

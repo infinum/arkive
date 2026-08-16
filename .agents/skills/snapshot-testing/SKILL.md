@@ -7,7 +7,7 @@ description: 'Use when: (1) enabling golden snapshot testing in a project that u
 
 Lock in approved UI with goldens and make regressions fail the build via
 `verifyShowcase<Variant>`. Read
-`${CLAUDE_PLUGIN_ROOT}/references/arkive-cheatsheet.md` for retention semantics, paths,
+`references/arkive-cheatsheet.md` for retention semantics, paths,
 and failure behavior.
 
 **Scope:** this is code-vs-code-as-last-approved, judged pixel-exact against committed
