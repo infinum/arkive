@@ -1,0 +1,179 @@
+package com.infinum.arkive.processor.generators
+
+import com.infinum.arkive.processor.generators.EngineTestGenerator.Companion.JUNIT_PACKAGE
+import com.infinum.arkive.processor.generators.EngineTestGenerator.Companion.RETENTION_SYSTEM_PROPERTY
+import com.infinum.arkive.processor.generators.EngineTestGenerator.Companion.TEST_CLASS_NAME
+import com.infinum.arkive.processor.generators.EngineTestGenerator.Companion.testAnnotation
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.BOOLEAN
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
+
+/**
+ * Paparazzi/layoutlib test: three test methods that pump every component through the
+ * generated shooter in one run. layoutlib renders each snapshot standalone (no window
+ * survives between captures), so the single-method shape is memory-safe here — unlike
+ * under Robolectric, which is why [RoborazziTestGenerator] has a different shape.
+ */
+internal class PaparazziTestGenerator : EngineTestGenerator {
+
+    override fun generate(): TypeSpec {
+        return TypeSpec.classBuilder(TEST_CLASS_NAME)
+            .addModifiers(KModifier.PUBLIC)
+            .addProperty(isVerifyRunProperty())
+            .addProperty(retentionProperty())
+            .addProperty(paparazziProperty())
+            .addProperty(ruleChainProperty())
+            .addFunction(
+                composableTestFunction(
+                    "testAllComposableFunctions",
+                    "runComposableTests",
+                    // Base goldens exist under BASE and ALL retention.
+                    verifySkipCondition = "$RETENTION_PROPERTY == \"NONE\"",
+                ),
+            )
+            .addFunction(
+                composableTestFunction(
+                    "testAllComposableVariants",
+                    "runComposableVariantTests",
+                    // Variant goldens only exist under ALL retention.
+                    verifySkipCondition = "$RETENTION_PROPERTY != \"ALL\"",
+                ),
+            )
+            .addFunction(viewTestFunction())
+            .build()
+    }
+
+    // Paparazzi flips verify mode via this system property on the test JVM; the generated
+    // code keys off the same source of truth instead of a parallel flag.
+    private fun isVerifyRunProperty(): PropertySpec {
+        return PropertySpec.builder(IS_VERIFY_RUN_PROPERTY, BOOLEAN)
+            .addModifiers(KModifier.PRIVATE)
+            .initializer("java.lang.Boolean.getBoolean(%S)", "paparazzi.test.verify")
+            .build()
+    }
+
+    // Injected by the Arkive Gradle plugin so verify runs only enforce snapshots whose
+    // goldens the retention policy actually kept — a consumer's plain verifyPaparazzi with
+    // retention NONE must not fail on golden-less Arkive snapshots.
+    private fun retentionProperty(): PropertySpec {
+        return PropertySpec.builder(RETENTION_PROPERTY, ClassName("kotlin", "String"))
+            .addModifiers(KModifier.PRIVATE)
+            .initializer("System.getProperty(%S) ?: %S", RETENTION_SYSTEM_PROPERTY, "NONE")
+            .build()
+    }
+
+    private fun paparazziProperty(): PropertySpec {
+        return PropertySpec.builder(
+            "paparazzi",
+            ClassName("app.cash.paparazzi", "Paparazzi"),
+        )
+            .initializer(
+                // Translucent theme keeps the window background transparent, so snapshots
+                // carry an alpha channel instead of the default dark Material backdrop.
+                "Paparazzi(" +
+                    "renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK, " +
+                    "theme = \"android:Theme.Translucent.NoTitleBar\"" +
+                    ")",
+            )
+            .build()
+    }
+
+    private fun ruleChainProperty(): PropertySpec {
+        // Paparazzi re-throws snapshot errors at rule teardown even when the test body
+        // swallowed them. In record mode the outer rule absorbs that, so one broken preview
+        // (already logged and skipped) never fails the snapshot run. In verify mode failures
+        // are the whole point — they propagate and fail the build.
+        return PropertySpec.builder(
+            "arkiveRule",
+            ClassName("org.junit.rules", "RuleChain"),
+        )
+            .addAnnotation(
+                AnnotationSpec.builder(ClassName(JUNIT_PACKAGE, "Rule"))
+                    .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
+                    .build(),
+            )
+            .initializer(
+                """
+                org.junit.rules.RuleChain
+                    .outerRule(
+                        org.junit.rules.TestRule { base, _ ->
+                            object : org.junit.runners.model.Statement() {
+                                override fun evaluate() {
+                                    try {
+                                        base.evaluate()
+                                    } catch (e: Throwable) {
+                                        if ($IS_VERIFY_RUN_PROPERTY) {
+                                            throw e
+                                        }
+                                        println("Arkive: snapshot session finished with errors: " + e.message)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                    .around(paparazzi)
+                """.trimIndent(),
+            )
+            .build()
+    }
+
+    // Base and variant snapshots run as separate tests so golden testing can target just
+    // the base set: ./gradlew verifyPaparazzi<Variant> --tests '*.testAllComposableFunctions'
+    private fun composableTestFunction(
+        testName: String,
+        shooterFunction: String,
+        verifySkipCondition: String,
+    ): FunSpec {
+        return FunSpec.builder(testName)
+            .addAnnotation(testAnnotation())
+            .addCode(
+                """
+                if ($IS_VERIFY_RUN_PROPERTY && $verifySkipCondition) {
+                    println("Arkive: $testName has no retained goldens (snapshotRetention = " + $RETENTION_PROPERTY + "), nothing to verify")
+                    return
+                }
+                val shooter = ArkiveComposeShoot()
+                shooter.$shooterFunction { name, function ->
+                    paparazzi.snapshot(name = name) {
+                        function()
+                    }
+                }
+                """.trimIndent(),
+            )
+            .build()
+    }
+
+    private fun viewTestFunction(): FunSpec {
+        val frameLayoutClass = ClassName("android.widget", "FrameLayout")
+        val layoutInflaterClass = ClassName("android.view", "LayoutInflater")
+
+        return FunSpec.builder("testAllViewFunctions")
+            .addAnnotation(testAnnotation())
+            .addCode(
+                """
+                if ($IS_VERIFY_RUN_PROPERTY && $RETENTION_PROPERTY == "NONE") {
+                    println("Arkive: testAllViewFunctions has no retained goldens (snapshotRetention = NONE), nothing to verify")
+                    return
+                }
+                val shooter = ArkiveViewShoot()
+                shooter.runViewTests { name, function ->
+                    val viewId = function()
+                    val view = %T.from(paparazzi.context).inflate(viewId, %T(paparazzi.context))
+                    paparazzi.snapshot(view = view, name = name)
+                }
+                """.trimIndent(),
+                layoutInflaterClass,
+                frameLayoutClass,
+            )
+            .build()
+    }
+
+    companion object {
+        private const val IS_VERIFY_RUN_PROPERTY = "isVerifyRun"
+        private const val RETENTION_PROPERTY = "snapshotRetention"
+    }
+}

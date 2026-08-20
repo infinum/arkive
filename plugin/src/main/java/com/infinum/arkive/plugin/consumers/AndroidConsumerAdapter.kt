@@ -22,6 +22,8 @@ internal class AndroidConsumerAdapter(
 
     override val defaultMultiModuleVariant = ""
 
+    override val testImplementationConfigurationName = "testImplementation"
+
     override fun onVariants(action: (String) -> Unit) {
         when (kind) {
             Kind.APPLICATION ->

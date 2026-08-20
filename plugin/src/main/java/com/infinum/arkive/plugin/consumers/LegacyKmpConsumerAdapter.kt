@@ -31,6 +31,8 @@ internal class LegacyKmpConsumerAdapter(
     // modules override via the extension, same as plain Android.
     override val defaultMultiModuleVariant = "debug"
 
+    override val testImplementationConfigurationName = "androidUnitTestImplementation"
+
     init {
         requireKspPlugin()
     }
@@ -69,8 +71,8 @@ internal class LegacyKmpConsumerAdapter(
                 "com.infinum.arkive:testprocessor:$arkiveVersion",
             )
             afterEvaluate {
-                if (configurations.findByName("androidUnitTestImplementation") != null) {
-                    addDependencyIfMissing("androidUnitTestImplementation", JUNIT_DEPENDENCY)
+                if (configurations.findByName(testImplementationConfigurationName) != null) {
+                    addDependencyIfMissing(testImplementationConfigurationName, JUNIT_DEPENDENCY)
                 }
                 if (configurations.findByName("androidUnitTestRuntimeOnly") != null) {
                     addDependencyIfMissing("androidUnitTestRuntimeOnly", JUNIT_VINTAGE_DEPENDENCY)

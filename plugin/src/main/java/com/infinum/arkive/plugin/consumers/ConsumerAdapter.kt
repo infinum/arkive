@@ -1,5 +1,6 @@
 package com.infinum.arkive.plugin.consumers
 
+import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.Project
 
 /**
@@ -16,6 +17,9 @@ internal interface ConsumerAdapter {
     /** Default `arkive.multiModuleVariant` when the consumer configures none. */
     val defaultMultiModuleVariant: String
 
+    /** The `implementation` configuration of the unit-test source set (engine test deps go here). */
+    val testImplementationConfigurationName: String
+
     /** Invokes [action] for every variant Arkive should showcase, as variants become known. */
     fun onVariants(action: (String) -> Unit)
 
@@ -28,8 +32,15 @@ internal interface ConsumerAdapter {
     /** Paparazzi's golden directory, relative to the module directory. */
     fun snapshotsPath(): String
 
-    /** The unit-test task Paparazzi's verify runs through for [variant]. */
+    /** The unit-test task the engine's verify runs through for [variant]. */
     fun unitTestTaskName(variant: String): String
+
+    /**
+     * Suffix of the Roborazzi plugin's per-variant tasks. On `android {}` flavors they
+     * follow the build variant (`recordRoborazziUatDebug`); on the AGP KMP library plugin
+     * Roborazzi names them after the test task instead (`recordRoborazziAndroidHostTest`).
+     */
+    fun roborazziTaskSuffix(variant: String): String = variant.capFirst
 
     companion object {
         private const val ANDROID_APPLICATION_PLUGIN_ID = "com.android.application"

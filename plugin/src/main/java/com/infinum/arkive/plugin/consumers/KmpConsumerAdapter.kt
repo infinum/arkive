@@ -26,6 +26,8 @@ internal class KmpConsumerAdapter(
     // without the consumer having to configure multiModuleVariant at all.
     override val defaultMultiModuleVariant = ANDROID_VARIANT
 
+    override val testImplementationConfigurationName = "androidHostTestImplementation"
+
     init {
         enableAndroidResources()
         requireKspPlugin()
@@ -57,8 +59,8 @@ internal class KmpConsumerAdapter(
             // Test-runtime deps aren't resolution-timing-sensitive the way KSP configs
             // are; deferring to afterEvaluate lets the consumer's own junit win.
             afterEvaluate {
-                if (configurations.findByName("androidHostTestImplementation") != null) {
-                    addDependencyIfMissing("androidHostTestImplementation", JUNIT_DEPENDENCY)
+                if (configurations.findByName(testImplementationConfigurationName) != null) {
+                    addDependencyIfMissing(testImplementationConfigurationName, JUNIT_DEPENDENCY)
                 }
                 if (configurations.findByName("androidHostTestRuntimeOnly") != null) {
                     addDependencyIfMissing("androidHostTestRuntimeOnly", JUNIT_VINTAGE_DEPENDENCY)
@@ -75,6 +77,9 @@ internal class KmpConsumerAdapter(
         "src${File.separator}androidHostTest${File.separator}snapshots"
 
     override fun unitTestTaskName(variant: String): String = "testAndroidHostTest"
+
+    // Roborazzi names its tasks after the host-test task here, not the variant.
+    override fun roborazziTaskSuffix(variant: String): String = "AndroidHostTest"
 
     /**
      * Paparazzi needs the consumer's `R` class, and the KMP library plugin does not

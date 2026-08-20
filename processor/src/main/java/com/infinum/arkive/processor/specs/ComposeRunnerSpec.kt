@@ -133,11 +133,17 @@ class ComposeRunnerSpec(
 
     private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder(SIMPLE_NAME)
         .addProperty(
-            // Paparazzi's own verify-mode property — the same literal is read in the
-            // generated test class (ArkiveTestProcessor); keep the two in sync.
+            // Whichever engine runs, its verify task sets its own system property on the
+            // test JVM — the shooter stays engine-agnostic by keying on either. The same
+            // literals are read in the generated test class (testprocessor generators);
+            // keep them in sync.
             PropertySpec.builder(IS_VERIFY_RUN_PROPERTY, BOOLEAN)
                 .addModifiers(KModifier.PRIVATE)
-                .initializer("java.lang.Boolean.getBoolean(%S)", "paparazzi.test.verify")
+                .initializer(
+                    "java.lang.Boolean.getBoolean(%S) || java.lang.Boolean.getBoolean(%S)",
+                    "paparazzi.test.verify",
+                    "roborazzi.test.verify",
+                )
                 .build(),
         )
 

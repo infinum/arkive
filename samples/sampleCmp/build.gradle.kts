@@ -10,9 +10,10 @@ plugins {
 
 arkive {
     // multiModuleVariant intentionally NOT set: on KMP modules the plugin defaults it to
-    // "androidMain" (the single Paparazzi variant), so generateWebShowcase finds this
+    // "androidMain" (the single android variant), so generateWebShowcase finds this
     // module with zero configuration.
     enableVariants.set(true)
+    engine(Roborazzi)
 }
 
 kotlin {

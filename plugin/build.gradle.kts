@@ -15,9 +15,12 @@ apply {
 // group/version come from maven-publish.gradle (GROUP/VERSION_NAME properties);
 // processResources below stamps ArkiveVersion from project.version.
 
+// JDK 17 bytecode floor: consumers commonly pin their Gradle JDK to 17, and the plugin
+// classes load in that daemon. Kotlin's jvmTarget must be pinned too (see below) or it
+// silently follows whatever JDK runs the build.
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 // Stamp the plugin version and the Kotlin it was built with into arkive.properties so
@@ -51,11 +54,20 @@ dependencies {
     // Project dependency (not the published artifact) so a fresh checkout can build
     // without any prior publish; the POM still maps it to com.infinum.arkive:metadata.
     implementation(project(":metadata"))
-    // runtimeOnly keeps Paparazzi off BOTH compile classpaths: the consumer's (the plugin
-    // applies it by id at runtime, see ArkivePlugin.applyPaparazzi; the DSL plugin
-    // classloader includes runtime deps) and our own — paparazzi is built with a much
-    // newer Kotlin than this deliberately-old library build compiles with.
-    runtimeOnly(libs.paparazzi.plugin)
+    // runtimeOnly keeps both engines' plugins off BOTH compile classpaths: the consumer's
+    // (the engine applies its plugin by id at runtime, see SnapshotEngineAdapter.apply;
+    // the DSL plugin classloader includes runtime deps) and our own — they are built with
+    // much newer Kotlin than this deliberately-old library build compiles with.
+    // Paparazzi additionally needs its Java-21 variant metadata overridden: this module
+    // targets 17, and strict variant matching would otherwise refuse to resolve it. The
+    // jar only ever LOADS when a consumer picks engine=paparazzi (which requires JDK 21);
+    // an unloaded classpath entry is harmless on a 17 daemon.
+    runtimeOnly(libs.paparazzi.plugin) {
+        attributes {
+            attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
+        }
+    }
+    runtimeOnly(libs.roborazzi.plugin)
     compileOnly(libs.gradle.android)
 
     testImplementation(libs.junit)
@@ -67,6 +79,7 @@ kotlin {
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
     coreLibrariesVersion = "2.0.21"
 }

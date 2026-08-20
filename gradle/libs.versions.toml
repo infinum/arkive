@@ -7,6 +7,7 @@ ksp = "2.0.21-1.0.28"
 koltinpoet = "2.0.0"
 compose-bom = "2024.09.03"
 paparazzi = "2.0.0-alpha05"
+roborazzi = "1.72.0"
 jetbrainsKotlinJvm = "2.0.21"
 agp = "8.7.3"
 agpVersion = "8.7.3"
@@ -32,6 +33,7 @@ compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 paparazzi-plugin = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
+roborazzi-plugin = { module = "io.github.takahirom.roborazzi:roborazzi-gradle-plugin", version.ref = "roborazzi" }
 gradle-android = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 
 [bundles]

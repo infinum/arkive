@@ -57,7 +57,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     var snapshotRetention = SnapshotRetention.NONE.name
 
-    // NOTE: the recordPaparazzi dependency is wired at registration (ArkivePlugin.
+    // NOTE: the engine's record-task dependency is wired at registration (ArkivePlugin.
     // addTaskWithVariant). Never register listeners from this class's init — tasks can
     // be realized lazily from guarded contexts (e.g. findByName inside a projectsEvaluated
     // callback when several modules apply the plugin), where that is illegal.
@@ -79,6 +79,19 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         val grabbed = snapshotsGrabber.grabSnapshots(
             outputDir = outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
         )
+
+        // Under snapshotRetention NONE this task CONSUMES the goldens it grabs — so on a
+        // re-run where the recording task was up-to-date (nothing new recorded), the
+        // golden directory is legitimately empty. Regenerating from zero snapshots would
+        // overwrite a perfectly good showcase with an empty one; keep the previous output.
+        val previousOutput = outputDirectory.get().asFile.resolve(ARKIVE_SHOWCASE_FILE_NAME)
+        if (grabbed.isEmpty() && previousOutput.exists()) {
+            logger.warn(
+                "Arkive: no new snapshots to consume — keeping the previously generated " +
+                    "showcase at ${previousOutput.absolutePath}",
+            )
+            return
+        }
 
         logger.warn("Loading metadata for variant: $variant")
         val metadata = metadataLoader.loadMetaData()
@@ -131,7 +144,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         const val NAME = "generateShowcase"
         const val DESCRIPTION = "Generates arkive showcase json file"
         val FD_GENERATED = "generated${File.separatorChar}arkive${File.separatorChar}showcase"
-        const val RECORDING_TASK = "recordPaparazzi"
         const val IMAGES_OUTPUT_PATH = "images"
+        const val ARKIVE_SHOWCASE_FILE_NAME = "arkive-showcase.json"
     }
 }

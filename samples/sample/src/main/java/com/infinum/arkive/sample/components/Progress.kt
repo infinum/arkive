@@ -2,6 +2,7 @@
 
 package com.infinum.arkive.sample.components
 
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -182,5 +184,39 @@ internal fun PreviewWeeklyBarChart() {
 internal fun PreviewElevationChart() {
     PeakTheme {
         ElevationChart(points = listOf(0.1f, 0.25f, 0.2f, 0.45f, 0.6f, 0.5f, 0.8f, 0.95f, 0.7f, 0.75f))
+    }
+}
+
+// An infinite animation: regression coverage for snapshot capture — a naive wait-for-idle
+// capture never returns on this (the composition never quiesces), so the generated test
+// must drive the clock itself.
+@Composable
+fun LoadingSpinner(modifier: Modifier = Modifier) {
+    val transition = androidx.compose.animation.core.rememberInfiniteTransition(label = "spinner")
+    val angle by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(durationMillis = 900),
+        ),
+        label = "angle",
+    )
+    Canvas(modifier = modifier.size(48.dp)) {
+        drawArc(
+            color = androidx.compose.ui.graphics.Color(0xFF2E7D32),
+            startAngle = angle,
+            sweepAngle = 270f,
+            useCenter = false,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx()),
+        )
+    }
+}
+
+@Preview
+@ArkiveComposable(name = "Loading Spinner", group = "Progress", tags = ["loading"])
+@Composable
+internal fun PreviewLoadingSpinner() {
+    PeakTheme {
+        LoadingSpinner()
     }
 }

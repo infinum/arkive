@@ -14,6 +14,8 @@ arkive {
     multiModuleVariant.set("uatDebug")
     enableVariants.set(true)
     designFileKey.set("fileKey")
+    engine(Roborazzi)
+
 }
 
 android {
