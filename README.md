@@ -1,8 +1,9 @@
 # Arkive
 
 Arkive turns your Compose previews and XML views into a browsable web catalogue of your
-app's UI — recorded on the JVM with [Paparazzi](https://github.com/cashapp/paparazzi), no
-device or emulator, no test code to write.
+app's UI — recorded on the JVM with [Roborazzi](https://github.com/takahirom/roborazzi)
+(or optionally [Paparazzi](https://github.com/cashapp/paparazzi)), no device or emulator,
+no test code to write.
 
 ## See it in action
 
@@ -91,7 +92,9 @@ plugins {
 }
 ```
 
-Requirements: Kotlin 2.0 or newer. Don't apply Paparazzi yourself — Arkive brings its own.
+Requirements: Kotlin 2.0 or newer, Gradle JDK 17 or newer, and an `arkive { engine(…) }`
+block per module — choosing a snapshot engine is mandatory (see [Engines](#engines)).
+Don't apply Roborazzi or Paparazzi yourself — Arkive brings its own.
 
 ### Kotlin Multiplatform / Compose Multiplatform
 
@@ -120,7 +123,7 @@ kotlin {
         compileSdk = 36
         minSdk = 24
         withHostTestBuilder {}.configure {
-            isIncludeAndroidResources = true   // Paparazzi renders in the host tests
+            isIncludeAndroidResources = true   // snapshots render in the host tests
         }
     }
 }
@@ -170,8 +173,73 @@ arkive {
     enablePreviewParameters.set(true)    // expand @PreviewParameter values (default true)
     designFileKey.set("AbC123")          // your Figma file key — enables per-component Figma links
     snapshotRetention.set(SnapshotRetention.NONE) // see Snapshot testing below
+    engine(Roborazzi) {                  // REQUIRED — every module picks its engine (see Engines)
+        device.set("w1280dp-h800dp-mdpi") // the device snapshots render on, as Robolectric
+                                          // qualifiers (default: a Pixel-6-class phone)
+    }
+    // or: engine(Paparazzi)             // requires a JDK 21+ Gradle daemon
 }
 ```
+
+### Engines
+
+Arkive records snapshots through one of two engines, and **every module must choose one**
+— there is no default, and the build fails with instructions until you pick. Selecting an
+engine and configuring it is a single call, so options for an engine the module doesn't
+run are unrepresentable:
+
+```kotlin
+arkive {
+    engine(Roborazzi) { device.set("w1280dp-h800dp-mdpi") }
+    // or: engine(Paparazzi)
+}
+```
+
+The `arkive.engine` Gradle property (module or root `gradle.properties`, or
+`-Parkive.engine=`) **overrides** the DSL — useful for flipping engines per-run or
+pinning one org-wide without editing build files:
+
+```properties
+arkive.engine=roborazzi   # or paparazzi
+```
+
+#### Choose `Roborazzi` when…
+
+- your **Gradle JDK is 17** (Studio's Gradle JDK setting; many organizations pin it) —
+  Roborazzi is the only engine that works there;
+- the module is **Compose Multiplatform and uses `composeResources`**
+  (`stringResource`/`painterResource`) — Robolectric provides a real Android context, so
+  CMP resources render; layoutlib cannot do this at all;
+- you want per-module **device control**: snapshots render on a real (simulated) device —
+  a Pixel-6-class phone unless configured, e.g. a 10" tablet `w1280dp-h800dp-mdpi` or a
+  desktop-like `w1920dp-h1080dp-mdpi`. Components capture at content size, screens at
+  device size;
+- you want per-component test reporting (one test per snapshot) and flat memory use on
+  modules of any size.
+
+[Roborazzi](https://github.com/takahirom/roborazzi) renders with real framework code via
+Robolectric — very close to on-device rendering, not pixel-identical to Studio previews.
+
+#### Choose `Paparazzi` when…
+
+- your **Gradle JDK is 21+** (hard requirement — Paparazzi ships Java 21 bytecode since
+  2.0.0-alpha03; on an older daemon Arkive fails with a clear error);
+- you want snapshots **pixel-identical to Android Studio previews** (layoutlib is the
+  same renderer);
+- recording speed matters most: ~52ms vs ~93ms per snapshot in our benchmark (identical
+  content, Apple silicon).
+
+**Paparazzi and Compose Multiplatform:** plain `commonMain` previews render fine, but any
+preview that reads CMP resources (`stringResource`/`painterResource` from
+`composeResources`) fails with "Android context is not initialized" and is skipped from
+the catalogue — layoutlib has no real Android context and there is no workaround. If your
+CMP module uses `composeResources`, choose Roborazzi for it. Engines are per module, so a
+CMP module on Roborazzi can sit next to an android module on Paparazzi.
+
+The engines' golden files are not interchangeable — switching engines means re-recording
+(the catalogue regenerates itself; retained goldens re-record on the next
+`generateShowcase` run). Everything else — tasks, retention, `verifyShowcase`, the
+catalogue — behaves identically on both.
 
 ### What ends up in the catalogue
 
@@ -225,19 +293,21 @@ unit-test task to Arkive's generated class for the whole invocation, so it canno
 combined with `check`, `build`, `generateShowcase<Variant>`, or anything else that runs
 those tests — the build fails fast with an explanation if it is.
 
-### Already using Paparazzi?
+### Already using Roborazzi or Paparazzi?
 
-Arkive coexists with an existing Paparazzi setup — but don't apply the Paparazzi plugin
-yourself alongside Arkive; Arkive applies it (your existing application is detected, just
-keep versions from conflicting):
+Arkive coexists with an existing snapshot-testing setup — but don't apply the engine's
+plugin yourself alongside Arkive; Arkive applies the one the `arkive.engine` property
+selects (an existing application is detected, just keep versions from conflicting):
 
-- Your own tests, goldens, and `recordPaparazzi` / `verifyPaparazzi` workflows keep
-  working unchanged. Arkive only ever touches snapshot files recorded by its own
-  generated test class.
-- For Arkive's snapshots, use `verifyShowcase<Variant>` instead of `verifyPaparazzi` —
-  it scopes the run to Arkive's test class and respects the retention policy.
-- Running plain `verifyPaparazzi<Variant>` is still safe: Arkive's generated tests
+- Your own tests, goldens, and `recordRoborazzi`/`verifyRoborazzi` (or
+  `recordPaparazzi`/`verifyPaparazzi`) workflows keep working unchanged. Arkive only ever
+  touches snapshot files recorded by its own generated test class.
+- For Arkive's snapshots, use `verifyShowcase<Variant>` instead of the engine's verify
+  task — it scopes the run to Arkive's test class and respects the retention policy.
+- Running the engine's plain verify task is still safe: Arkive's generated tests
   self-skip whatever the retention policy kept no goldens for.
+- If you use Paparazzi for your own tests, note the engines don't mix in one module —
+  set `arkive.engine=paparazzi` there.
 
 Recording is deliberately resilient: a preview that fails to render is logged and skipped
 — it never breaks the build, and it's excluded from verification (it has no golden).

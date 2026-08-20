@@ -47,7 +47,7 @@ Check before touching build files; each miss is a confusing failure later:
 | Kotlin 2.0+ | Published libraries have a Kotlin 2.0 language floor |
 | KSP plugin (`com.google.devtools.ksp`) applied to the module | Arkive adds KSP *dependencies* but does not apply the KSP plugin |
 | Android application/library module, or a KMP module (either the classic `androidTarget()` layout or `com.android.kotlin.multiplatform.library`) | Tasks are registered per Android variant (the new KMP plugin has a single one, `androidMain`) |
-| No explicitly-applied Paparazzi | Arkive applies its own; a second version conflicts |
+| No explicitly-applied Paparazzi or Roborazzi | Arkive applies the selected engine's plugin itself; a second version conflicts |
 | `org.gradle.configureondemand` in `gradle.properties`? | If true, the plugin must ALSO be applied to the **root** project |
 
 Match the project's existing dependency style: if it uses a version catalog, add Arkive to
@@ -59,15 +59,48 @@ plugins {
 }
 ```
 
-## Step 4 — Configure the extension
+## Step 4 — Choose the snapshot engine (mandatory — the build fails without it)
+
+Every module must select an engine; there is no default. **Decide from the Gradle JDK**,
+which you check first (`./gradlew -version` → the "Launcher JVM"/"Daemon JVM" line; this
+is the daemon's JDK, not the app's `jvmToolchain`):
+
+- **Gradle JDK is 17–20 → choose `Roborazzi` yourself, don't ask.** Paparazzi requires a
+  JDK 21+ daemon and would fail the build. Tell the user what you chose and why, and that
+  Paparazzi becomes available if they ever raise the Gradle JDK.
+- **Gradle JDK is 21+ → ask the user which engine**, with the trade-off stated briefly:
+  - `Roborazzi` — real framework rendering via Robolectric; renders Compose Multiplatform
+    resources; per-module device config (`device.set("<robolectric qualifiers>")`);
+    ~1.8× slower per snapshot.
+  - `Paparazzi` — layoutlib, pixel-identical to Android Studio previews, faster; **cannot
+    render CMP `composeResources`** (those previews get skipped).
+- **Exception that overrides the question:** a CMP module whose previews use
+  `composeResources` (`stringResource`/`painterResource`) must use `Roborazzi` — choose it
+  for that module and explain why, whatever the JDK.
+
+Engines are per module — a mixed project is fine. The `arkive.engine` Gradle property
+(root `gradle.properties` or `-Parkive.engine=`) overrides the DSL for the whole build;
+mention it if the team wants one org-wide choice.
+
+## Step 5 — Configure the extension
 
 ```kotlin
 arkive {
+    engine(Roborazzi) {                  // REQUIRED — from Step 4
+        // device.set("w1280dp-h800dp-mdpi")  // optional: the (Robolectric) device to render
+                                              // on; default is a Pixel-6-class phone. Match the
+                                              // product: tablet app → tablet qualifiers, etc.
+    }
+    // or: engine(Paparazzi)
     multiModuleVariant.set("uatDebug")   // critical when the module has flavors — see below
     // enableVariants.set(true)          // richer catalogue, slower recording — ask, don't assume
     // designFileKey.set("...")          // Figma file key, if the team has one (enables /arkive:design-loop tier 1)
 }
 ```
+
+For Roborazzi, ask whether the module targets a phone, tablet, or desktop-sized screen
+and set `device` accordingly (e.g. 10" tablet `w1280dp-h800dp-mdpi`, desktop
+`w1920dp-h1080dp-mdpi`) — screens capture at device size, so the right canvas matters.
 
 **`multiModuleVariant` — get this exactly right.** The root `generateWebShowcase` task
 builds each module's showcase for ONE variant and defaults to `debug`. If the module has
@@ -82,7 +115,7 @@ variant (`androidMain`) and the plugin defaults to it.
 Leave `snapshotRetention` at its NONE default — golden testing is `/arkive:snapshot-testing`'s
 job, and enabling it here without explaining it just surprises the team's git status.
 
-## Step 5 — Preview hygiene (two silent killers)
+## Step 6 — Preview hygiene (two silent killers)
 
 **Private previews are dropped.** The processor ignores `private` functions, and
 `@Preview private fun ...Preview()` is a very common pattern — those components silently
@@ -91,7 +124,7 @@ never reach the catalogue. Find them in each target module and raise their visib
 
 **A module with no test sources records nothing.** KSP skips a compilation with zero
 sources of its own (NO-SOURCE). A module whose test source set is empty never triggers
-Arkive's test processor, so the Paparazzi test is never generated and the module produces
+Arkive's test processor, so the snapshot test is never generated and the module produces
 zero snapshots with no error anywhere. If a target module has no test sources, add the
 placeholder — same file everywhere, only the directory differs:
 
@@ -124,7 +157,7 @@ The full mechanics live in `references/arkive-cheatsheet.md`; what changes for s
   }
   ```
   (The plugin enables the library's `androidResources` itself — don't add that.)
-- **The placeholder goes in `src/androidHostTest/kotlin`** (see Step 5) — KMP modules
+- **The placeholder goes in `src/androidHostTest/kotlin`** (see Step 6) — KMP modules
   rarely have host-test sources, so this is almost always needed.
 
 **Classic KMP layout** (`com.android.library` + `androidTarget()`, any AGP 8+) is also
@@ -140,9 +173,9 @@ forward-compatible). On an even older Kotlin the plugin wires the annotations in
 androidMain instead and logs a warning — write commonMain previews as plain `@Preview`
 in that case (collected all the same).
 
-## Step 6 — Annotations (the catalogue works without them, but recommend the upgrade)
+## Step 7 — Annotations (the catalogue works without them, but recommend the upgrade)
 
-Plain `@Preview` composables are collected by default — after Step 5, a project with
+Plain `@Preview` composables are collected by default — after Step 6, a project with
 previews gets a catalogue with zero further annotation work, including any `name`/`group`
 already set on the `@Preview` annotations themselves. That's the on-ramp; ship the first
 showcase on it.
@@ -154,7 +187,7 @@ of silently skipping broken previews. The naming/grouping conventions live in
 During setup, don't mass-annotate beyond what the user asked for — recommend, offer,
 don't impose.
 
-## Step 7 — First run, and actually look at it
+## Step 8 — First run, and actually look at it
 
 ```
 ./gradlew generateWebShowcase
@@ -165,7 +198,7 @@ Recording every preview takes minutes on a real app — warn the user before run
 1. Confirm `<root>/build/generated/arkive/showcase/arkive-showcase.json` exists and that
    **every module from Step 2** has a non-empty `images/` directory in the output — a
    missing module usually means a wrong `multiModuleVariant` or the empty-test-sources
-   trap from Step 5.
+   trap from Step 6.
 2. Scan the build log for `Arkive: no snapshot recorded for component` warnings — each
    is a preview that crashed during recording and was dropped. Report them; don't let
    them pass silently. (The test-side `Arkive: skipping component` line with the crash
@@ -185,12 +218,19 @@ Recording every preview takes minutes on a real app — warn the user before run
 
 | Symptom | Cause / fix |
 |---|---|
+| Build fails: "no snapshot engine selected" | The module never called `engine(...)` — add it (Step 4). The error message contains the exact block to paste |
+| Build fails: "Paparazzi engine requires a JDK 21+ Gradle daemon" | The Gradle JDK is older than 21 — switch the module to `engine(Roborazzi)`, or raise the Gradle JDK (Studio: Settings → Build Tools → Gradle → Gradle JDK) |
+| `UnsupportedClassVersionError` (class file 65) during sync | Something loaded Paparazzi classes on a <21 daemon — make sure the module selects `engine(Roborazzi)` and re-sync |
+| CMP components skipped: "Android context is not initialized" | The module is on Paparazzi but its previews use `composeResources` — switch that module to `engine(Roborazzi)` |
+| First Roborazzi run stalls for ~a minute | Robolectric downloads the android-all jar for the pinned SDK (one-time, cached in `~/.m2`); corporate proxies can redirect it via the `robolectric.dependency.repo.url` system property |
+| Component skipped: "Compose did not get idle after N attempts in 60 SECONDS" | The preview never settles (focus-request loops, non-clock polling) — a component bug; it's skipped safely but costs 60s per run. Fix the component or `skip` the preview |
+| One engine misbehaves and the cause is unclear | Engines are swappable: flip the module (or the whole build via `-Parkive.engine=`) to the other engine to isolate whether the problem is the engine or the preview — goldens re-record on switch |
 | `generateWebShowcase` not found | `configureondemand=true` without the plugin on the root project; or plugin applied to a non-Android module |
 | A flavored module is missing from the aggregated showcase | `multiModuleVariant` unset or naming a variant that doesn't exist — set it to the exact `<flavor><BuildType>` |
-| A module generates no test and no snapshots at all, no errors | Empty test source set — KSP never triggered; add the `ArkivePlaceholder.kt` from Step 5 (on KMP: in `src/androidHostTest/kotlin`) |
+| A module generates no test and no snapshots at all, no errors | Empty test source set — KSP never triggered; add the `ArkivePlaceholder.kt` from Step 6 (on KMP: in `src/androidHostTest/kotlin`) |
 | KMP module: `@ArkiveComposable` unresolved in commonMain, log mentions Kotlin being older | Consumer's Kotlin predates the annotations' build Kotlin — plugin wired annotations to androidMain; use plain `@Preview` in commonMain |
 | KMP module: every snapshot missing, log shows `snapshot session finished with errors: <ns>.R` | Host tests can't see android resources — add `isIncludeAndroidResources = true` to `withHostTestBuilder {}.configure { }` |
-| Showcase has no components | Previews are `private` (Step 5), or annotations are in a source set the debug variant doesn't compile |
+| Showcase has no components | Previews are `private` (Step 6), or annotations are in a source set the debug variant doesn't compile |
 | Change to arkive version "didn't take" | Stale Gradle module cache — re-sync with `--refresh-dependencies` once |
 | A component is missing from the catalogue | It crashed during recording — the build log has an `Arkive: no snapshot recorded for component` warning; re-run with `--info` for the test-side crash message, then fix the preview |
 | Blank page when opening the showcase | Opened via `file://` — serve over HTTP |

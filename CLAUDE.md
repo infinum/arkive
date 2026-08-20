@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Arkive is a Gradle plugin (`com.infinum.arkive`) that generates a browsable web showcase
-("catalogue") of an Android app's Compose previews and views, using Paparazzi to record
-snapshots on the JVM. Published to Maven Central under `com.infinum.arkive`.
+("catalogue") of an Android app's Compose previews and views, recording snapshots on the
+JVM through one of two engines: **Roborazzi (default)** or Paparazzi — see "Snapshot
+engines" below. Published to Maven Central under `com.infinum.arkive`.
 
 ## Two builds, two toolchains (read first)
 
@@ -95,9 +96,18 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
   module's build file keep the JVM metadata story explicit; with the compiler itself at
   2.0.21 they also match the emitted klib ABI. Removing any of it silently breaks
   consumers.
-- Paparazzi must stay `runtimeOnly` in `:plugin` and OFF the root buildscript classpath —
-  it is built with a much newer Kotlin/android-tools than this build compiles with
-  (compile-classpath contamination breaks AGP's version check and Kotlin metadata reading).
+- Both engine plugins (Paparazzi AND Roborazzi) must stay `runtimeOnly` in `:plugin` and
+  OFF the root buildscript classpath — they are built with much newer Kotlin/android-tools
+  than this build compiles with (compile-classpath contamination breaks AGP's version
+  check and Kotlin metadata reading). Paparazzi's dependency additionally carries a
+  `TargetJvmVersion=21` attribute override: this build targets 17 and strict variant
+  matching would otherwise refuse to resolve Paparazzi's Java-21 metadata. The jar is
+  harmless on a consumer's 17 daemon as long as its classes never load (engine=roborazzi).
+- **All modules target JDK 17 bytecode** (explicit `JavaVersion.VERSION_17` +
+  `jvmTarget = JVM_17`; the annotations jvm target pins it via `compilations.all`).
+  Consumers commonly pin their Gradle JDK to 17 (Studio sync runs the plugin in that
+  daemon) — never raise this floor, and never leave jvmTarget implicit: Kotlin silently
+  follows whatever JDK runs the deploy.
 - `:annotations` publishes a **full KMP target matrix** (jvm serves plain-Android
   consumers; the rest exist so a `commonMain` dependency resolves everywhere). Apple
   targets need a macOS host (KGP 2.0 has no klib cross-compilation) — deploys run from
@@ -111,6 +121,83 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
 - `:plugin` depends on `project(":metadata")`, not the published artifact (POM coordinates
   map correctly anyway); this keeps fresh checkouts buildable.
 - Root `build.gradle.kts` must NOT put the arkive plugin on the buildscript classpath.
+
+## Snapshot engines
+
+Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../engines/`):
+`RoborazziEngine` (default) and `PaparazziEngine`. Selection, by priority:
+1. the **`arkive.engine` Gradle property** (module or root gradle.properties, or `-P`) —
+   overrides everything, with a warning when it conflicts with the DSL;
+2. the **`engine(Roborazzi) { …options… }` / `engine(Paparazzi)` DSL call** — selection
+   and engine-scoped config are ONE call (`EngineSelection` in ArkivePlugin), executed
+   eagerly during the script body, which is still inside AGP's variant window, so the
+   chosen engine's plugin is applied on the spot. `Property.set`-style selection is
+   impossible — property values are only readable at afterEvaluate, after the window;
+3. **there is NO default** — a module that selects nothing fails at afterEvaluate with an
+   instructive GradleException (the error text contains the exact block to paste). The
+   engine-read that enforces this must stay OUTSIDE the KSP-arg try/catch in
+   ArkivePlugin.addExtension, or the error degrades into a warning. All engine-dependent
+   wiring (test deps, KSP args, test-task config, task dependsOn) reads the selection at
+   afterEvaluate/task-realization time, so it always follows the final choice. Only the
+   chosen engine's classes ever load (Paparazzi is Java-21 bytecode; a JDK<21 daemon
+   selecting paparazzi gets a clear GradleException, not UnsupportedClassVersionError).
+   The samples declare `engine(Roborazzi)` explicitly; flip either to paparazzi per-run
+   via `-Parkive.engine=paparazzi`.
+
+- Per-engine JDK floor: roborazzi ⇒ Gradle JDK 17+; paparazzi ⇒ 21+ (alpha03+ bytecode).
+- The engine reaches the testprocessor as the `arkive.engine` KSP arg (so switching
+  engines regenerates the test class — intended).
+- Engine task names: `record/verifyPaparazzi<Variant>` vs `record/verifyRoborazzi<Suffix>`
+  where the suffix is `ConsumerAdapter.roborazziTaskSuffix(variant)` — Roborazzi names
+  tasks per build variant on `android {}` flavors but after the test task on the AGP KMP
+  library plugin (`recordRoborazziAndroidHostTest`, NOT `...AndroidMain`).
+- The Roborazzi engine injects roborazzi/roborazzi-compose/robolectric/ui-test-junit4
+  into the adapter's test configuration (versions hardcoded in `RoborazziEngine`), flips
+  `includeAndroidResources` reflectively on `android {}` flavors, and declares the golden
+  dir as a test-task input — without that, editing a golden leaves the test UP-TO-DATE
+  and verify silently "passes" (found the hard way).
+- The generated Roborazzi test is **one parameterized test per snapshot**
+  (`ParameterizedRobolectricTestRunner`, parameters collected by running the shooters
+  with a recording callback). This is load-bearing, not style: Robolectric frees
+  activities/compositions per test METHOD, so a single method capturing hundreds of full
+  screens accumulates every window until it ends — GC thrash then OOM on real apps
+  (EdgePOS epos/ui proved it at 2g). Per-snapshot tests keep memory flat; verify failures
+  name the component in the test name. An empty module gets a sentinel no-op parameter
+  (the runner rejects empty lists). It pins `@Config(sdk = [35])` — Robolectric's SDK-36
+  android-all jars are Java-21 bytecode; 35 keeps the test JVM 17-compatible — and bakes
+  the device into `@Config(qualifiers = …)`: Pixel-6-class (`w411dp-h914dp-420dpi`) by
+  default (Robolectric's own 320x470dp default clips real screens), overridable per
+  module via `arkive { engine(Roborazzi) { device.set(…) } }` → `arkive.device` KSP arg
+  (device change ⇒ codegen change ⇒ re-record, intended). Engine-only options always
+  live inside the engine(...) call, never as flat top-level extension properties (user
+  requirement — no options that silently apply to only one engine). Captures shrink to content but can never exceed
+  the window (verified: capture clamps at window bounds — layoutlib-style unbounded
+  SHRINK is impossible under a real window system), so density/font variants render
+  *within* the device; a DensityVariant dp-budget compensation in composeUtils is a known
+  open item. It records via `captureRoboImage(filePath)` straight into the adapter's
+  golden dir with the same `com.infinum.arkive_`-prefixed names, so
+  grabber/retention/verify are engine-agnostic.
+  Its `@Before` reflectively runs `Robolectric.setupContentProvider(AndroidContextProvider)`
+  — the CMP-resources context fix (Robolectric does not auto-create manifest providers in
+  library unit tests; `PreviewContextConfigurationEffect` is inspection-mode-gated and
+  does NOT work). Roborazzi's verify diff artifacts go to `build/outputs/roborazzi/`,
+  never the golden dir. The engine also defaults Test-task `maxHeapSize` to 2g when the
+  consumer set none (Robolectric's framework baseline alone drowns Gradle's 512m default).
+- testprocessor structure: `ArkiveTestProcessor` is engine-agnostic plumbing; each engine
+  has its own generator class (`generators/PaparazziTestGenerator`,
+  `generators/RoborazziTestGenerator` behind `EngineTestGenerator`) that owns its complete
+  test shape — no cross-engine branching inside a generator.
+- The compose capture is clock-controlled (`createAndroidComposeRule(RoborazziActivity)`,
+  wrapped in a RuleChain whose outer rule runs Roborazzi's
+  `registerRoborazziActivityToRobolectricIfNeeded()` — Robolectric refuses undeclared
+  activities and test-classpath AAR manifests never merge; a @Before is too late, the
+  rule launches first). `mainClock.autoAdvance = false` + `advanceTimeBy(1_000)` renders
+  a deterministic t=1s frame, so infinite animations can't hang the capture (they used
+  to spin captureRoboImage's wait-for-idle forever at 100% CPU). Components that
+  invalidate composition outside the clock (e.g. focus-request loops) still hit
+  Espresso's 60s idle timeout — they're skip-logged, cost ~60s each, and never break
+  the run.
+- Goldens are NOT interchangeable between engines (layoutlib vs Robolectric pixels).
 
 ## Architecture
 
@@ -128,25 +215,30 @@ Modules and how they compose at a consumer's build time:
   across packages, and `_`-joined ids collided too since `_` is legal in identifiers),
   `ArkiveComposeShoot`/`ArkiveViewShoot` (runners that call every wrapper under per-component
   try/catch), and `components_meta_data.json` (KSP resources).
-- **testprocessor** (KSP, `kspTestDebug`) — generates `ArkiveSnapshotTestGenerator`, the
-  Paparazzi test (SHRINK rendering, `android:Theme.Translucent.NoTitleBar` for transparent
-  backgrounds, a RuleChain that absorbs Paparazzi's teardown re-throws). It cannot see the
-  annotations (SOURCE retention, different compilation) — hence the shooter indirection.
+- **testprocessor** (KSP, `kspTestDebug`) — generates `ArkiveSnapshotTestGenerator`,
+  keyed on the `arkive.engine` KSP arg via per-engine generator classes (see "Snapshot
+  engines"): the Roborazzi test (parameterized per snapshot, `@GraphicsMode(NATIVE)`,
+  `@Config(sdk=[35])`, explicit-filePath captures, CMP ContentProvider setup in
+  `@Before`) or the Paparazzi test (single-method, SHRINK rendering,
+  `android:Theme.Translucent.NoTitleBar` for transparent backgrounds, a RuleChain that
+  absorbs Paparazzi's teardown re-throws). It cannot see the annotations (SOURCE
+  retention, different compilation) — hence the shooter indirection.
 - **metadata** — kotlinx-serialization models shared by processor and plugin
   (`ArkiveShowcase` → modules → items → component + variants).
 - **composeUtils** — runtime wrappers the generated variant code composes previews in
   (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`); on the consumer's classpath.
-- **plugin** — applies Paparazzi by id (kept off the consumer's compile classpath), injects
-  the runtime/KSP dependencies at `ArkiveVersion.current`, forwards extension flags
-  (`enablePreviewParameters`, `enableVariants`) as KSP args and `snapshotRetention` as the
-  `arkive.snapshot.retention` system property on the consumer's Test tasks (read at test
-  runtime, so changing retention never invalidates KSP codegen), and registers tasks:
-  per-variant `generateShowcase<Variant>` (depends on `recordPaparazzi<Variant>`),
-  per-variant `verifyShowcase<Variant>` (depends on `verifyPaparazzi<Variant>`, scopes the
-  test run to Arkive's generated test class via a `taskGraph.whenReady` filter, and fails
-  fast when retention is NONE), and root `generateWebShowcase`. Applying the plugin to the
-  consumer's **root** project registers the aggregate task eagerly — required under
-  `org.gradle.configureondemand`, where task-name resolution happens before
+- **plugin** — applies the selected engine's plugin by id (kept off the consumer's
+  compile classpath), injects the runtime/KSP dependencies at `ArkiveVersion.current`,
+  forwards extension flags (`enablePreviewParameters`, `enableVariants`) and the engine
+  name as KSP args, `snapshotRetention` as the `arkive.snapshot.retention` system property
+  and the adapter's golden dir as `arkive.snapshots.dir` on the consumer's Test tasks
+  (read at test runtime, so changing retention never invalidates KSP codegen), and
+  registers tasks: per-variant `generateShowcase<Variant>` (depends on the engine's record
+  task), per-variant `verifyShowcase<Variant>` (depends on the engine's verify task,
+  scopes the test run to Arkive's generated test class via a `taskGraph.whenReady` filter,
+  and fails fast when retention is NONE), and root `generateWebShowcase`. Applying the
+  plugin to the consumer's **root** project registers the aggregate task eagerly —
+  required under `org.gradle.configureondemand`, where task-name resolution happens before
   `projectsEvaluated` callbacks fire.
 
 ## Consumer adapters (android vs KMP)
@@ -207,6 +299,10 @@ the adapter's snapshot dir → `SnapshotsGrabber` copies out **only files prefix
 the JSON, dropping components with no recorded snapshot (a failed preview logs and skips;
 it must not abort the run) → `snapshotRetention` (NONE default/BASE/ALL) decides what
 survives in the golden directory, decided from the generated items, not filenames.
+Because NONE *consumes* the goldens, a re-run whose record task was up-to-date grabs
+zero snapshots — the task then KEEPS the previously generated showcase instead of
+overwriting it with an empty one (regenerate-from-nothing was a real bug: every second
+`generateWebShowcase` wiped unchanged modules).
 `GenerateWebShowcaseTask` (root) aggregates each module's output into
 `<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
 
@@ -223,7 +319,9 @@ bundled fonts (system stack; the Infinum brand fonts are licensed and must not b
 ## Golden verification (verifyShowcase)
 
 The failure-swallowing that keeps recording resilient is **mode-aware**, keyed on the
-`paparazzi.test.verify` system property Paparazzi itself sets. Three cooperating layers:
+verify system property the active engine itself sets (`paparazzi.test.verify` /
+`roborazzi.test.verify`; the shooter ORs both, the generated test reads its own engine's).
+Three cooperating layers:
 
 - The generated shooter (`ComposeRunnerSpec`) collects per-component `AssertionError`s in
   verify mode and throws one aggregate error naming every mismatched component; other
