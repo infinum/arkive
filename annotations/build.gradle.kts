@@ -18,7 +18,18 @@ apply {
 // variant); the rest exist so a commonMain dependency resolves on every consumer target.
 // All targets are annotation-only klibs (no cinterop), so they cross-compile on any host.
 kotlin {
-    jvm()
+    // The jvm jar must stay JDK 17 bytecode (consumer Gradle daemons and 17-pinned test
+    // JVMs load it); without the pin it silently follows whatever JDK runs the deploy.
+    jvm {
+        compilations.all {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    (this as org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions)
+                        .jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                }
+            }
+        }
+    }
     js { nodejs() }
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs { nodejs() }
