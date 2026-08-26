@@ -47,7 +47,7 @@ Check before touching build files; each miss is a confusing failure later:
 | Kotlin 2.0+ | Published libraries have a Kotlin 2.0 language floor |
 | KSP plugin (`com.google.devtools.ksp`) applied to the module | Arkive adds KSP *dependencies* but does not apply the KSP plugin |
 | Android application/library module, or a KMP module (either the classic `androidTarget()` layout or `com.android.kotlin.multiplatform.library`) | Tasks are registered per Android variant (the new KMP plugin has a single one, `androidMain`) |
-| No explicitly-applied Paparazzi or Roborazzi | Arkive applies the selected engine's plugin itself; a second version conflicts |
+| Existing Paparazzi/Roborazzi setups are fine — don't remove them | Arkive detects an already-applied engine plugin and leaves it alone; the only risk is two *conflicting versions* on the classpath |
 | `org.gradle.configureondemand` in `gradle.properties`? | If true, the plugin must ALSO be applied to the **root** project |
 
 Match the project's existing dependency style: if it uses a version catalog, add Arkive to

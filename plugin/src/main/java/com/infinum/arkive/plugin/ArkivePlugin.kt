@@ -11,6 +11,7 @@ import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import com.infinum.arkive.plugin.utils.RetentionArgumentProvider
 import com.infinum.arkive.plugin.utils.capFirst
+import com.infinum.arkive.plugin.utils.showcaseModuleName
 import org.gradle.api.GradleException
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -37,6 +38,9 @@ class ArkivePlugin : Plugin<Project> {
             ) { task ->
                 task.group = GenerateWebShowcaseTask.GROUP
                 task.description = GenerateWebShowcaseTask.DESCRIPTION
+                task.outputDirectory.set(project.layout.buildDirectory.dir(GenerateWebShowcaseTask.FD_GENERATED))
+                task.projectName = project.name
+                task.moduleShowcaseDirs.set(moduleShowcaseDirMap(project))
                 task.setSource(moduleShowcaseOutputDirs(project))
                 task.dependsOn(project.provider { moduleShowcaseTaskPaths(project) })
             }
@@ -133,38 +137,26 @@ class ArkivePlugin : Plugin<Project> {
             val enablePreviewParameters = extension.enablePreviewParameters.get()
             val enableVariants = extension.enableVariants.get()
 
+            // Reflective on purpose: a typed dependency on the KSP Gradle plugin would
+            // pin one KSP version onto every consumer, while `arg(String, String)` has
+            // been stable across the KSP versions consumers actually use.
             project.extensions.findByName("ksp")?.let { kspExt ->
+                val kspArgs = listOf(
+                    ENABLE_PREVIEW_PARAMETERS to enablePreviewParameters.toString(),
+                    ENABLE_VARIANTS to enableVariants.toString(),
+                    // The test processor generates the test class matching the engine.
+                    SnapshotEngineAdapter.ENGINE_KSP_ARG to engineName,
+                    // Baked into the generated test's @Config so Robolectric keeps one
+                    // cached environment per module; changing device re-records.
+                    ArkiveExtension.DEVICE to extension.roborazziOptions.device.get(),
+                )
                 try {
                     val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
-                    argMethod.invoke(kspExt, ENABLE_PREVIEW_PARAMETERS, enablePreviewParameters.toString())
-                } catch (e: Exception) {
-                    project.logger.warn("Failed to pass $ENABLE_PREVIEW_PARAMETERS to KSP: ${e.message}")
-                }
-
-                try {
-                    val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
-                    argMethod.invoke(kspExt, ENABLE_VARIANTS, enableVariants.toString())
-                } catch (e: Exception) {
-                    project.logger.warn("Failed to pass enableVariants to KSP: ${e.message}")
-                }
-
-                // The test processor generates the test class matching the engine.
-                try {
-                    val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
-                    argMethod.invoke(kspExt, SnapshotEngineAdapter.ENGINE_KSP_ARG, engineName)
+                    kspArgs.forEach { (key, value) -> argMethod.invoke(kspExt, key, value) }
                 } catch (e: Exception) {
                     project.logger.warn(
-                        "Failed to pass ${SnapshotEngineAdapter.ENGINE_KSP_ARG} to KSP: ${e.message}",
+                        "Arkive: failed to pass KSP args ${kspArgs.map { it.first }}: ${e.message}",
                     )
-                }
-
-                // Baked into the generated test's @Config so Robolectric keeps one cached
-                // environment per module; changing device regenerates and re-records.
-                try {
-                    val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
-                    argMethod.invoke(kspExt, ArkiveExtension.DEVICE, extension.roborazziOptions.device.get())
-                } catch (e: Exception) {
-                    project.logger.warn("Failed to pass ${ArkiveExtension.DEVICE} to KSP: ${e.message}")
                 }
             }
         }
@@ -186,6 +178,12 @@ class ArkivePlugin : Plugin<Project> {
                 task.variant = variant
                 task.kspResourcesPath = adapter.kspResourcesPath(variant)
                 task.snapshotsPath = adapter.snapshotsPath()
+                task.outputDirectory.set(layout.buildDirectory.dir(GenerateShowcaseTask.FD_GENERATED))
+                task.moduleDirectory.set(layout.projectDirectory)
+                task.buildDir.set(layout.buildDirectory)
+                // Path-derived name: bare project names collide in nested layouts
+                // (":epos:ui" vs ":cfs:ui") and it doubles as the aggregate's module dir.
+                task.moduleName = project.showcaseModuleName
                 val extension = project.extensions.findByType(ArkiveExtension::class.java)
                 task.designFileKey = extension?.designFileKey?.get().orEmpty()
                 task.snapshotRetention = snapshotRetentionOf(project).name
@@ -316,6 +314,11 @@ class ArkivePlugin : Plugin<Project> {
                 ) { task ->
                     task.group = GenerateWebShowcaseTask.GROUP
                     task.description = GenerateWebShowcaseTask.DESCRIPTION
+                    task.outputDirectory.set(
+                        rootProject.layout.buildDirectory.dir(GenerateWebShowcaseTask.FD_GENERATED),
+                    )
+                    task.projectName = rootProject.name
+                    task.moduleShowcaseDirs.set(moduleShowcaseDirMap(rootProject))
                     task.dependsOn(moduleShowcaseTaskPaths(rootProject))
                     task.setSource(moduleShowcaseOutputDirs(rootProject))
                 }
@@ -328,6 +331,18 @@ class ArkivePlugin : Plugin<Project> {
     // projectDir) turns every other task's outputs — jacoco reports, lint results — into
     // undeclared inputs, which strict Gradle validation rejects. Lazy because at
     // root-apply time the modules haven't been configured yet.
+    // Module name -> generated showcase dir, resolved lazily (modules aren't configured
+    // yet when the root task registers). The task holds plain names/files, never Projects.
+    private fun moduleShowcaseDirMap(rootProject: Project) =
+        rootProject.provider {
+            rootProject.subprojects
+                .filter { it.pluginManager.hasPlugin(PLUGIN_ID) }
+                .associate { module ->
+                    module.showcaseModuleName to
+                        module.layout.buildDirectory.dir(GenerateWebShowcaseTask.FD_GENERATED).get().asFile
+                }
+        }
+
     private fun moduleShowcaseOutputDirs(rootProject: Project) =
         rootProject.provider {
             rootProject.subprojects

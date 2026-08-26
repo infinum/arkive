@@ -22,6 +22,8 @@ internal interface EngineTestGenerator {
         const val SNAPSHOT_FILE_PREFIX = "${PACKAGE_NAME}_${TEST_CLASS_NAME}_"
 
         const val JUNIT_PACKAGE = "org.junit"
+
+        // Set on the test JVM by :plugin's RetentionArgumentProvider — keep in sync.
         const val RETENTION_SYSTEM_PROPERTY = "arkive.snapshot.retention"
 
         fun testAnnotation() = ClassName(JUNIT_PACKAGE, "Test")

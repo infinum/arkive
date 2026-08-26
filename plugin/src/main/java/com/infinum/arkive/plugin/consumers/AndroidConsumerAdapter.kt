@@ -20,7 +20,10 @@ internal class AndroidConsumerAdapter(
 
     override val flavor = "android ${kind.name.lowercase()}"
 
-    override val defaultMultiModuleVariant = ""
+    // "debug" exists on every unflavored module, so the root aggregate works with no
+    // configuration there; flavored modules have no bare "debug" variant and must set
+    // multiModuleVariant explicitly (the setup skill enforces this).
+    override val defaultMultiModuleVariant = "debug"
 
     override val testImplementationConfigurationName = "testImplementation"
 

@@ -8,16 +8,15 @@ import com.infinum.arkive.plugin.services.GrabbedSnapshot
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
 import com.infinum.arkive.plugin.utils.ArkiveVersion
-import com.infinum.arkive.plugin.utils.showcaseModuleName
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import java.io.File
-import org.gradle.api.file.Directory
+import org.gradle.api.GradleException
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileTree
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -25,23 +24,34 @@ import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 
+// Everything the action needs is captured as task properties at registration — the
+// action never touches `project`, so the task serializes under the configuration cache.
 @CacheableTask
 internal abstract class GenerateShowcaseTask : SourceTask() {
+
+    /** `<build>/generated/arkive/showcase`; set at registration. */
     @get:OutputDirectory
-    val outputDirectory: Provider<Directory>
-        get() = project.layout.buildDirectory.dir(
-            FD_GENERATED,
-        )
+    abstract val outputDirectory: DirectoryProperty
+
+    /** The module directory (golden dir parent); set at registration. */
+    @get:Internal
+    abstract val moduleDirectory: DirectoryProperty
+
+    /** The module build directory (KSP output parent); set at registration. */
+    @get:Internal
+    abstract val buildDir: DirectoryProperty
 
     // Required to invalidate the task on version updates.
     @Suppress("unused")
     @get:Input
-    val pluginVersion: Property<String>
-        get() = project.objects.property(String::class.java)
-            .convention(ArkiveVersion.current)
+    val pluginVersion: String = ArkiveVersion.current
 
     @get:Input
     var variant = ""
+
+    /** Path-derived module name (bare project names collide in nested layouts). */
+    @get:Input
+    var moduleName = ""
 
     /** KSP-generated resources dir, relative to the build dir; set from the ConsumerAdapter. */
     @get:Input
@@ -64,8 +74,11 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
 
     @TaskAction
     fun doOnRun() {
-        val snapshotsGrabber = SnapshotsGrabberImpl(project, snapshotsPath)
-        val metadataLoader = KSPMetaDataLoader(project, kspResourcesPath)
+        val snapshotsGrabber = SnapshotsGrabberImpl(
+            snapshotsDir = moduleDirectory.get().asFile.resolve(snapshotsPath),
+            logger = logger,
+        )
+        val metadataLoader = KSPMetaDataLoader(buildDir.get().asFile, kspResourcesPath)
         val generator = ShowcaseGeneratorImpl(
             onMissingSnapshot = { id ->
                 logger.warn("Arkive: no snapshot recorded for component '$id' — excluded from the showcase")
@@ -97,16 +110,27 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         val metadata = metadataLoader.loadMetaData()
 
         val moduleItems = generator.generateShowcase(grabbed.map { it.relativePath }, metadata)
+
+        // Per-component resilience must not compound into a silent total failure: if the
+        // processor collected components but not a single snapshot matched, recording
+        // broke wholesale (theme, engine/AGP mismatch, OOM in the test JVM) and an empty
+        // showcase would sail through CI and deploy. Fail loudly instead.
+        if (metadata.components.isNotEmpty() && moduleItems.isEmpty()) {
+            throw GradleException(
+                "Arkive: recording produced no usable snapshot for any of the " +
+                    "${metadata.components.size} collected component(s) — the showcase " +
+                    "would be empty. Recording likely failed wholesale; re-run the test " +
+                    "task with --info for the per-component crash messages.",
+            )
+        }
+
         applyRetention(grabbed, moduleItems)
-        // logger.warn("Showcase: $moduleItems")
         writer.write(
             outputDir = outputDirectory.get().asFile,
-            // Path-derived name: bare project names collide in nested layouts (":epos:ui"
-            // vs ":cfs:ui") and this name doubles as the aggregate's module directory.
-            module = ArkiveModule(project.showcaseModuleName, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
+            module = ArkiveModule(moduleName, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
         )
 
-        logger.warn("Showcase written to ${outputDirectory.get().asFile.resolve("arkive-showcase.json").absolutePath}")
+        logger.warn("Showcase written to ${previousOutput.absolutePath}")
     }
 
     /**
@@ -133,9 +157,11 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         }
     }
 
+    // RELATIVE: cache keys must not embed machine-specific absolute paths, or the build
+    // cache can never hit across machines/checkouts.
     @InputFiles
     @SkipWhenEmpty
-    @PathSensitive(PathSensitivity.ABSOLUTE)
+    @PathSensitive(PathSensitivity.RELATIVE)
     override fun getSource(): FileTree =
         super.getSource()
 

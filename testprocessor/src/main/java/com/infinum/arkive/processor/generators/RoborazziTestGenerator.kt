@@ -205,6 +205,10 @@ internal class RoborazziTestGenerator(
                     return
                 }
                 if (isVerifyRun) {
+                    // A typo'd or unreachable retention value must not silently verify nothing.
+                    require(snapshotRetention in listOf("NONE", "BASE", "ALL")) {
+                        "Arkive: unrecognized snapshotRetention '" + snapshotRetention + "' — expected NONE, BASE, or ALL"
+                    }
                     // Only enforce snapshots whose goldens the retention policy actually
                     // kept: variants exist only under ALL, everything else needs > NONE.
                     val hasGolden = if ($SHOT_KIND == "variant") snapshotRetention == "ALL" else snapshotRetention != "NONE"

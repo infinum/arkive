@@ -3,7 +3,6 @@ package com.infinum.arkive.plugin.services
 import com.infinum.arkive.metadata.fromJson
 import com.infinum.arkive.metadata.model.ComponentsMetaData
 import java.io.File
-import org.gradle.api.Project
 
 interface MetadataLoader {
     fun loadMetaData(): ComponentsMetaData
@@ -25,12 +24,12 @@ private val ARKIVE_METADATA_FILE =
  * comes from the ConsumerAdapter through the task.
  */
 class KSPMetaDataLoader(
-    private val project: Project,
+    private val buildDir: File,
     private val kspResourcesPath: String,
 ) : ProcessorMetadataLoader {
 
     override fun getMetaDataFile(): File {
-        return project.layout.buildDirectory.get().asFile
+        return buildDir
             .resolve(kspResourcesPath)
             .resolve(ARKIVE_METADATA_FILE)
     }

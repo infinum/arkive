@@ -132,9 +132,15 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
             .addAnnotation(testAnnotation())
             .addCode(
                 """
-                if ($IS_VERIFY_RUN_PROPERTY && $verifySkipCondition) {
-                    println("Arkive: $testName has no retained goldens (snapshotRetention = " + $RETENTION_PROPERTY + "), nothing to verify")
-                    return
+                if ($IS_VERIFY_RUN_PROPERTY) {
+                    // A typo'd or unreachable retention value must not silently verify nothing.
+                    require($RETENTION_PROPERTY in listOf("NONE", "BASE", "ALL")) {
+                        "Arkive: unrecognized snapshotRetention '" + $RETENTION_PROPERTY + "' — expected NONE, BASE, or ALL"
+                    }
+                    if ($verifySkipCondition) {
+                        println("Arkive: $testName has no retained goldens (snapshotRetention = " + $RETENTION_PROPERTY + "), nothing to verify")
+                        return
+                    }
                 }
                 val shooter = ArkiveComposeShoot()
                 shooter.$shooterFunction { name, function ->
@@ -155,9 +161,14 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
             .addAnnotation(testAnnotation())
             .addCode(
                 """
-                if ($IS_VERIFY_RUN_PROPERTY && $RETENTION_PROPERTY == "NONE") {
-                    println("Arkive: testAllViewFunctions has no retained goldens (snapshotRetention = NONE), nothing to verify")
-                    return
+                if ($IS_VERIFY_RUN_PROPERTY) {
+                    require($RETENTION_PROPERTY in listOf("NONE", "BASE", "ALL")) {
+                        "Arkive: unrecognized snapshotRetention '" + $RETENTION_PROPERTY + "' — expected NONE, BASE, or ALL"
+                    }
+                    if ($RETENTION_PROPERTY == "NONE") {
+                        println("Arkive: testAllViewFunctions has no retained goldens (snapshotRetention = NONE), nothing to verify")
+                        return
+                    }
                 }
                 val shooter = ArkiveViewShoot()
                 shooter.runViewTests { name, function ->

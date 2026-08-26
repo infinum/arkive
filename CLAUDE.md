@@ -47,7 +47,8 @@ Gradle).
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
 - Single test: `./gradlew :processor:test --tests 'SomeClass'`
-- Full sample pipeline (records ~350 Paparazzi snapshots, builds the site):
+- Full sample pipeline (records every preview — hundreds of snapshots with variants on —
+  and builds the site):
   `cd samples && ./gradlew generateWebShowcase` → output at
   `samples/build/generated/arkive/showcase/` (serve it with `python3 -m http.server`;
   the JSON is fetched, so `file://` won't work)

@@ -3,6 +3,11 @@ package com.infinum.arkive.plugin.consumers
 import com.infinum.arkive.plugin.utils.ArkiveVersion
 import org.gradle.api.Project
 
+// The generated snapshot test is JUnit 4; these are only injected when the consumer
+// declares no junit/vintage of their own (see addDependencyIfMissing — matched by
+// group:name, so a consumer's version always wins). Vintage lets the generated test run
+// on a JUnit 5 runtime. Kept as documented pins, not a version catalog: the plugin jar
+// resolves these at the CONSUMER's build time, where our catalog does not exist.
 internal const val JUNIT_DEPENDENCY = "junit:junit:4.13.2"
 internal const val JUNIT_VINTAGE_DEPENDENCY = "org.junit.vintage:junit-vintage-engine:5.9.1"
 
