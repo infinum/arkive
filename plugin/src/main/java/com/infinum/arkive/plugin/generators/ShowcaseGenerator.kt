@@ -10,6 +10,7 @@ interface ShowcaseGenerator {
 
 class ShowcaseGeneratorImpl(
     private val onMissingSnapshot: (String) -> Unit = {},
+    private val onMalformedVariant: (String) -> Unit = {},
 ) : ShowcaseGenerator {
     override fun generateShowcase(
         snapshots: List<String>,
@@ -32,27 +33,39 @@ class ShowcaseGeneratorImpl(
         }
     }
 
+    // Snapshot filenames are <testclass>_<id>.png (base) and <testclass>_<id>_<category>_<value>.png
+    // (variants). Component ids are dash-joined and never contain '_', so "_<id>.png" and
+    // "_<id>_" match exactly one component — they cannot match inside a longer id, and one
+    // component's base can never be claimed as another's variant.
+
     private fun List<String>.findSnapshot(id: String): String? {
         return find {
-            it.endsWith("$id.png")
+            it.endsWith("_$id.png")
         }
     }
 
     private fun List<String>.findVariants(id: String): List<ComponentVariant> {
+        val marker = "_${id}_"
         return filter {
-            it.contains("${id}_")
-        }.map { snapshot ->
-            val variantBlock =
-                snapshot.substring(snapshot.indexOf(id) + id.length + 1, snapshot.indexOf(".png"))
-                    .split("_")
+            it.contains(marker)
+        }.mapNotNull { snapshot ->
+            val variantBlock = snapshot
+                .substring(snapshot.indexOf(marker) + marker.length)
+                .substringBeforeLast('.')
+                .split("_")
 
-            val category = variantBlock[0]
-            val variant = variantBlock[1]
-            ComponentVariant(
-                category = category,
-                variant = variant,
-                snapshotPath = snapshot,
-            )
+            if (variantBlock.size < 2) {
+                onMalformedVariant(snapshot)
+                null
+            } else {
+                ComponentVariant(
+                    category = variantBlock.first(),
+                    // A category may itself contain '_' (e.g. a preview-parameter name);
+                    // everything after the first block is the variant value.
+                    variant = variantBlock.drop(1).joinToString("_"),
+                    snapshotPath = snapshot,
+                )
+            }
         }
     }
 }

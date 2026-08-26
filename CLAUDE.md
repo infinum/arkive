@@ -77,7 +77,8 @@ Modules and how they compose at a consumer's build time:
   → validators (drop `skip=true`, private functions, bad parameters; `@ArkiveComposable`
   problems should error, plain-`@Preview` problems skip) → specs generate into
   `com.infinum.arkive`: `ComposeVariants.kt` (one wrapper per component, **named by the
-  unique component id** `<pkg>_<function>` lowercased — bare names collide across packages),
+  unique component id** `<pkg>-<function>` dash-joined and lowercased — bare names collide
+  across packages, and `_`-joined ids collided too since `_` is legal in identifiers),
   `ArkiveComposeShoot`/`ArkiveViewShoot` (runners that call every wrapper under per-component
   try/catch), and `components_meta_data.json` (KSP resources).
 - **testprocessor** (KSP, `kspTestDebug`) — generates `ArkiveSnapshotTestGenerator`, the

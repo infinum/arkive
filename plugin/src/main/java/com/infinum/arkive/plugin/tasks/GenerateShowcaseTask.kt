@@ -69,6 +69,9 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
             onMissingSnapshot = { id ->
                 logger.warn("Arkive: no snapshot recorded for component '$id' — excluded from the showcase")
             },
+            onMalformedVariant = { snapshot ->
+                logger.warn("Arkive: unrecognized variant snapshot name '$snapshot' — skipped")
+            },
         )
         val writer = ShowcaseWriterImpl()
 

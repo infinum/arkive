@@ -49,6 +49,7 @@ class ComposeVariantSpec(
 
     // Wrappers are named by the unique component id, not the bare function name — previews
     // with the same name in different packages would otherwise generate clashing overloads.
+    // Ids are dash-joined, so KotlinPoet emits the wrapper names backtick-escaped.
     // Base and variants are split so golden testing can run against base snapshots only.
 
     private fun generatePreviewFunction(holder: ComposeHolder): FunSpec {

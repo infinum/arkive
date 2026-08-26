@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.paparazzi.plugin)
     compileOnly(libs.gradle.android)
 
+    testImplementation(libs.junit)
 }
 
 // Publish with a Kotlin 2.0 floor so consumers on older Kotlin versions can read the
