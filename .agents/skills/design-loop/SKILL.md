@@ -69,7 +69,8 @@ ask what the screen should look like **before** judging; never invent the requir
    batch fixes across a screen before regenerating rather than re-running per tweak.
 4. **Locate the snapshot** in `<module>/build/generated/arkive/showcase/images/` by its
    component id (see the cheatsheet's filename convention). If it's missing, the preview
-   crashed — find the `Arkive: skipping component` log line and fix that first.
+   crashed — the build log has an `Arkive: no snapshot recorded for component` warning
+   (re-run with `--info` for the crash message); fix that first.
 5. **Fetch the design truth** for the tier you're on.
 6. **Compare in a single turn:** Read the snapshot PNG (renders visually), fetch/hold the
    design truth, and enumerate every observable difference — colors, spacing, alignment,

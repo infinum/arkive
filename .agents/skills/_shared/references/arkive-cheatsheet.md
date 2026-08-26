@@ -78,9 +78,11 @@ module { name, designFileKey?, items: [ { component: { id, name, group, designNo
 
 ## Failure semantics (important, counter-intuitive)
 
-- **Recording never fails the build.** A preview that crashes is logged
-  (`Arkive: skipping component <id>, snapshot failed: ...`) and dropped from the showcase.
-  It also has **no golden**, so verification never covers it either.
+- **Recording never fails the build.** A preview that crashes is dropped from the
+  showcase with an `Arkive: no snapshot recorded for component '<id>'` build-log warning.
+  (The test-side `Arkive: skipping component <id>, snapshot failed: ...` line carries the
+  crash message but is test-JVM stdout — Gradle only shows it with `--info`.) A crashed
+  preview also has **no golden**, so verification never covers it either.
 - **Verification** (`verifyShowcase`, arkive 0.0.3+) fails with ONE aggregate
   `AssertionError` naming every mismatched component, each with a delta-image path and an
   accept command. Missing goldens (new components) also fail.

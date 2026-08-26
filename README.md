@@ -56,6 +56,10 @@ Arkive, or call the skill directly:
 /arkive:setup
 ```
 
+> The `/arkive:` prefix comes from the plugin installs. With `npx skills add` the skills
+> are unprefixed — call `/setup`, `/annotate`, `/find`, `/design-loop`,
+> `/snapshot-testing` instead.
+
 ## The skills
 
 | Skill | What it does |

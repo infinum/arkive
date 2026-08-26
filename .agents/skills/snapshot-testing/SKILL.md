@@ -47,9 +47,10 @@ verify the outcome — do not assume it:
 1. Count `com.infinum.arkive_`-prefixed PNGs in `<module>/src/test/snapshots/images/`.
 2. Cross-check against the component count in the module's `arkive-showcase.json` —
    under BASE they should match one-to-one.
-3. Scan the build log for `Arkive: skipping component` lines. A crashed preview has **no
-   golden and will never be covered by verification** — report each one to the user
-   rather than letting coverage silently shrink.
+3. Scan the build log for `Arkive: no snapshot recorded for component` warnings. A
+   crashed preview has **no golden and will never be covered by verification** — report
+   each one to the user rather than letting coverage silently shrink. (Re-run with
+   `--info` to see the test-side crash message.)
 
 ## Step 4 — Prove verification works before committing
 
