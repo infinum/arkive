@@ -63,8 +63,11 @@ arkive {
 ## Snapshot filename convention
 
 - Base: `com.infinum.arkive_ArkiveSnapshotTestGenerator_<testMethod>_<componentId>.png`
-- Variant: same + `_<category>_<value>` suffix (e.g. `_fontscale_large`, `_layoutdirection_rtl`)
-- `<componentId>` = `<package>_<functionName>` lowercased, dots replaced by underscores.
+- Variant: same + `_<category>_<value>` suffix (e.g. `_font_1.5`, `_layoutDirection_LTR`,
+  `_param-<parameterName>_<index>` for @PreviewParameter values)
+- `<componentId>` = `<package>-<functionName>` lowercased and dash-joined (dashes can't
+  appear in identifiers, so ids never collide and `_` marks only the id/variant
+  boundaries).
 
 ## Showcase JSON shape (the parts skills use)
 
