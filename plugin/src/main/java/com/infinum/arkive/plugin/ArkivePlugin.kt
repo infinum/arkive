@@ -10,12 +10,13 @@ import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask.Companion.RECORDING_TASK
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
 import com.infinum.arkive.plugin.utils.ArkiveVersion
+import com.infinum.arkive.plugin.utils.RetentionArgumentProvider
 import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.testing.Test
-import org.gradle.process.CommandLineArgumentProvider
 
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -46,25 +47,21 @@ class ArkivePlugin : Plugin<Project> {
             addPlugins(this)
             addDependencies(this)
             addTestDependencies(this)
-            forwardRetentionToTests(this)
             addTasks(this)
 
             addRootTasks(rootProject)
         }
     }
 
-    private fun forwardRetentionToTests(project: Project) {
+    private fun forwardRetentionToTests(project: Project, extension: ArkiveExtension) {
         // The generated snapshot test reads retention at runtime to decide which verify
-        // guards apply (see ArkiveTestProcessor). A lazy argument provider defers reading
-        // the extension until the test JVM is forked, after the consumer's script ran.
+        // guards apply (see ArkiveTestProcessor). The Provider defers reading the value
+        // until the test's inputs are resolved — after the consumer's script ran — and the
+        // named provider class keeps the Test task configuration-cache safe and makes the
+        // forwarded value a tracked input (see RetentionArgumentProvider).
+        val retention = extension.snapshotRetention.map { it.name }
         project.tasks.withType(Test::class.java).configureEach { test ->
-            test.jvmArgumentProviders.add(
-                CommandLineArgumentProvider {
-                    val retention = project.extensions.findByType(ArkiveExtension::class.java)
-                        ?.snapshotRetention?.get() ?: SnapshotRetention.NONE
-                    listOf("-Darkive.snapshot.retention=${retention.name}")
-                },
-            )
+            test.jvmArgumentProviders.add(RetentionArgumentProvider(retention))
         }
     }
 
@@ -74,6 +71,9 @@ class ArkivePlugin : Plugin<Project> {
                 "arkive",
                 ArkiveExtension::class.java,
             )
+            // Wired here, not from apply(): the extension must exist first, and this block
+            // is the earliest point that's true regardless of the consumer's plugin order.
+            forwardRetentionToTests(project, extension)
 
             project.afterEvaluate {
                 val enablePreviewParameters = extension.enablePreviewParameters.get()
@@ -181,7 +181,7 @@ class ArkivePlugin : Plugin<Project> {
     private fun addTaskWithVariant(project: Project, variant: String) {
         with(project) {
             tasks.register(
-                "${GenerateShowcaseTask.NAME}${variant.capFirst}",
+                showcaseTaskName(variant),
                 GenerateShowcaseTask::class.java,
             ) { task ->
                 task.group = GenerateShowcaseTask.GROUP
@@ -189,8 +189,7 @@ class ArkivePlugin : Plugin<Project> {
                 task.variant = variant
                 val extension = project.extensions.findByType(ArkiveExtension::class.java)
                 task.designFileKey = extension?.designFileKey?.get().orEmpty()
-                task.snapshotRetention =
-                    (extension?.snapshotRetention?.get() ?: SnapshotRetention.NONE).name
+                task.snapshotRetention = snapshotRetentionOf(project).name
                 if (variant.isEmpty()) {
                     task.dependsOn(RECORDING_TASK)
                 } else {
@@ -199,8 +198,19 @@ class ArkivePlugin : Plugin<Project> {
                 task.setSource(projectDir)
             }
         }
-        addVerifyTaskWithVariant(project, variant)
+        // The generated test class only exists where kspTestDebug ran (see
+        // addDependencies), so a release-variant verify would only fail with an opaque
+        // "No tests found for given includes".
+        if (variant.isEmpty() || variant.endsWith("Debug") || variant == "debug") {
+            addVerifyTaskWithVariant(project, variant)
+        }
     }
+
+    private fun showcaseTaskName(variant: String) = "${GenerateShowcaseTask.NAME}${variant.capFirst}"
+
+    private fun snapshotRetentionOf(project: Project): SnapshotRetention =
+        project.extensions.findByType(ArkiveExtension::class.java)
+            ?.snapshotRetention?.get() ?: SnapshotRetention.NONE
 
     /**
      * `verifyShowcase<Variant>` is the public verify entry point: it runs Paparazzi's
@@ -223,19 +233,54 @@ class ArkivePlugin : Plugin<Project> {
         project.gradle.taskGraph.whenReady { graph ->
             val verifyTask = project.tasks.findByName(verifyTaskName)
             if (verifyTask != null && graph.hasTask(verifyTask)) {
-                val retention = project.extensions.findByType(ArkiveExtension::class.java)
-                    ?.snapshotRetention?.get() ?: SnapshotRetention.NONE
-                if (retention == SnapshotRetention.NONE) {
+                if (snapshotRetentionOf(project) == SnapshotRetention.NONE) {
                     throw GradleException(
                         "Arkive: $verifyTaskName has nothing to verify — snapshotRetention is NONE, " +
                             "so no goldens are retained. Set arkive.snapshotRetention to BASE or ALL " +
-                            "and record goldens with ${GenerateShowcaseTask.NAME}${variant.capFirst} first.",
+                            "and record goldens with ${showcaseTaskName(variant)} first.",
                     )
                 }
+                failOnConflictingTasks(project, graph, verifyTaskName, variant)
                 val testTaskName = if (variant.isEmpty()) "test" else "test${variant.capFirst}UnitTest"
                 val testTask = project.tasks.findByName(testTaskName) as? Test
                 testTask?.filter?.includeTestsMatching(GENERATED_TEST_CLASS)
             }
+        }
+    }
+
+    /**
+     * The verify filter narrows the consumer's SHARED unit-test task to Arkive's generated
+     * class for the whole invocation, and Paparazzi resolves record-vs-verify from
+     * properties on that same task. Any co-scheduled task that drives those tests (check,
+     * build) would silently run none of the consumer's own tests, and a co-scheduled
+     * record (generateShowcase / recordPaparazzi) fights verify over the mode — fail fast
+     * instead of silently misbehaving.
+     */
+    private fun failOnConflictingTasks(
+        project: Project,
+        graph: TaskExecutionGraph,
+        verifyTaskName: String,
+        variant: String,
+    ) {
+        // The variant's own unit-test task can't be listed here — it is always in the
+        // graph as verifyPaparazzi's dependency, so a direct request for it is
+        // indistinguishable. The aggregates below catch the common combinations.
+        val conflicting = listOfNotNull(
+            project.tasks.findByName("check"),
+            project.tasks.findByName("build"),
+            project.tasks.findByName("test"),
+            project.tasks.findByName(showcaseTaskName(variant)),
+            project.tasks.findByName("$RECORDING_TASK${variant.capFirst}"),
+        ).filter { graph.hasTask(it) }
+        if (conflicting.isNotEmpty()) {
+            throw GradleException(
+                "Arkive: $verifyTaskName cannot share an invocation with " +
+                    conflicting.joinToString { it.name } +
+                    " — the verify filter restricts the shared unit-test task to Arkive's " +
+                    "generated class (their tests would silently not run), and record and " +
+                    "verify flip the same Paparazzi mode. Run $verifyTaskName in its own " +
+                    "Gradle invocation.",
+            )
         }
     }
 
@@ -265,7 +310,7 @@ class ArkivePlugin : Plugin<Project> {
             .mapNotNull { module ->
                 val variant = module.extensions.findByType(ArkiveExtension::class.java)
                     ?.multiModuleVariant?.get().orEmpty()
-                module.tasks.findByName("${GenerateShowcaseTask.NAME}${variant.capFirst}")?.path
+                module.tasks.findByName(showcaseTaskName(variant))?.path
             }
     }
 

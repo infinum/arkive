@@ -70,18 +70,18 @@ class ComposeRunnerSpec(
             nextControlFlow("catch (e: %T)", ClassName(KOTLIN_PACKAGE, "AssertionError"))
             beginControlFlow("if ($IS_VERIFY_RUN_PROPERTY)")
             addStatement(
-                "$VERIFY_FAILURES_PROPERTY += %S + e.message",
+                "$VERIFY_FAILURES_PROPERTY += %S + (e.message ?: e.toString())",
                 "${holder.functionId}$wrapperSuffix: ",
             )
             nextControlFlow("else")
             addStatement(
-                "println(%S + e.message)",
+                "println(%S + (e.message ?: e.toString()))",
                 "Arkive: skipping component ${holder.functionId}$wrapperSuffix, snapshot failed: ",
             )
             endControlFlow()
             nextControlFlow("catch (e: %T)", ClassName(KOTLIN_PACKAGE, "Throwable"))
             addStatement(
-                "println(%S + e.message)",
+                "println(%S + (e.message ?: e.toString()))",
                 "Arkive: skipping component ${holder.functionId}$wrapperSuffix, snapshot failed: ",
             )
             endControlFlow()
@@ -133,6 +133,8 @@ class ComposeRunnerSpec(
 
     private fun getArkiveClass(): TypeSpec.Builder = TypeSpec.classBuilder(SIMPLE_NAME)
         .addProperty(
+            // Paparazzi's own verify-mode property — the same literal is read in the
+            // generated test class (ArkiveTestProcessor); keep the two in sync.
             PropertySpec.builder(IS_VERIFY_RUN_PROPERTY, BOOLEAN)
                 .addModifiers(KModifier.PRIVATE)
                 .initializer("java.lang.Boolean.getBoolean(%S)", "paparazzi.test.verify")

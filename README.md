@@ -69,6 +69,11 @@ goldens the retention policy kept (base under `BASE`, everything under `ALL`), a
 the build with an aggregate report naming every mismatched component. With
 `snapshotRetention = NONE` the task fails fast — there is nothing to verify.
 
+Run it in its **own Gradle invocation**: the scoping narrows the module's shared
+unit-test task to Arkive's generated class for the whole invocation, so it cannot be
+combined with `check`, `build`, `generateShowcase<Variant>`, or anything else that runs
+those tests — the build fails fast with an explanation if it is.
+
 Recording stays resilient either way: a preview that fails to render is logged and
 skipped, never breaking the build, and is likewise excluded from verification (it has no
 golden). Running plain `verifyPaparazzi<Variant>` yourself is also safe — Arkive's tests

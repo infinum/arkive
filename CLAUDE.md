@@ -37,7 +37,11 @@ after republishing the same version.
   with `python3 -m http.server`; the JSON is fetched, so `file://` won't work)
 - Per-variant module task: `./gradlew :sample:generateShowcaseUatDebug`
 - Verify retained goldens: `./gradlew :sample:verifyShowcaseUatDebug` (needs
-  `snapshotRetention` BASE/ALL and previously recorded goldens)
+  `snapshotRetention` BASE/ALL and previously recorded goldens). The sample leaves
+  retention at the NONE default, so reproducing verification means temporarily setting
+  `snapshotRetention.set(SnapshotRetention.BASE)` in `sample/build.gradle.kts` and
+  recording first — CI does not exercise this path. Run it in its own invocation (a
+  guard fails the build when combined with check/build/test/record).
 - Central deploy: `./gradlew deployAll` (needs `SONATYPE_USERNAME`/`SONATYPE_PASS` env vars +
   signing keys in `~/.gradle/gradle.properties`), then the OSSRH staging API dance: GET
   `/manual/search/repositories?state=open`, POST `/manual/upload/repository/<key>`, then
