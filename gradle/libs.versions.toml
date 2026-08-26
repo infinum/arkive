@@ -11,6 +11,7 @@ roborazzi = "1.72.0"
 jetbrainsKotlinJvm = "2.0.21"
 agp = "8.7.3"
 agpVersion = "8.7.3"
+junit = "4.13.2"
 
 [plugins]
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
@@ -35,6 +36,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 paparazzi-plugin = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
 roborazzi-plugin = { module = "io.github.takahirom.roborazzi:roborazzi-gradle-plugin", version.ref = "roborazzi" }
 gradle-android = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+junit = { module = "junit:junit", version.ref = "junit" }
 
 [bundles]
 compose = [
