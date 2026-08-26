@@ -30,7 +30,9 @@ class ShowcaseWebGeneratorImpl : ShowcaseWebGenerator {
     }
 
     private fun getResourceStream(resourcePath: String): InputStream =
-        classLoader.getResourceAsStream("$RESOURCES_DIR${File.separatorChar}$resourcePath")
+        // Classpath resource names always use '/', regardless of OS — File.separatorChar
+        // here would break resource lookup on Windows.
+        classLoader.getResourceAsStream("$RESOURCES_DIR/$resourcePath")
             ?: error("Can't locate resource: $resourcePath")
 
     private fun writeResource(resource: String, outputDir: File) {
