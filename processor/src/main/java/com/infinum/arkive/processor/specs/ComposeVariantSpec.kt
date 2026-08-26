@@ -148,12 +148,17 @@ class ComposeVariantSpec(
                 packageName = packageName,
                 simpleName = simpleName,
             )
+            // The parameter name becomes the variant category. Prefixed with "param-" so a
+            // parameter named `font`/`density`/`layoutDirection` can't collide with the
+            // built-in categories, and '_' is sanitized to '-' so the category never
+            // introduces extra '_' separators into the snapshot filename.
             val parameterName = holder.parameters.firstOrNull()?.name?.asString().orEmpty()
+            val parameterCategory = "param-${parameterName.replace('_', '-')}"
             val provider = CodeBlock.builder().apply {
                 addStatement(
                     "%M().values.forEachIndexed { index, it -> runner(%L) { %M(it) } }",
                     providerFunctionMember,
-                    "\"${id}_${parameterName}_\${index}\"",
+                    "\"${id}_${parameterCategory}_\${index}\"",
                     componentMember,
                 )
             }.build()

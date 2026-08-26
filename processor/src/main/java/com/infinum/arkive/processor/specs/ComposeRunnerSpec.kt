@@ -82,10 +82,13 @@ class ComposeRunnerSpec(
                     returnType = UNIT,
                 ),
             )
+            // CodeBlocks are added directly, never rendered to String and re-parsed:
+            // addCode(String) treats '%' as format specifiers and bypasses MemberName
+            // import handling.
             .addCode(
-                holders.joinToString(separator = "\n") { holder ->
-                    getRunnerFunction(holder, wrapperSuffix).toString()
-                },
+                CodeBlock.builder()
+                    .apply { holders.forEach { add(getRunnerFunction(it, wrapperSuffix)) } }
+                    .build(),
             )
             .build()
     }

@@ -43,7 +43,17 @@ class SnapshotsGrabberImpl(
 
         project.logger.warn("Copying ${originalSnapshots.size} snapshot(s) to ${outputDir.absolutePath}")
 
+        // The walk is recursive but the copy is flat (the web template resolves images by
+        // basename) — two same-named files in different subdirectories would silently
+        // clobber each other, so collisions are surfaced loudly.
+        val seenNames = mutableSetOf<String>()
         return originalSnapshots.map { snapshot ->
+            if (!seenNames.add(snapshot.name)) {
+                project.logger.warn(
+                    "Arkive: duplicate snapshot filename '${snapshot.name}' — " +
+                        "'${snapshot.absolutePath}' overwrites a previously grabbed copy",
+                )
+            }
             val destinationFile = File(outputDir, snapshot.name)
             Files.copy(snapshot.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
             GrabbedSnapshot(
