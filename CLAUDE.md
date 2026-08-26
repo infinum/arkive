@@ -46,7 +46,8 @@ Gradle).
   `./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build`
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
-- Single test: `./gradlew :processor:test --tests 'SomeClass'`
+- Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
+  unit suite so far — it covers the showcase filename parsing)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
   and builds the site):
   `cd samples && ./gradlew generateWebShowcase` → output at
