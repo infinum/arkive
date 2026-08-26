@@ -17,6 +17,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.testing.Test
+import org.gradle.process.CommandLineArgumentProvider
 
 class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -202,16 +203,19 @@ class ArkivePlugin : Plugin<Project> {
                 )
             }
         }
-        // The generated test class only exists where the test-source KSP ran — debug
-        // build types on android modules, the single host-test compilation on KMP — so a
-        // verify for any other variant could only fail with an opaque "No tests found".
-        if (variant.isEmpty() ||
-            variant == "debug" ||
-            variant.endsWith("Debug") ||
-            variant == adapter.defaultMultiModuleVariant
-        ) {
+        if (hasGeneratedTestClass(adapter, variant)) {
             addVerifyTaskWithVariant(project, adapter, selection, variant)
         }
+    }
+
+    // The generated test class only exists where the test-source KSP ran — debug build
+    // types on android modules, the single host-test compilation on KMP — so a verify
+    // task for any other variant could only fail with an opaque "No tests found".
+    private fun hasGeneratedTestClass(adapter: ConsumerAdapter, variant: String): Boolean {
+        if (variant.isEmpty() || variant == "debug" || variant.endsWith("Debug")) {
+            return true
+        }
+        return variant == adapter.defaultMultiModuleVariant
     }
 
     private fun showcaseTaskName(variant: String) = "${GenerateShowcaseTask.NAME}${variant.capFirst}"
@@ -249,7 +253,13 @@ class ArkivePlugin : Plugin<Project> {
                             "and record goldens with ${showcaseTaskName(variant)} first.",
                     )
                 }
-                failOnConflictingTasks(project, graph, verifyTaskName, variant)
+                failOnConflictingTasks(
+                    project,
+                    graph,
+                    verifyTaskName,
+                    variant,
+                    selection.engine.recordTaskName(adapter, variant),
+                )
                 val testTask = project.tasks.findByName(adapter.unitTestTaskName(variant)) as? Test
                 testTask?.filter?.includeTestsMatching(GENERATED_TEST_CLASS)
             }
@@ -269,6 +279,7 @@ class ArkivePlugin : Plugin<Project> {
         graph: TaskExecutionGraph,
         verifyTaskName: String,
         variant: String,
+        recordTaskName: String,
     ) {
         // The variant's own unit-test task can't be listed here — it is always in the
         // graph as verifyPaparazzi's dependency, so a direct request for it is
@@ -278,7 +289,7 @@ class ArkivePlugin : Plugin<Project> {
             project.tasks.findByName("build"),
             project.tasks.findByName("test"),
             project.tasks.findByName(showcaseTaskName(variant)),
-            project.tasks.findByName("$RECORDING_TASK${variant.capFirst}"),
+            project.tasks.findByName(recordTaskName),
         ).filter { graph.hasTask(it) }
         if (conflicting.isNotEmpty()) {
             throw GradleException(
