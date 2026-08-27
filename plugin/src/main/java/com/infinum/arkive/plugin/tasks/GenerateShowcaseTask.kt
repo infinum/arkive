@@ -1,9 +1,13 @@
 package com.infinum.arkive.plugin.tasks
 
 import com.infinum.arkive.metadata.model.ArkiveModule
+import com.infinum.arkive.metadata.model.ShowcaseItem
+import com.infinum.arkive.plugin.extensions.SnapshotRetention
 import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
+import com.infinum.arkive.plugin.services.GrabbedSnapshot
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
+import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import java.io.File
@@ -34,13 +38,16 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     val pluginVersion: Property<String>
         get() = project.objects.property(String::class.java)
-            .convention("0.0.1") // TODO automate this
+            .convention(ArkiveVersion.current)
 
     @get:Input
     var variant = ""
 
     @get:Input
     var designFileKey = ""
+
+    @get:Input
+    var snapshotRetention = SnapshotRetention.NONE.name
 
     init {
         project.gradle.projectsEvaluated {
@@ -58,26 +65,57 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     fun doOnRun() {
         val snapshotsGrabber = SnapshotsGrabberImpl(project)
         val metadataLoader = KSPMetaDataLoader(project)
-        val generator = ShowcaseGeneratorImpl()
+        val generator = ShowcaseGeneratorImpl(
+            onMissingSnapshot = { id ->
+                logger.warn("Arkive: no snapshot recorded for component '$id' — excluded from the showcase")
+            },
+            onMalformedVariant = { snapshot ->
+                logger.warn("Arkive: unrecognized variant snapshot name '$snapshot' — skipped")
+            },
+        )
         val writer = ShowcaseWriterImpl()
 
-        val snapshots =
-            snapshotsGrabber.grabAndMoveSnapshots(
-                outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
-            )
+        val grabbed = snapshotsGrabber.grabSnapshots(
+            outputDir = outputDirectory.get().dir(IMAGES_OUTPUT_PATH).asFile,
+        )
 
         val vrr = variant
         logger.warn("Loading metadata for variant: $vrr")
         val metadata = metadataLoader.loadMetaData(vrr)
 
-        val moduleItems = generator.generateShowcase(snapshots, metadata)
-        //logger.warn("Showcase: $moduleItems")
+        val moduleItems = generator.generateShowcase(grabbed.map { it.relativePath }, metadata)
+        applyRetention(grabbed, moduleItems)
+        // logger.warn("Showcase: $moduleItems")
         writer.write(
             outputDir = outputDirectory.get().asFile,
             module = ArkiveModule(project.name, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
         )
 
         logger.warn("Showcase written to ${outputDirectory.get().asFile.resolve("arkive-showcase.json").absolutePath}")
+    }
+
+    /**
+     * Decides which recorded snapshots survive in Paparazzi's golden directory after the
+     * showcase has taken its copies. Base vs variant is determined from the generated
+     * showcase items — not filename heuristics.
+     */
+    private fun applyRetention(grabbed: List<GrabbedSnapshot>, items: List<ShowcaseItem>) {
+        val retention = SnapshotRetention.valueOf(snapshotRetention)
+        val removed = when (retention) {
+            SnapshotRetention.ALL -> emptyList()
+            SnapshotRetention.NONE -> grabbed
+            SnapshotRetention.BASE -> {
+                val basePaths = items.map { it.snapshotPath }.toSet()
+                grabbed.filter { it.relativePath !in basePaths }
+            }
+        }
+        removed.forEach { it.sourceFile.delete() }
+        if (removed.isNotEmpty()) {
+            logger.warn(
+                "Arkive: removed ${removed.size} consumed snapshot(s) from the golden directory " +
+                    "(snapshotRetention = $retention)",
+            )
+        }
     }
 
     @InputFiles

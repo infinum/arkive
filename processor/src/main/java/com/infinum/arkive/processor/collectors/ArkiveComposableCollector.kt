@@ -31,7 +31,8 @@ class ArkiveComposableCollector(
                     figmaNodeId = arkiveComposable.designNodeId.ifEmpty { null },
                     packageName = it.packageName.asString(),
                     parameters = it.parameters,
-                    fileName = it.containingFile?.fileName.orEmpty()
+                    fileName = it.containingFile?.fileName.orEmpty(),
+                    fromArkive = true,
                 )
             }
             .toSet().also {

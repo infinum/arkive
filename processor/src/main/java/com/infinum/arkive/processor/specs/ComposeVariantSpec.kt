@@ -20,15 +20,15 @@ import com.squareup.kotlinpoet.ksp.writeTo
 class ComposeVariantSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
-    disablePreviewParameters: Boolean,
+    private val enablePreviewParameters: Boolean,
     private val enableVariants: Boolean,
 ) : KotlinSpec {
-    private val enablePreviewParameters = !disablePreviewParameters
 
     override fun write() {
         val fileSpec = getFileSpec()
         holders.forEach { holder ->
             fileSpec.addFunction(generatePreviewFunction(holder))
+            fileSpec.addFunction(generatePreviewVariantsFunction(holder))
         }
 
         fileSpec
@@ -47,13 +47,24 @@ class ComposeVariantSpec(
         )
     }
 
+    // Wrappers are named by the unique component id, not the bare function name — previews
+    // with the same name in different packages would otherwise generate clashing overloads.
+    // Ids are dash-joined, so KotlinPoet emits the wrapper names backtick-escaped.
+    // Base and variants are split so golden testing can run against base snapshots only.
+
     private fun generatePreviewFunction(holder: ComposeHolder): FunSpec {
-        val builder = FunSpec.builder(holder.functionName)
+        return FunSpec.builder(holder.functionId)
+            .addParameter(createRunnerParameter())
+            .addCode(generateBaseVariant(holder.functionId, getComponentMember(holder), holder))
+            .build()
+    }
+
+    private fun generatePreviewVariantsFunction(holder: ComposeHolder): FunSpec {
+        val builder = FunSpec.builder("${holder.functionId}$VARIANTS_SUFFIX")
             .addParameter(createRunnerParameter())
 
         val functionComponent = getComponentMember(holder)
         val id = holder.functionId
-        builder.addCode(generateBaseVariant(id, functionComponent, holder))
 
         if (enablePreviewParameters) {
             generatePreviewVariants(holder, id, functionComponent)?.let {
@@ -137,12 +148,17 @@ class ComposeVariantSpec(
                 packageName = packageName,
                 simpleName = simpleName,
             )
+            // The parameter name becomes the variant category. Prefixed with "param-" so a
+            // parameter named `font`/`density`/`layoutDirection` can't collide with the
+            // built-in categories, and '_' is sanitized to '-' so the category never
+            // introduces extra '_' separators into the snapshot filename.
             val parameterName = holder.parameters.firstOrNull()?.name?.asString().orEmpty()
+            val parameterCategory = "param-${parameterName.replace('_', '-')}"
             val provider = CodeBlock.builder().apply {
                 addStatement(
                     "%M().values.forEachIndexed { index, it -> runner(%L) { %M(it) } }",
                     providerFunctionMember,
-                    "\"${id}_${parameterName}_\${index}\"",
+                    "\"${id}_${parameterCategory}_\${index}\"",
                     componentMember,
                 )
             }.build()
@@ -323,6 +339,7 @@ class ComposeVariantSpec(
 
     companion object {
         private const val SIMPLE_NAME = "ComposeVariants"
+        const val VARIANTS_SUFFIX = "_variants"
         private const val RUNNER_FUNCTION = "runner"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
         private const val COMPOSE_UTILS_PACKAGE = "com.infinum.arkive.composeutils"

@@ -156,6 +156,10 @@ afterEvaluate {
     }
 
     signing {
+        // Signing is mandatory only when deploying to Maven Central. With no signing key
+        // configured (e.g. CI running publishToMavenLocal), the Sign tasks are skipped;
+        // a Central deploy without a key still fails loudly.
+        required = { gradle.taskGraph.allTasks.any { it.name.contains("SonatypeMavenCentral") } }
         sign publishing.publications
     }
 

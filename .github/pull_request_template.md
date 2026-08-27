@@ -2,9 +2,9 @@
 
 <!-- 
     Provide an overview of what this pull request aims to address or achieve.
-
-    Link any relevant issues that this pull request addresses or resolves, using the format "Fixes #issue_number". 
 -->
+
+**Related issue**: <!-- Add the issue number in format [#<number>](link) or set to "None" if this is not related to a reported issue. -->
 
 ## Changes
 

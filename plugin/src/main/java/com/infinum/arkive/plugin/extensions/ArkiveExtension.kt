@@ -10,8 +10,8 @@ open class ArkiveExtension @Inject constructor(
     val multiModuleVariant: Property<String> = objects.property(String::class.java)
         .convention("")
 
-    val disablePreviewParameters: Property<Boolean> = objects.property(Boolean::class.java)
-        .convention(false)
+    val enablePreviewParameters: Property<Boolean> = objects.property(Boolean::class.java)
+        .convention(true)
 
     val enableVariants: Property<Boolean> = objects.property(Boolean::class.java)
         .convention(false)
@@ -19,8 +19,16 @@ open class ArkiveExtension @Inject constructor(
     val designFileKey: Property<String> = objects.property(String::class.java)
         .convention("")
 
+    /**
+     * Which snapshots remain in Paparazzi's `src/test/snapshots` golden directory after
+     * the showcase consumes them: [SnapshotRetention.NONE] (default), [SnapshotRetention.BASE]
+     * for base-only golden testing, or [SnapshotRetention.ALL].
+     */
+    val snapshotRetention: Property<SnapshotRetention> = objects.property(SnapshotRetention::class.java)
+        .convention(SnapshotRetention.NONE)
+
     companion object {
-        const val DISABLE_PREVIEW_PARAMETERS = "disablePreviewParameters"
+        const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
         const val ENABLE_VARIANTS = "enableVariants"
     }
 }

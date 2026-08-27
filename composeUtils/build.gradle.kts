@@ -16,6 +16,7 @@ apply {
 val buildConfig: Map<String, Any> by project
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
+val pomConfig: Map<String, Any> by project
 
 android {
     namespace = "com.infinum.arkive.composeutils"
@@ -75,17 +76,28 @@ extra["mavenPublishProperties"] = mapOf(
         "username" to sonatype["username"],
         "password" to sonatype["password"]
     ),
-    "name" to "ExampleLib LibModule1",
-    "description" to "ExampleLib LibModule1 module",
-    "url" to "https://github.com/infinum/android-libname",
-    "scm" to mapOf(
-        "connection" to "https://github.com/infinum/android-libname.git",
-        "url" to "https://github.com/infinum/android-libname"
-    )
+
+    "name" to "Arkive Compose Utils",
+
+    "description" to "Compose utilities for rendering Arkive preview variants",
+
+    "url" to pomConfig["url"],
+
+    "scm" to pomConfig["scm"]
 )
 
 dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+}
+
+// Publish with a Kotlin 2.0 floor so consumers on older Kotlin versions can read the
+// metadata; coreLibrariesVersion keeps the kotlin-stdlib dependency at 2.0.x in the POM.
+kotlin {
+    compilerOptions {
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+    coreLibrariesVersion = "2.0.21"
 }

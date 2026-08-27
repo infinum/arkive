@@ -14,13 +14,15 @@ data class ViewHolder(
     override val figmaNodeId: String?,
     override val function: KSFunctionDeclaration,
     override val parameters: List<KSValueParameter>,
-    override val fileName: String
+    override val fileName: String,
 ) : Holder {
-    // This id should be used in the generated json file to include more info about the component
+    // This id should be used in the generated json file to include more info about the component.
+    // Dash-joined for the same reasons as ComposeHolder.functionId: uniqueness and
+    // unambiguous '_' boundaries in snapshot filenames.
     override val functionId: String
         get() {
-            val validPackageName = packageName.replace(".", "_")
-            return "${validPackageName}_$functionName".lowercase()
+            val validPackageName = packageName.replace('.', '-')
+            return "$validPackageName-$functionName".lowercase()
         }
 
     override fun equals(other: Any?): Boolean {

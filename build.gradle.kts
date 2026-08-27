@@ -16,6 +16,9 @@ buildscript {
         classpath(libs.gradle.android)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
+        classpath(libs.paparazzi.plugin)
+        // Do NOT add the arkive plugin to the buildscript classpath — it conflicts with the
+        // versioned `alias(libs.plugins.arkive)` request in :sample (resolved via pluginManagement).
     }
 }
 

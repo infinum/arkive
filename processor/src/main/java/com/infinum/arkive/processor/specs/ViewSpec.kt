@@ -44,12 +44,12 @@ class ViewSpec(
         )
     }
 
-    private fun getRunnerFunction(holder: ViewHolder): String {
-        return """
-            runner("${holder.functionId}") {
-             ${getCodeBody(holder).toString().trimIndent()}
-            } 
-        """.trimIndent()
+    private fun getRunnerFunction(holder: ViewHolder): CodeBlock {
+        return CodeBlock.builder().apply {
+            beginControlFlow("runner(%S)", holder.functionId)
+            add(getCodeBody(holder))
+            endControlFlow()
+        }.build()
     }
 
     private fun getRunViewTestsFunction(): FunSpec {
@@ -64,10 +64,12 @@ class ViewSpec(
                     returnType = UNIT,
                 ),
             )
+            // CodeBlocks are added directly — see ComposeRunnerSpec for why rendering
+            // to String and re-parsing is unsafe.
             .addCode(
-                holders.joinToString(separator = "\n") { holder ->
-                    getRunnerFunction(holder)
-                },
+                CodeBlock.builder()
+                    .apply { holders.forEach { add(getRunnerFunction(it)) } }
+                    .build(),
             )
             .build()
     }

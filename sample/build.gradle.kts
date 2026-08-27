@@ -1,3 +1,4 @@
+import com.infinum.arkive.plugin.extensions.ArkiveExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -16,8 +17,7 @@ apply {
 
 arkive {
     multiModuleVariant.set("uatDebug")
-    enableVariants.set(false)
-    disablePreviewParameters.set(false)
+    enableVariants.set(true)
     designFileKey.set("fileKey")
 }
 
@@ -94,4 +94,5 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+    implementation(libs.compose.material.icons.core)
 }

@@ -6,17 +6,13 @@ dokka {
         outputDirectory.set(layout.buildDirectory.dir("javadoc"))
     }
 
-    dokkaSourceSets.named("main") {
-        // TODO add dokka configuration
-    }
-
-    // Android modules: the AGP variant source sets ("release", "debug") duplicate the
-    // source roots already owned by "androidJvm", which fails Dokka's pre-generation
-    // validity check ("Every Kotlin source file should belong to only one source set",
-    // https://github.com/Kotlin/dokka/issues/3701). Keep a single owner per root.
+    // Known Dokka+AGP issue (https://github.com/Kotlin/dokka/issues/3701): on Android
+    // modules the "androidJvm" source set and the variant-named ones ("debug"/"release")
+    // report the same source roots, which fails Dokka's pre-generation check. Suppress
+    // the variant duplicates so each module documents a single source set.
     dokkaSourceSets.configureEach {
-        if (name != "main" && name != "androidJvm") {
-            suppress.set(true)
+        if (name == "debug" || name == "release") {
+            suppress = true
         }
     }
 }

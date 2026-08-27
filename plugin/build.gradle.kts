@@ -12,6 +12,7 @@ apply {
 
 val releaseConfig: Map<String, Any> by project
 val sonatype: Map<String, Any> by project
+val pomConfig: Map<String, Any> by project
 
 // Drive the publication coordinates (incl. the auto-generated plugin marker) from a
 // single source of truth. Without these, the marker publishes at "unspecified" and its
@@ -22,6 +23,16 @@ version = releaseConfig["version"] as String
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Stamp the plugin version into arkive.properties so runtime code (injected dependency
+// coordinates, task cache keys) never hardcodes it. See ArkiveVersion.kt.
+tasks.processResources {
+    val arkiveVersion = version.toString()
+    inputs.property("arkiveVersion", arkiveVersion)
+    filesMatching("arkive.properties") {
+        expand("arkiveVersion" to arkiveVersion)
+    }
 }
 
 gradlePlugin {
@@ -39,35 +50,37 @@ gradlePlugin {
 extra["mavenPublishProperties"] = mapOf(
     "group" to releaseConfig["group"],
     "version" to releaseConfig["version"],
-    // TODO - <YOUR-LIBRARY-ARTIFACTID>
     "artifactId" to "arkive-plugin",
     "repository" to mapOf(
         "url" to sonatype["url"],
         "username" to sonatype["username"],
         "password" to sonatype["password"]
     ),
-    // TODO - <YOUR-AWESOME-LIBRARY-NAME>
-    "name" to "ExampleLib LibModule1",
-    // TODO - <YOUR-AWESOME-LIBRARY-DESCRIPTION>
-    "description" to "ExampleLib LibModule1 module",
-    // TODO - https://github.com/infinum/<YOUR-AWESOME-LIBRARY>
-    "url" to "https://github.com/infinum/android-libname",
-    "scm" to mapOf(
-        // TODO - https://github.com/infinum/<YOUR-AWESOME-LIBRARY>.git
-        "connection" to "https://github.com/infinum/android-libname.git",
-        // TODO - https://github.com/infinum/<YOUR-AWESOME-LIBRARY>
-        "url" to "https://github.com/infinum/android-libname"
-    )
+    "name" to "Arkive Plugin",
+    "description" to "Gradle plugin that generates a browsable web showcase from Compose preview snapshots",
+    "url" to pomConfig["url"],
+    "scm" to pomConfig["scm"]
 )
 
 dependencies {
-//    implementation(project(":metadata"))
-    implementation(libs.arkive.metadata)
+    // Project dependency (not the published artifact) so a fresh checkout can build
+    // without any prior publish; the POM still maps it to com.infinum.arkive:metadata.
+    implementation(project(":metadata"))
     // implementation (runtime scope) keeps Paparazzi off the consumer's compile classpath.
     // The plugin applies it by id at runtime (see ArkivePlugin.addPlugins), and the DSL
     // plugin classloader includes runtime deps, so it resolves without being `api`.
     implementation(libs.paparazzi.plugin)
     compileOnly(libs.gradle.android)
 
+    testImplementation(libs.junit)
 }
 
+// Publish with a Kotlin 2.0 floor so consumers on older Kotlin versions can read the
+// metadata; coreLibrariesVersion keeps the kotlin-stdlib dependency at 2.0.x in the POM.
+kotlin {
+    compilerOptions {
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+    coreLibrariesVersion = "2.0.21"
+}

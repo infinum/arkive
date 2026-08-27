@@ -8,11 +8,7 @@ interface ShowcaseWebGenerator {
 }
 
 private const val INDEX_HTML_FILE = "index.html"
-private const val INDEX_JS_FILE = "index.js"
-private const val MODULE_HTML_FILE = "module.html"
-private const val MODULE_JS_FILE = "module.js"
-private const val COMPONENT_HTML_FILE = "component.html"
-private const val COMPONENT_JS_FILE = "component.js"
+private const val APP_JS_FILE = "app.js"
 private const val STYLES_FILE = "styles.css"
 
 private const val RESOURCES_DIR = "web"
@@ -26,11 +22,7 @@ class ShowcaseWebGeneratorImpl : ShowcaseWebGenerator {
 
         listOf(
             INDEX_HTML_FILE,
-            INDEX_JS_FILE,
-            MODULE_HTML_FILE,
-            MODULE_JS_FILE,
-            COMPONENT_HTML_FILE,
-            COMPONENT_JS_FILE,
+            APP_JS_FILE,
             STYLES_FILE,
         ).forEach {
             writeResource(it, outputDir)
@@ -38,7 +30,9 @@ class ShowcaseWebGeneratorImpl : ShowcaseWebGenerator {
     }
 
     private fun getResourceStream(resourcePath: String): InputStream =
-        classLoader.getResourceAsStream("$RESOURCES_DIR${File.separatorChar}$resourcePath")
+        // Classpath resource names always use '/', regardless of OS — File.separatorChar
+        // here would break resource lookup on Windows.
+        classLoader.getResourceAsStream("$RESOURCES_DIR/$resourcePath")
             ?: error("Can't locate resource: $resourcePath")
 
     private fun writeResource(resource: String, outputDir: File) {
