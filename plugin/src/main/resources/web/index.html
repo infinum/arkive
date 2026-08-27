@@ -10,6 +10,9 @@
 <body>
   <div class="app">
     <header class="topbar">
+      <button type="button" class="menubtn" data-action="toggle-sidebar" aria-label="Toggle navigation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <div class="brand">
         <svg width="26" height="26" viewBox="0 0 80 80" fill="none" aria-hidden="true">
           <rect x="9.40582" y="49.5771" width="59.0877" height="21.2351" rx="10.6175" transform="rotate(-13.2756 9.40582 49.5771)" stroke="#D8262C" stroke-width="4"/>
@@ -42,6 +45,7 @@
     </header>
 
     <div class="body">
+      <div class="sidebar-backdrop" data-action="close-sidebar"></div>
       <nav class="sidebar">
         <div class="sidebar-filter">
           <input type="text" id="tree-filter" placeholder="Filter…" autocomplete="off">
