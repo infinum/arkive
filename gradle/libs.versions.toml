@@ -1,16 +1,16 @@
 [versions]
 detekt = "1.23.8"
 dokka = "2.2.0"
-kotlin = "2.0.21"
-kotlinxSerializationJson = "1.7.3"
-ksp = "2.0.21-1.0.28"
+kotlin = "2.3.21"
+kotlinxSerializationJson = "1.8.1"
+ksp = "2.3.11"
 koltinpoet = "2.0.0"
-compose-bom = "2024.09.03"
+compose-bom = "2025.06.01"
 paparazzi = "2.0.0-alpha05"
 roborazzi = "1.72.0"
-jetbrainsKotlinJvm = "2.0.21"
-agp = "8.7.3"
-agpVersion = "8.7.3"
+jetbrainsKotlinJvm = "2.3.21"
+agp = "9.3.1"
+agpVersion = "9.3.1"
 junit = "4.13.2"
 
 [plugins]

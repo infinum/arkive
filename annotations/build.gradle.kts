@@ -50,14 +50,15 @@ kotlin {
     linuxArm64()
     mingwX64()
 
-    // Publish with a Kotlin 2.0 floor so consumers on older Kotlin versions can read the
-    // metadata; coreLibrariesVersion keeps the kotlin-stdlib dependency at 2.0.x in the
-    // POM. The library build's own Kotlin IS the floor (see the root build docs), so
-    // compiler, language version, and stdlib all agree — including the emitted klib ABI,
-    // which is what makes @ArkiveComposable usable from commonMain on any 2.0+ consumer.
+    // Publish with a Kotlin 2.2 language floor so JVM consumers on Kotlin 2.2 (the
+    // lowest AGP 9 allows) can read the metadata. No coreLibrariesVersion here: the
+    // js/wasm/native stdlib ABI must match the COMPILER version, so the klib targets
+    // ship with the build's own stdlib. The klib floor is likewise the compiler
+    // version (see the root build docs) — @ArkiveComposable in commonMain needs a
+    // consumer on Kotlin >= the version this build compiles with;
+    // wireAnnotationsWhereConsumable falls back to androidMain below that.
     compilerOptions {
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
     }
-    coreLibrariesVersion = "2.0.21"
 }
