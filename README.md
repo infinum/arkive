@@ -13,6 +13,18 @@ https://github.com/user-attachments/assets/8134c6d3-88d0-4c5e-b7b4-badd36761f26
 **Live demo:** the sample app's catalogue is deployed to
 [GitHub Pages](https://infinum.github.io/arkive/) on every merge to `main`.
 
+## Requirements
+
+- **Kotlin 2.0.21 or newer** — the published modules are deliberately built with the
+  oldest supported toolchain, so any Kotlin 2.0.21+ consumer can read them.
+- **Gradle JDK 17 or newer** with the Roborazzi engine; the Paparazzi engine needs a
+  **JDK 21+** Gradle daemon (see [Engines](#engines)).
+- **KSP** applied to every module using Arkive.
+- Android modules on AGP 8+. Kotlin Multiplatform works on both layouts: the classic
+  `com.android.library` + `androidTarget()` setup (AGP 8+) and
+  `com.android.kotlin.multiplatform.library` (AGP 9+) — see
+  [Kotlin Multiplatform](#kotlin-multiplatform--compose-multiplatform).
+
 ## Install with AI skills (recommended)
 
 The fastest way to adopt Arkive is to let your coding agent do it. This repo ships agent
@@ -92,9 +104,10 @@ plugins {
 }
 ```
 
-Requirements: Kotlin 2.0 or newer, Gradle JDK 17 or newer, and an `arkive { engine(…) }`
-block per module — choosing a snapshot engine is mandatory (see [Engines](#engines)).
-Don't apply Roborazzi or Paparazzi yourself — Arkive brings its own.
+An `arkive { engine(…) }` block per module is mandatory — the build fails until you
+choose a snapshot engine (see [Engines](#engines)). Don't apply Roborazzi or Paparazzi
+yourself — Arkive brings its own. Toolchain prerequisites are listed under
+[Requirements](#requirements).
 
 ### Kotlin Multiplatform / Compose Multiplatform
 
@@ -332,3 +345,48 @@ Consuming a locally published build from another project additionally needs
 `mavenLocal()` in the consumer's `settings.gradle(.kts)` — in **both**
 `pluginManagement.repositories` (plugin marker + jar) and
 `dependencyResolutionManagement.repositories` (the runtime artifacts the plugin injects).
+
+## Contributing
+
+We believe that the community can help us improve and build a better product.
+Please refer to our [contributing guide](CONTRIBUTING.md) to learn about the types of
+contributions we accept and the process for submitting them.
+
+To ensure that our community remains respectful and professional, we defined a
+[code of conduct](CODE_OF_CONDUCT.md) that we expect all contributors to follow.
+
+For reporting security vulnerabilities, please refer to our
+[security policy](SECURITY.md).
+
+We appreciate your interest and look forward to your contributions.
+
+## License
+
+```text
+Copyright 2026 Infinum
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+## Credits
+
+Maintained and sponsored by [Infinum](https://infinum.com).
+
+<div align="center">
+    <a href='https://infinum.com'>
+    <picture>
+        <source srcset="https://assets.infinum.com/brand/logo/static/white.svg" media="(prefers-color-scheme: dark)">
+        <img src="https://assets.infinum.com/brand/logo/static/default.svg">
+    </picture>
+    </a>
+</div>
