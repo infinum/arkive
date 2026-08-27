@@ -13,16 +13,17 @@ engines" below. Published to Maven Central under `com.infinum.arkive`.
 
 The repo is **two Gradle builds**, deliberately:
 
-- **Root build** — the published modules. Pinned to the **oldest supported toolchain**:
-  Gradle 8.10, Kotlin 2.0.21, AGP 8.7, and matching old dep pins (ksp-api, kotlinpoet,
-  serialization, 2024 Compose BOM). The Kotlin version here IS the public
-  `@ArkiveComposable`-in-commonMain floor: klibs are not forward-compatible, so the
-  annotations klibs are only readable by consumers on Kotlin ≥ the version that built
-  them. **Do not bump this toolchain casually — raising it is a breaking change for
-  KMP consumers.** (JVM artifacts are protected separately by the language floor.)
+- **Root build** — the published modules. Pinned to the **oldest supported toolchain of
+  the AGP 9 era**: Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1 (compileOnly — the consumer
+  AGP floor). The Kotlin version here IS the public `@ArkiveComposable`-in-commonMain
+  floor: klibs are not forward-compatible, so the annotations klibs are only readable
+  by consumers on Kotlin ≥ the version that built them (2.3.21). **Do not bump this
+  toolchain casually — raising it is a breaking change for KMP consumers.** (JVM
+  artifacts are protected separately by the 2.2 language floor; AGP 9 itself requires
+  KGP 2.2.10+, so no reachable consumer is below it.)
 - **`samples/`** — a standalone build with its own wrapper on the **newest toolchain**
-  (Gradle 9.x, AGP 9, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
-  samples simulate real consumers and prove the old-library/new-consumer direction.
+  (Gradle 9.6, AGP 9.2, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
+  samples simulate real consumers and prove the older-library/newer-consumer direction.
 
 The samples consume the **published** plugin from mavenLocal, so bootstrap first:
 
@@ -92,19 +93,21 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
 
 ## Compatibility constraints (do not remove)
 
-- The root build's toolchain (Gradle 8.10, Kotlin 2.0.21, AGP 8.7 + old dep pins) is the
-  compatibility mechanism, not staleness — see "Two builds, two toolchains". The
-  **Kotlin 2.0 language/api floor + `coreLibrariesVersion = 2.0.21`** blocks in each
-  module's build file keep the JVM metadata story explicit; with the compiler itself at
-  2.0.21 they also match the emitted klib ABI. Removing any of it silently breaks
-  consumers.
+- The root build's toolchain (Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1) is the
+  compatibility mechanism — see "Two builds, two toolchains". The **Kotlin 2.2
+  language/api floor** blocks in each module's build file keep the JVM metadata story
+  explicit (`coreLibrariesVersion = 2.2.21` on the JVM-only modules; :annotations must
+  NOT set it — the js/wasm/native stdlib ABI has to match the compiler). The klib floor
+  is the compiler version itself (2.3.21). Removing any of it silently breaks consumers.
+  AGP 8 consumers and the classic KMP layout (`kotlin.multiplatform` +
+  `com.android.library`, which AGP 9 rejects outright) are served by Arkive 0.0.3.
 - Both engine plugins (Paparazzi AND Roborazzi) must stay `runtimeOnly` in `:plugin` and
-  OFF the root buildscript classpath — they are built with much newer Kotlin/android-tools
-  than this build compiles with (compile-classpath contamination breaks AGP's version
-  check and Kotlin metadata reading). Paparazzi's dependency additionally carries a
-  `TargetJvmVersion=21` attribute override: this build targets 17 and strict variant
-  matching would otherwise refuse to resolve Paparazzi's Java-21 metadata. The jar is
-  harmless on a consumer's 17 daemon as long as its classes never load (engine=roborazzi).
+  OFF the root buildscript classpath — nothing in this build applies them, and their
+  transitive android-tools jars would fight the root build's AGP on the classpath.
+  Paparazzi's dependency additionally carries a `TargetJvmVersion=21` attribute
+  override: this build targets 17 and strict variant matching would otherwise refuse to
+  resolve Paparazzi's Java-21 metadata. The jar is harmless on a consumer's 17 daemon as
+  long as its classes never load (engine=roborazzi).
 - **All modules target JDK 17 bytecode** (explicit `JavaVersion.VERSION_17` +
   `jvmTarget = JVM_17`; the annotations jvm target pins it via `compilations.all`).
   Consumers commonly pin their Gradle JDK to 17 (Studio sync runs the plugin in that
@@ -112,8 +115,8 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
   follows whatever JDK runs the deploy.
 - `:annotations` publishes a **full KMP target matrix** (jvm serves plain-Android
   consumers; the rest exist so a `commonMain` dependency resolves everywhere). Apple
-  targets need a macOS host (KGP 2.0 has no klib cross-compilation) — deploys run from
-  macOS; the Linux CI bootstrap skips them, and the samples only need the jvm artifact.
+  targets are built on a macOS host — deploys run from macOS; the Linux CI bootstrap
+  skips them, and the samples only need the jvm artifact.
   Dokka javadoc cannot render KMP modules, so `maven-publish.gradle` attaches empty
   javadoc jars to KMP publications (kotlinx convention) — don't re-apply `dokka.gradle`
   there.
@@ -266,12 +269,15 @@ Everything flavor-specific lives behind `ConsumerAdapter`
   `*ProcessorClasspath` configs, whose extendsFrom edge doesn't fire the parent's hooks.
   Requires KSP 2.3.6+ (google/ksp#2476).
 - **LegacyKmpConsumerAdapter** (`kotlin.multiplatform` + `com.android.library`/
-  `.application` with `androidTarget()`, any AGP 8+): per-build-variant like plain
+  `.application` with `androidTarget()`): per-build-variant like plain
   android but target-prefixed — `kspAndroidDebug`/`kspAndroidTestDebug`, KSP output
   `build/generated/ksp/android/android<Variant>/resources`, goldens
   `src/androidUnitTest/snapshots`, test task `test<Variant>UnitTest`,
-  `multiModuleVariant` defaults to `debug`. Verified on the EdgePOS-era toolchain
-  (Gradle 8.13, AGP 8.11, Kotlin 2.2.0, KSP 2.2.0-2.0.2, CMP 1.9.3). Selection: the
+  `multiModuleVariant` defaults to `debug`. Was verified on the EdgePOS-era toolchain
+  (Gradle 8.13, AGP 8.11, Kotlin 2.2.0, KSP 2.2.0-2.0.2, CMP 1.9.3) — but AGP 9
+  rejects this layout outright, and 0.0.4+ requires AGP 9, so the adapter is
+  effectively dormant (kept for reference; classic-layout consumers use 0.0.3).
+  Selection: the
   android plugin id alone is ambiguous, so `select` arms both Kotlin hooks
   (`kotlin-android` → plain, `kotlin.multiplatform` → legacy) with an afterEvaluate
   fallback to plain (built-in Kotlin / java-only).

@@ -234,6 +234,7 @@
     }
     state.route = route;
     state.palette = false;
+    document.body.classList.remove('sidebar-open');
     renderPalette();
     render();
   }
@@ -675,7 +676,14 @@
       '</div>' +
       '</div>';
 
-    $('.palette', root).addEventListener('click', (e) => e.stopPropagation());
+    // Clicks inside the palette must not bubble to the overlay's close action, but
+    // stopping propagation also hides them from the delegated document handler — so
+    // result picks are resolved here, before the click dies.
+    $('.palette', root).addEventListener('click', (e) => {
+      const pick = e.target.closest('[data-pick]');
+      if (pick) navTo({ kind: 'detail', id: pick.dataset.pick });
+      e.stopPropagation();
+    });
     const input = $('#palette-input');
     input.value = state.pq;
     input.addEventListener('input', () => {
@@ -811,6 +819,8 @@
     switch (target.dataset.action) {
       case 'open-palette': openPalette(); break;
       case 'close-palette': closePalette(); break;
+      case 'toggle-sidebar': document.body.classList.toggle('sidebar-open'); break;
+      case 'close-sidebar': document.body.classList.remove('sidebar-open'); break;
       case 'copy': copyPreviewFn(); break;
       case 'toggle-bezel':
         state.bezel = !state.bezel;

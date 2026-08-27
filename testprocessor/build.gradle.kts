@@ -20,13 +20,14 @@ dependencies {
     implementation(libs.kotlinpoet.ksp)
 }
 
-// Publish with a Kotlin 2.0 floor so consumers on older Kotlin versions can read the
-// metadata; coreLibrariesVersion keeps the kotlin-stdlib dependency at 2.0.x in the POM.
+// Publish with a Kotlin 2.2 floor: AGP 9 (our consumer floor) itself requires KGP
+// 2.2.10+, so 2.2 is the lowest Kotlin any consumer can be on; coreLibrariesVersion
+// keeps the kotlin-stdlib dependency at 2.2.x in the POM.
 kotlin {
     compilerOptions {
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
-    coreLibrariesVersion = "2.0.21"
+    coreLibrariesVersion = "2.2.21"
 }

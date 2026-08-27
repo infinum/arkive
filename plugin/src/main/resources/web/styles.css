@@ -34,13 +34,19 @@ button { padding: 0; }
 ::-webkit-scrollbar-thumb:hover { background: #B4B4B4; background-clip: content-box; border: 3px solid transparent; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-.app { height: 100vh; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+.app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
 
 /* ---------------------------------------------------------------- header */
 .topbar {
   height: 52px; flex: none; display: flex; align-items: center; gap: 16px;
   padding: 0 16px; border-bottom: 1px solid var(--inf-ink-200); background: #fff;
 }
+.menubtn {
+  display: none; align-items: center; justify-content: center; width: 34px; height: 34px;
+  flex: none; background: transparent; border: none; border-radius: 6px;
+  cursor: pointer; color: var(--inf-ink-700);
+}
+.menubtn:hover { background: var(--inf-ink-100); }
 .brand { display: flex; align-items: center; gap: 10px; width: 256px; flex: none; }
 .brand svg { flex: none; display: block; }
 .brand-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -71,6 +77,7 @@ kbd {
 .topbar-link:hover { color: var(--inf-red); }
 
 .body { flex: 1; display: flex; min-height: 0; }
+.sidebar-backdrop { display: none; }
 
 /* --------------------------------------------------------------- sidebar */
 .sidebar {
@@ -452,3 +459,59 @@ kbd {
 /* ----------------------------------------------------------------- error */
 .load-error { padding: 48px; font-size: 13px; line-height: 1.6; color: var(--inf-ink-500); max-width: 560px; }
 .load-error code { font-family: var(--font-mono); font-size: 12px; background: var(--inf-ink-100); padding: 2px 5px; border-radius: 4px; }
+
+/* ------------------------------------------------------------ responsive */
+/* Tablets: shrink the fixed columns before the drawer kicks in. */
+@media (max-width: 1080px) {
+  .brand { width: auto; }
+  .panel { width: 256px; }
+}
+
+/* Phones and small tablets: the sidebar becomes an off-canvas drawer behind the
+   topbar menu button, the detail view stacks vertically, and the row view keeps
+   only thumb / name / variants. */
+@media (max-width: 840px) {
+  .topbar { gap: 10px; padding: 0 12px; }
+  .menubtn { display: flex; }
+  .brand-project { display: none; }
+  .topbar-right { display: none; }
+  .searchbtn { max-width: none; }
+  #search-kbd { display: none; }
+
+  .sidebar {
+    position: fixed; top: 52px; bottom: 0; left: 0; z-index: 900;
+    width: min(320px, 85vw);
+    transform: translateX(-102%); transition: transform 0.18s ease;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  }
+  body.sidebar-open .sidebar { transform: none; }
+  body.sidebar-open .sidebar-backdrop {
+    display: block; position: fixed; top: 52px; right: 0; bottom: 0; left: 0;
+    z-index: 850; background: rgba(10, 10, 10, 0.34);
+  }
+
+  .ov-head { padding: 16px 16px 10px; }
+  .ov-title { font-size: 22px; }
+  .cards { padding: 16px 16px 40px; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 12px; }
+
+  .rows { padding: 8px 8px 40px; }
+  .rows-head, .row { grid-template-columns: 56px 1fr 60px; gap: 10px; }
+  .rows-head span:nth-child(3), .rows-head span:nth-child(4), .rows-head span:nth-child(5),
+  .row .group, .row .pkg, .row .tags { display: none; }
+
+  .detail-head { padding: 12px 16px; }
+  .detail-title { font-size: 20px; }
+  .detail-head-row { flex-wrap: wrap; align-items: flex-start; }
+  .detail-actions { width: 100%; flex-wrap: wrap; }
+
+  .detail-body { display: block; overflow-y: auto; }
+  .canvas { height: 52vh; height: 52dvh; min-height: 300px; }
+  .panel { width: auto; border-left: none; border-top: 1px solid var(--inf-ink-200); overflow-y: visible; }
+
+  .canvas-compare { padding: 20px; gap: 18px; }
+  .compare-shot, .compare-shot img { max-width: min(340px, 78vw); }
+
+  .palette-overlay { padding-top: 5vh; }
+  .palette { width: 94vw; max-height: 80vh; max-height: 80dvh; }
+  .palette-foot { display: none; }
+}
