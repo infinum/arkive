@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
+
 plugins {
     id("java-gradle-plugin")
     id("kotlin")
@@ -10,28 +12,30 @@ apply {
     from("$rootDir/detekt.gradle")
 }
 
-val releaseConfig: Map<String, Any> by project
-val sonatype: Map<String, Any> by project
-val pomConfig: Map<String, Any> by project
+// group/version come from maven-publish.gradle (GROUP/VERSION_NAME properties);
+// processResources below stamps ArkiveVersion from project.version.
 
-// Drive the publication coordinates (incl. the auto-generated plugin marker) from a
-// single source of truth. Without these, the marker publishes at "unspecified" and its
-// dependency resolves to the raw Gradle defaults ("Arkive:plugin:unspecified").
-group = releaseConfig["group"] as String
-version = releaseConfig["version"] as String
-
+// JDK 17 bytecode floor: consumers commonly pin their Gradle JDK to 17, and the plugin
+// classes load in that daemon. Kotlin's jvmTarget must be pinned too (see below) or it
+// silently follows whatever JDK runs the build.
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
-// Stamp the plugin version into arkive.properties so runtime code (injected dependency
-// coordinates, task cache keys) never hardcodes it. See ArkiveVersion.kt.
+// Stamp the plugin version and the Kotlin it was built with into arkive.properties so
+// runtime code (injected dependency coordinates, klib-compatibility checks, task cache
+// keys) never hardcodes them. See ArkiveVersion.kt.
 tasks.processResources {
     val arkiveVersion = version.toString()
+    val arkiveKotlinVersion = project.getKotlinPluginVersion()
     inputs.property("arkiveVersion", arkiveVersion)
+    inputs.property("arkiveKotlinVersion", arkiveKotlinVersion)
     filesMatching("arkive.properties") {
-        expand("arkiveVersion" to arkiveVersion)
+        expand(
+            "arkiveVersion" to arkiveVersion,
+            "arkiveKotlinVersion" to arkiveKotlinVersion,
+        )
     }
 }
 
@@ -46,30 +50,24 @@ gradlePlugin {
     }
 }
 
-// specify per module - mostly needed due to different artifactIds, names, descriptions
-extra["mavenPublishProperties"] = mapOf(
-    "group" to releaseConfig["group"],
-    "version" to releaseConfig["version"],
-    "artifactId" to "arkive-plugin",
-    "repository" to mapOf(
-        "url" to sonatype["url"],
-        "username" to sonatype["username"],
-        "password" to sonatype["password"]
-    ),
-    "name" to "Arkive Plugin",
-    "description" to "Gradle plugin that generates a browsable web showcase from Compose preview snapshots",
-    "url" to pomConfig["url"],
-    "scm" to pomConfig["scm"]
-)
-
 dependencies {
     // Project dependency (not the published artifact) so a fresh checkout can build
     // without any prior publish; the POM still maps it to com.infinum.arkive:metadata.
     implementation(project(":metadata"))
-    // implementation (runtime scope) keeps Paparazzi off the consumer's compile classpath.
-    // The plugin applies it by id at runtime (see ArkivePlugin.addPlugins), and the DSL
-    // plugin classloader includes runtime deps, so it resolves without being `api`.
-    implementation(libs.paparazzi.plugin)
+    // runtimeOnly keeps both engines' plugins off BOTH compile classpaths: the consumer's
+    // (the engine applies its plugin by id at runtime, see SnapshotEngineAdapter.apply;
+    // the DSL plugin classloader includes runtime deps) and our own — they are built with
+    // much newer Kotlin than this deliberately-old library build compiles with.
+    // Paparazzi additionally needs its Java-21 variant metadata overridden: this module
+    // targets 17, and strict variant matching would otherwise refuse to resolve it. The
+    // jar only ever LOADS when a consumer picks engine=paparazzi (which requires JDK 21);
+    // an unloaded classpath entry is harmless on a 17 daemon.
+    runtimeOnly(libs.paparazzi.plugin) {
+        attributes {
+            attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
+        }
+    }
+    runtimeOnly(libs.roborazzi.plugin)
     compileOnly(libs.gradle.android)
 
     testImplementation(libs.junit)
@@ -81,6 +79,7 @@ kotlin {
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
     coreLibrariesVersion = "2.0.21"
 }

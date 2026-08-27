@@ -3,8 +3,6 @@ plugins {
 }
 
 buildscript {
-    apply(from = "maven.gradle")
-
     repositories {
         google()
         mavenLocal()
@@ -16,10 +14,18 @@ buildscript {
         classpath(libs.gradle.android)
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
-        classpath(libs.paparazzi.plugin)
-        // Do NOT add the arkive plugin to the buildscript classpath — it conflicts with the
-        // versioned `alias(libs.plugins.arkive)` request in :sample (resolved via pluginManagement).
+        classpath(libs.vanniktech.publish.plugin)
+        // Do NOT add paparazzi here: nothing in this build applies it (it is :plugin's
+        // implementation dependency only), and its newer com.android.tools jars would
+        // outrank this build's deliberately old AGP on the classpath and break it.
     }
+}
+
+allprojects {
+    // Central Portal credentials for the vanniktech publish plugin, mapped from the
+    // env var names this repo has always deployed with (portal user tokens).
+    System.getenv("SONATYPE_USERNAME")?.let { extra["mavenCentralUsername"] = it }
+    System.getenv("SONATYPE_PASS")?.let { extra["mavenCentralPassword"] = it }
 }
 
 allprojects {

@@ -31,6 +31,9 @@ before writing any annotation.
 
 ## Red flags
 
+- A preview that renders more than one instance of the component — a `Row`/`Column` of
+  sizes, styles, or an enabled/disabled pair. One preview = one instance; variation goes
+  through a `@PreviewParameter` provider (one value per catalogue variant).
 - Inventing a group without listing the existing ones first.
 - `"Buttons"` / `"Button"` / `"buttons"` coexisting — casing/pluralization drift.
 - Encoding variant info (font, density, RTL) in tags — the variant system owns that.

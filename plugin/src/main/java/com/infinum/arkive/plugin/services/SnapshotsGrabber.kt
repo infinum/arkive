@@ -3,7 +3,7 @@ package com.infinum.arkive.plugin.services
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import org.gradle.api.Project
+import org.gradle.api.logging.Logger
 
 /** A snapshot copied into the showcase output, with its origin in the golden directory. */
 data class GrabbedSnapshot(
@@ -15,19 +15,19 @@ interface SnapshotsGrabber {
     fun grabSnapshots(outputDir: File): List<GrabbedSnapshot>
 }
 
-private val SNAPSHOTS_PATH =
-    "src${File.separator}test${File.separator}snapshots"
-
 // Only snapshots recorded by the generated Arkive test class are grabbed (and later
 // subject to retention cleanup) — a consumer's own Paparazzi goldens are never touched.
 private const val ARKIVE_SNAPSHOT_PREFIX = "com.infinum.arkive_"
 
+/**
+ * Copies Arkive-recorded goldens out of Paparazzi's snapshot directory. Where that
+ * directory lives differs per project flavor, so the path (relative to the module dir)
+ * comes from the ConsumerAdapter through the task.
+ */
 class SnapshotsGrabberImpl(
-    private val project: Project,
+    private val snapshotsDir: File,
+    private val logger: Logger,
 ) : SnapshotsGrabber {
-
-    private val snapshotsDir: File
-        get() = project.projectDir.resolve(SNAPSHOTS_PATH)
 
     override fun grabSnapshots(outputDir: File): List<GrabbedSnapshot> {
         val originalSnapshots = snapshotsDir
@@ -41,7 +41,7 @@ class SnapshotsGrabberImpl(
 
         outputDir.mkdirs()
 
-        project.logger.warn("Copying ${originalSnapshots.size} snapshot(s) to ${outputDir.absolutePath}")
+        logger.warn("Copying ${originalSnapshots.size} snapshot(s) to ${outputDir.absolutePath}")
 
         // The walk is recursive but the copy is flat (the web template resolves images by
         // basename) — two same-named files in different subdirectories would silently
@@ -49,7 +49,7 @@ class SnapshotsGrabberImpl(
         val seenNames = mutableSetOf<String>()
         return originalSnapshots.map { snapshot ->
             if (!seenNames.add(snapshot.name)) {
-                project.logger.warn(
+                logger.warn(
                     "Arkive: duplicate snapshot filename '${snapshot.name}' — " +
                         "'${snapshot.absolutePath}' overwrites a previously grabbed copy",
                 )

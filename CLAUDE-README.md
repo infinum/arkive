@@ -1,3 +1,6 @@
+> **Unmaintained snapshot** — this document described version 0.0.1 and has drifted.
+> `CLAUDE.md` is the maintained, auto-loaded reference; trust it over anything here.
+
 # Arkive — Project Reference (for AI coding sessions)
 
 > **Purpose of this file.** A complete, self-contained analysis of the Arkive codebase to be

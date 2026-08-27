@@ -1,0 +1,42 @@
+[versions]
+kotlin = "2.4.0"
+agp = "9.2.1"
+ksp = "2.3.11"
+composeMultiplatform = "1.11.1"
+arkive = "0.0.3"
+compose-bom = "2026.06.01"
+appcompat = "1.7.1"
+cardview = "1.0.0"
+constraintlayout = "2.2.1"
+detekt = "1.23.8"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+arkive = { id = "com.infinum.arkive", version.ref = "arkive" }
+detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+[libraries]
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+# Pinned: material-icons is no longer shipped with the Compose BOM; 1.7.8 is its final release.
+compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version = "1.7.8" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+
+[bundles]
+compose = [
+    "compose-material3",
+    "compose-ui",
+    "compose-ui-tooling-preview",
+]

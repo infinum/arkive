@@ -80,4 +80,9 @@ publish.properties
 # general
 **/.DS_Store
 
-sample/src/test/snapshots/
+samples/sample/src/test/snapshots/
+
+# Arkive KMP sample goldens (consumed by the showcase, same as sample/)
+samples/sampleCmp/src/androidHostTest/snapshots/
+
+.idea/markdown.xml
