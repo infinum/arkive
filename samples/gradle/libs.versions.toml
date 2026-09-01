@@ -1,13 +1,13 @@
 [versions]
-kotlin = "2.4.0"
-agp = "9.2.1"
+kotlin = "2.4.10"
+agp = "9.3.2"
 ksp = "2.3.11"
-composeMultiplatform = "1.11.1"
+composeMultiplatform = "1.12.0"
 arkive = "0.0.4"
-compose-bom = "2026.06.01"
-appcompat = "1.7.1"
+compose-bom = "2026.08.00"
+appcompat = "1.8.0"
 cardview = "1.0.0"
-constraintlayout = "2.2.1"
+constraintlayout = "2.2.2"
 detekt = "1.23.8"
 
 [plugins]
