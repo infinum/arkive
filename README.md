@@ -283,6 +283,25 @@ One gotcha worth knowing: a module with an **empty test source set** records not
 skips compilations with no sources). Add a tiny `internal object ArkivePlaceholder` in
 `src/test/java` — `/arkive:setup` does this for you.
 
+### UI trees
+
+Next to every snapshot Arkive writes a UI tree — `uitree/<shotId>.json` beside `images/`
+in the showcase. It holds the layout hierarchy, bounds in dp, semantics (text, content
+descriptions, roles, actions, state), text style (size, weight, line height, color, and
+whether it overflowed), and the composable that emitted each node with its `File.kt:line`.
+The showcase's detail view has an **Inspect** toggle (`I`) that outlines nodes on the
+snapshot, and agents read the files directly (the `find` and `design-loop` skills use them).
+
+Trees are captured by Arkive's own runtime, inside the composition, on the frame the engine
+draws — identically under Roborazzi and Paparazzi. They are informational only: never
+goldens, never verified, untouched by `snapshotRetention`. Turn them off per module:
+
+```kotlin
+arkive {
+    uiTree.set(false)
+}
+```
+
 ## Snapshot testing
 
 The catalogue always receives every recorded snapshot. `snapshotRetention` controls what
