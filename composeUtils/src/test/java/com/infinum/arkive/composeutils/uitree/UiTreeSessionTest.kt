@@ -61,4 +61,27 @@ class UiTreeSessionTest {
 
         assertTrue(File(directory, "shot.json").exists())
     }
+
+    @Test
+    fun finishWithoutAnyDrawLogsASkip() {
+        val logs = mutableListOf<String>()
+        val session = UiTreeSession("shot", folder.root, { tree("shot") }, logs::add)
+
+        session.start()
+        session.finish()
+
+        assertEquals(listOf("Arkive: ui tree skipped for shot: nothing was drawn in the captured window"), logs)
+    }
+
+    @Test
+    fun finishAfterADrawLogsNothing() {
+        val logs = mutableListOf<String>()
+        val session = UiTreeSession("shot", folder.root, { tree("shot") }, logs::add)
+
+        session.start()
+        session.onDrawn()
+        session.finish()
+
+        assertEquals(emptyList<String>(), logs)
+    }
 }

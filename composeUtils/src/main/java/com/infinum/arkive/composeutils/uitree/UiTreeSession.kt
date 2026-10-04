@@ -19,9 +19,22 @@ internal class UiTreeSession(
     private val file = File(directory, "$shotId.json")
     private var lastWritten: String? = null
     private var reportedFailure = false
+    private var walkAttempted = false
+    private var reportedNothingDrawn = false
 
     fun start() {
         file.delete()
+    }
+
+    /**
+     * Ends the shot. A capture root that never drew (dialog-only previews draw in another
+     * window) never walked, so say why there is no tree.
+     */
+    fun finish() {
+        if (!walkAttempted && !reportedNothingDrawn) {
+            reportedNothingDrawn = true
+            log("Arkive: ui tree skipped for $shotId: nothing was drawn in the captured window")
+        }
     }
 
     fun markDirty() {
@@ -30,6 +43,7 @@ internal class UiTreeSession(
 
     fun onDrawn() {
         if (!dirty.getAndSet(false)) return
+        walkAttempted = true
         try {
             val json = UiTreeJson.write(walk())
             if (json != lastWritten) {
