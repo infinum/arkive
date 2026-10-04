@@ -460,6 +460,42 @@ kbd {
 .load-error { padding: 48px; font-size: 13px; line-height: 1.6; color: var(--inf-ink-500); max-width: 560px; }
 .load-error code { font-family: var(--font-mono); font-size: 12px; background: var(--inf-ink-100); padding: 2px 5px; border-radius: 4px; }
 
+/* ------------------------------------------------------- ui tree inspector */
+.zoombar .text.is-on { background: var(--inf-ink-900); color: #fff; }
+.zoombar button:disabled { opacity: 0.4; cursor: default; background: transparent; }
+.uitree-layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none; }
+.uitree-box { position: absolute; display: none; }
+.uitree-box.is-hover { box-shadow: 0 0 0 calc(1px * var(--inv, 1)) var(--inf-ice-deep); background: rgba(74, 90, 118, 0.10); }
+.uitree-box.is-sel { box-shadow: 0 0 0 calc(2px * var(--inv, 1)) var(--inf-red); }
+.uitree-label {
+  position: absolute; display: none; white-space: nowrap;
+  transform-origin: 0 0; transform: scale(var(--inv, 1)) translateY(-100%);
+  padding: 3px 6px; border-radius: 4px; background: var(--inf-ink-900); color: #fff;
+  font: 500 10.5px/1 var(--font-mono);
+}
+.uitree-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-bottom: 8px; }
+.uitree-crumbs button {
+  border: none; background: transparent; cursor: pointer; padding: 2px 4px; border-radius: 4px;
+  font: 500 11px/1.3 var(--font-mono); color: var(--inf-ink-500);
+}
+.uitree-crumbs button:hover { background: var(--inf-ink-100); }
+.uitree-crumbs button.is-here { color: var(--inf-ink-900); font-weight: 700; }
+.uitree-crumbs .sep { color: var(--inf-ink-300); font-size: 11px; }
+.uitree-style { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+.badge-warn { padding: 1px 5px; border-radius: 4px; background: var(--inf-red-soft); color: var(--inf-red-700); font: 600 10px/1.4 var(--font-mono); }
+.uitree-list { margin-top: 12px; }
+.uitree-list summary { cursor: pointer; font: 600 11px/1 var(--font-display); color: var(--inf-ink-700); padding: 6px 0; }
+.uitree-row {
+  display: flex; align-items: baseline; gap: 6px; width: 100%; border: none; background: transparent;
+  text-align: left; cursor: pointer; padding: 4px 8px; border-radius: 4px;
+  font: 400 11px/1.3 var(--font-mono); color: var(--inf-ink-700);
+}
+.uitree-row:hover { background: var(--inf-ink-100); }
+.uitree-row.is-active { background: var(--inf-ink-900); color: #fff; }
+.uitree-row .sub { color: var(--inf-ink-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uitree-row.is-active .sub { color: var(--inf-ink-300); }
+
 /* ------------------------------------------------------------ responsive */
 /* Tablets: shrink the fixed columns before the drawer kicks in. */
 @media (max-width: 1080px) {
