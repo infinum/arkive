@@ -90,3 +90,8 @@ jobs:
       - name: Generate the full web showcase (android + KMP consumers)
         working-directory: samples
         run: ./gradlew generateWebShowcase
+
+      # Every snapshot must ship with a parseable UI tree (informational, but the web
+      # inspector and the agent skills rely on it being there).
+      - name: Check every snapshot has a UI tree
+        run: python3 .github/scripts/check_uitree.py samples/build/generated/arkive/showcase

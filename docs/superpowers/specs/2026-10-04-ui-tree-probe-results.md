@@ -59,3 +59,34 @@ The sample has `enableVariants` on, so every probe preview ran 12 times per engi
   Full lines were extracted up to the newline instead (see the report).
 - The lazy probe saw `tables=7`: each lazy item adds its own `CompositionData` to
   `LocalInspectionTables`. All of them are needed to reach the item calls.
+
+## Walk-cost estimate (Task 11, measured)
+
+Setup: published 0.0.5 (Tasks 2–10), `:sample` (367 Roborazzi shots: 32 base, 2 of them
+`@ArkiveView`s, + 335 variants), JDK 21.0.10, warm daemon.
+Command: `./gradlew :sample:cleanTestUatDebugUnitTest :sample:generateShowcaseUatDebug
+--profile`, with `uiTree.set(false)` toggled in `samples/sample/build.gradle.kts`.
+Duration: `:sample:testUatDebugUnitTest` from `build/reports/profile/profile-*.html`.
+
+| Run (in order) | uiTree | `testUatDebugUnitTest` | JUnit testcase sum |
+|---|---|---|---|
+| on1 | on | 29.827 s | — |
+| off1 | off | 28.989 s | — |
+| on2 | on | 27.089 s | — |
+| off2 | off | 29.763 s | 26.58 s (median 36.0 ms/shot) |
+| on3 | on | 29.365 s | 26.75 s (median 37.0 ms/shot) |
+| off3 | off | 27.826 s | 25.45 s (median 35.0 ms/shot) |
+
+Three more uiTree-on runs (28.036 s, 27.863 s, 28.794 s) came from a harness slip that
+left the switch on. They are consistent with the table.
+
+- Brief's rule (second measurement of each): on2 27.089 s vs off2 29.763 s, so
+  (on − off) / off = **−9.0%**. The sign is noise: run-to-run spread is about ±1.5 s
+  (5%) in both modes.
+- Medians over all runs: on 28.42 s (6 runs) vs off 28.99 s (3 runs), **−2.0%**.
+- JUnit per-test time, the finer signal: on3 26.75 s vs mean off 26.02 s, **+2.8%**.
+  The per-shot median is 37.0 vs 35.5 ms (+1.5 ms, ~4%). This agrees with Phase 0's
+  0.24–2.2 ms walk medians.
+
+Verdict: within the ≤10% budget. At task level the walk cost cannot be told apart from
+run-to-run noise. Per test it is about 1–2 ms per shot (≈3–4%).
