@@ -154,7 +154,6 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
     }
 
     private fun viewTestFunction(): FunSpec {
-        val frameLayoutClass = ClassName("android.widget", "FrameLayout")
         val layoutInflaterClass = ClassName("android.view", "LayoutInflater")
 
         return FunSpec.builder("testAllViewFunctions")
@@ -173,12 +172,12 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
                 val shooter = ArkiveViewShoot()
                 shooter.runViewTests { name, function ->
                     val viewId = function()
-                    val view = %T.from(paparazzi.context).inflate(viewId, %T(paparazzi.context))
+                    val view = %T.from(paparazzi.context).inflate(viewId, %T.host(paparazzi.context, name))
                     paparazzi.snapshot(view = view, name = name)
                 }
                 """.trimIndent(),
                 layoutInflaterClass,
-                frameLayoutClass,
+                UI_TREE_VIEWS,
             )
             .build()
     }
@@ -186,5 +185,7 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
     companion object {
         private const val IS_VERIFY_RUN_PROPERTY = "isVerifyRun"
         private const val RETENTION_PROPERTY = "snapshotRetention"
+
+        private val UI_TREE_VIEWS = ClassName("com.infinum.arkive.composeutils.uitree", "ArkiveUiTreeViews")
     }
 }

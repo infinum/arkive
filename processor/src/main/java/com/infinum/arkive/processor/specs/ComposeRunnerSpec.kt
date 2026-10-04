@@ -13,7 +13,10 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.SET
+import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -21,10 +24,20 @@ import com.squareup.kotlinpoet.ksp.writeTo
 class ComposeRunnerSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
+    private val appPackages: Set<String>,
     private val logger: KSPLogger,
 ) : KotlinSpec {
     override fun write() {
-        val fileSpec = getFileSpec()
+        fileSpec().writeTo(
+            codeGenerator = codeGenerator,
+            aggregating = true,
+            originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
+        )
+
+        logger.info("Generated $SIMPLE_NAME")
+    }
+
+    internal fun fileSpec(): FileSpec {
         val arkiveClass = getArkiveClass()
         arkiveClass.addFunction(getRunTestsFunction(RUN_COMPOSABLE_TESTS_FUNCTION, wrapperSuffix = ""))
         arkiveClass.addFunction(
@@ -33,17 +46,7 @@ class ComposeRunnerSpec(
                 wrapperSuffix = ComposeVariantSpec.VARIANTS_SUFFIX,
             ),
         )
-
-        fileSpec
-            .addType(arkiveClass.build())
-            .build()
-            .writeTo(
-                codeGenerator = codeGenerator,
-                aggregating = true,
-                originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
-            )
-
-        logger.info("Generated $SIMPLE_NAME")
+        return getFileSpec().addType(arkiveClass.build()).build()
     }
 
     override fun getFileSpec(): FileSpec.Builder {
@@ -66,7 +69,7 @@ class ComposeRunnerSpec(
         // never recorded has no golden, so verify must not fail on it.
         return CodeBlock.builder().apply {
             beginControlFlow("try")
-            addStatement("%M(runner)", functionRunner)
+            addStatement("%M($CAPTURING_RUNNER)", functionRunner)
             nextControlFlow("catch (e: %T)", ClassName(KOTLIN_PACKAGE, "AssertionError"))
             beginControlFlow("if ($IS_VERIFY_RUN_PROPERTY)")
             addStatement(
@@ -90,18 +93,19 @@ class ComposeRunnerSpec(
 
     private fun getRunTestsFunction(functionName: String, wrapperSuffix: String): FunSpec {
         return FunSpec.builder(functionName)
-            .addParameter(
-                RUNNER_FUNCTION,
-                LambdaTypeName.get(
-                    parameters = arrayOf(
-                        ClassName(KOTLIN_PACKAGE, "String"),
-                        LambdaTypeName.get(returnType = UNIT)
-                            .copy(annotations = listOf(getComposableAnnotation())),
-                    ),
-                    returnType = UNIT,
-                ),
-            )
+            .addParameter(RUNNER_FUNCTION, runnerType())
             .addStatement("val $VERIFY_FAILURES_PROPERTY = mutableListOf<String>()")
+            // Every shot goes through UI-tree capture — a pass-through unless the Gradle plugin
+            // enabled it. Wrapping the runner here keeps the component wrappers and both
+            // engines' test generators untouched.
+            .addStatement(
+                "val %L: %T = { name, content -> %L(name) { %M(name, %L, content) } }",
+                CAPTURING_RUNNER,
+                runnerType(),
+                RUNNER_FUNCTION,
+                UI_TREE_CAPTURE,
+                APP_PACKAGES_PROPERTY,
+            )
             // CodeBlocks are added directly, never rendered to String and re-parsed:
             // addCode(String) treats '%' as format specifiers and bypasses MemberName
             // import handling.
@@ -113,6 +117,14 @@ class ComposeRunnerSpec(
             .addCode(getAggregateThrow())
             .build()
     }
+
+    private fun runnerType(): LambdaTypeName = LambdaTypeName.get(
+        parameters = arrayOf(
+            ClassName(KOTLIN_PACKAGE, "String"),
+            LambdaTypeName.get(returnType = UNIT).copy(annotations = listOf(getComposableAnnotation())),
+        ),
+        returnType = UNIT,
+    )
 
     private fun getAggregateThrow(): CodeBlock {
         // Verification reports every mismatched component at once instead of failing on
@@ -146,6 +158,21 @@ class ComposeRunnerSpec(
                 )
                 .build(),
         )
+        .addProperty(
+            PropertySpec.builder(APP_PACKAGES_PROPERTY, SET.parameterizedBy(STRING))
+                .addModifiers(KModifier.PRIVATE)
+                .initializer(appPackagesInitializer())
+                .build(),
+        )
+
+    private fun appPackagesInitializer(): CodeBlock = CodeBlock.builder().apply {
+        add("setOf(")
+        appPackages.forEachIndexed { index, name ->
+            if (index > 0) add(", ")
+            add("%S", name)
+        }
+        add(")")
+    }.build()
 
     private fun getComposableAnnotation(): AnnotationSpec {
         return AnnotationSpec.builder(ClassName.bestGuess(ANNOTATION_COMPOSABLE))
@@ -161,5 +188,8 @@ class ComposeRunnerSpec(
         private const val KOTLIN_PACKAGE = "kotlin"
         private const val IS_VERIFY_RUN_PROPERTY = "isVerifyRun"
         private const val VERIFY_FAILURES_PROPERTY = "verifyFailures"
+        private const val CAPTURING_RUNNER = "capturingRunner"
+        private const val APP_PACKAGES_PROPERTY = "appPackages"
+        private val UI_TREE_CAPTURE = MemberName("com.infinum.arkive.composeutils.uitree", "ArkiveUiTreeCapture")
     }
 }

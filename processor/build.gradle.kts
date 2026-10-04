@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":metadata"))
     implementation(libs.ksp.api)
     implementation(libs.kotlinpoet.ksp)
+    testImplementation(libs.junit)
 }
 
 // Publish with a Kotlin 2.2 floor: AGP 9 (our consumer floor) itself requires KGP
