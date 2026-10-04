@@ -47,8 +47,12 @@ Gradle).
   `./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build`
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
-- Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
-  unit suite so far — it covers the showcase filename parsing)
+- Single test: `./gradlew :composeUtils:testDebugUnitTest --tests '*UiTreeJsonTest'` (or
+  `:plugin:test --tests 'ShowcaseGeneratorImplTest'`). Unit suites: composeUtils' uitree
+  core (JSON, pruning, assembly, attribution, semantics mapping, interop, session),
+  processor (`ComposeRunnerSpecTest`, `ModulePackagesTest`), testprocessor (`ViewHostTest`),
+  metadata (`ShowcaseJsonCompatibilityTest`), plugin (`ShowcaseGeneratorImplTest`,
+  `UiTreeGrabberTest`)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
   and builds the site):
   `cd samples && ./gradlew generateWebShowcase` → output at
@@ -318,6 +322,9 @@ Because NONE *consumes* the goldens, a re-run whose record task was up-to-date g
 zero snapshots — the task then KEEPS the previously generated showcase instead of
 overwriting it with an empty one (regenerate-from-nothing was a real bug: every second
 `generateWebShowcase` wiped unchanged modules).
+`GenerateWebShowcaseTask` (root) aggregates each module's output into
+`<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
+
 UI trees ride alongside, never through the golden dir: the plugin sets
 `arkive.uitree.dir = build/arkive/uitree/<variant>/` on the variant's test task (declared
 output; `arkive { uiTree }` → system property, never a KSP arg). The shooter's runner is
@@ -325,9 +332,8 @@ wrapped once in `ComposeRunnerSpec`, with the module's own packages (from KSP) s
 from app code get `source`/`callers`. `GenerateShowcaseTask` pairs trees to items by
 lowercased shot id (Paparazzi lowercases PNG names), copies only paired ones to
 `<module>/uitree/`, and writes `uiTreePath`. Trees are informational: never verified,
-never retained/consumed. CI fails if any snapshot lacks a tree (`.github/scripts/check_uitree.py`).
-`GenerateWebShowcaseTask` (root) aggregates each module's output into
-`<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
+never retained/consumed. CI fails if any snapshot lacks a tree or the known sample trees
+lose expected content (`.github/scripts/check_uitree.py`).
 
 Snapshot filename convention everything relies on:
 `<testclass>_<componentId>.png` for base, `<testclass>_<componentId>_<category>_<value>.png`
@@ -337,7 +343,10 @@ for variants. UI trees: `<shotId>.json` (`<componentId>[_<category>_<value>]`, n
 mirrored in `ShowcaseWebGenerator`) — a dependency-free vanilla-JS SPA with hash routing,
 designed for GitHub Pages (relative paths only). It fetches `arkive-showcase.json` and
 resolves images as `<module>/images/<basename(snapshotPath)>`. No build step, no CDN, no
-bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added). The detail view's Inspect toggle (`I`) lazily fetches `<module>/uitree/<basename(uiTreePath)>` and overlays node boxes inside the transformed stage.
+bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added).
+The detail view's Inspect toggle (`I`) lazily fetches
+`<module>/uitree/<basename(uiTreePath)>` and overlays node boxes inside the transformed
+stage.
 
 ## Golden verification (verifyShowcase)
 

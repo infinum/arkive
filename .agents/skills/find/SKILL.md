@@ -36,8 +36,8 @@ Search three places — each covers another's blind spot:
    invisible to it, and that's exactly the component that gets duplicated.
 3. **The UI trees**: every module's `build/generated/arkive/showcase/uitree/*.json` — grep
    `"composable"` and `"callers"` names and visible `"text"`. Shared components used only
-   inside previewed screens show up here (in the screen's `callers`), and designs can be
-   matched by their copy.
+   inside previewed screens show up here — as a node's `composable`, or in `callers` on the
+   shared component's own outermost node — and designs can be matched by their copy.
 
 Freshness: if the showcase output is missing or predates recent UI work, either
 regenerate (`generateShowcase<Variant>` — takes minutes, warn first) or continue

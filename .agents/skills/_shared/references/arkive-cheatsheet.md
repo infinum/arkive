@@ -161,7 +161,9 @@ nothing in the captured main window (dialog-only previews — dialogs and popups
 
 - `bounds` = `[x, y, w, h]` in **dp** from the snapshot's top-left, the node's outer box
   including its own padding (what the snapshot shows for that node); `px = dp × density`.
-  Text sizes are sp.
+  Text sizes are sp. With `Modifier.padding(…)` placed before `.background(…)`, the outer
+  box includes that outer padding, so sibling gaps computed from bounds can be smaller
+  than the visible gaps — when they disagree, trust the visible pixels.
 - `composable` = the innermost composable called from the module's own code that emitted
   the node; `source` = that call's `File.kt:line`; `callers` = the outer calls from the
   module's own code between a node and its nearest emitted ancestor, outermost first, so
@@ -172,7 +174,8 @@ nothing in the captured main window (dialog-only previews — dialogs and popups
   `testTag`, `actions` (`click`, `longClick`, `scroll`, …), `state` (`enabled`,
   `selected`, `toggle`, `focused`).
 - `textStyle` on text nodes: `fontSize`, `fontWeight`, `lineHeight`, `color`
-  (`#RRGGBBAA`), `maxLines`, `overflow` (`true` = the text was clipped or ellipsized).
+  (`#RRGGBBAA`), `maxLines`, `overflow` (`true` = the text exceeded `maxLines` or was
+  ellipsized; horizontal clipping of `softWrap = false` text is not detected).
 - **Informational only**: never a golden, never verified, never in the golden directory,
   untouched by `snapshotRetention`. A visual match is still judged with the image.
 
