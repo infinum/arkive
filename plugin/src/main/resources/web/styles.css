@@ -496,6 +496,21 @@ kbd {
 .uitree-row .sub { color: var(--inf-ink-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .uitree-row.is-active .sub { color: var(--inf-ink-300); }
 .uitree-row .kind { color: var(--inf-ink-400); }
+.uitree-jump {
+  align-self: flex-start; margin-top: 4px; padding: 3px 8px; max-width: 100%;
+  background: #fff; border: 1px solid var(--inf-ink-200); border-radius: 4px; cursor: pointer;
+  font: 500 10.5px/1.3 var(--font-mono); color: var(--inf-ink-700); text-align: left; overflow-wrap: anywhere;
+}
+.uitree-jump:hover:not(:disabled) { background: var(--inf-ink-900); border-color: var(--inf-ink-900); color: #fff; }
+.uitree-jump:disabled { cursor: default; color: var(--inf-ink-400); background: var(--inf-ink-50); }
+.uitree-jump.is-loading { font-style: italic; }
+.uitree-jump-list { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.uitree-jump-pick {
+  display: flex; align-items: baseline; gap: 6px; border: none; background: transparent; cursor: pointer;
+  padding: 3px 6px; border-radius: 4px; text-align: left; font: 500 11px/1.3 var(--font-mono); color: var(--inf-ink-900);
+}
+.uitree-jump-pick:hover { background: var(--inf-ink-100); }
+.uitree-jump-pick .sub { color: var(--inf-ink-400); font-weight: 400; }
 .uitree-row.is-active .kind { color: var(--inf-ink-300); }
 
 /* ------------------------------------------------------------ responsive */

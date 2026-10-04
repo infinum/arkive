@@ -58,6 +58,7 @@
 
   const CLICK_SLOP = 3;
   const treeCache = new Map();
+  const componentLookups = new Map();
   let inspectUrl = null;
 
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -247,6 +248,103 @@
     return componentName(node) || elementName(node);
   }
 
+  // The nearest node at or above index that a component emitted (it carries callers).
+  function componentNodeOf(nodes, index) {
+    let i = index;
+    while (i >= 0 && !nodes[i].node.callers) i = nodes[i].parent;
+    return i;
+  }
+
+  // An item shows a component when its base tree's root was emitted by it (or under it).
+  function showsComponent(root, component) {
+    return root.composable === component || (root.callers || []).indexOf(component) > -1;
+  }
+
+  function lookupKey(component) {
+    return state.route.id + '|' + component;
+  }
+
+  // Which other items show component? Base trees load lazily (shared treeCache), in
+  // parallel: the open item's module first, the other modules only when it has none.
+  // A miss with failed fetches is incomplete: the next request retries those trees.
+  function lookupComponent(component) {
+    const key = lookupKey(component);
+    let entry = componentLookups.get(key);
+    if (entry && !entry.incomplete) return entry;
+    const id = state.route.id;
+    const current = findItem(id);
+    const home = current ? current.module : null;
+    const candidates = allItems().filter((it) => it.uiTreePath);
+    entry = { status: 'loading', matches: [], isSelf: false, failed: false, incomplete: false };
+    const search = (items) => Promise.all(items.map((it) => {
+      const url = treeUrl(it.module, it.uiTreePath);
+      const cached = treeCache.get(url);
+      if (cached && cached.status === 'error' && url !== inspectUrl) treeCache.delete(url);
+      const tree = loadTree(url);
+      return tree.promise.then(() => {
+        if (tree.status !== 'ok') { entry.failed = true; return null; }
+        return showsComponent(tree.data.tree.root, component) ? it : null;
+      });
+    })).then((found) => found.filter(Boolean));
+    // The open item takes part only to tell "this is its entry" apart from "it has none".
+    entry.promise = search(candidates.filter((it) => it.module === home))
+      .then((found) => {
+        entry.isSelf = found.some((it) => it.component.id === id);
+        const others = found.filter((it) => it.component.id !== id);
+        return others.length ? others : search(candidates.filter((it) => it.module !== home));
+      })
+      .then((found) => {
+        entry.status = 'done';
+        entry.matches = found;
+        entry.incomplete = entry.failed && !found.length;
+      });
+    componentLookups.set(key, entry);
+    return entry;
+  }
+
+  function openComponent(component) {
+    const origin = state.route.id;
+    const entry = lookupComponent(component);
+    const settle = () => {
+      if (state.route.kind !== 'detail' || state.route.id !== origin) return;
+      // Navigate only if the pinned node still belongs to this component (no stale jumps).
+      const data = currentTree();
+      const sel = state.inspectSel;
+      const stillSelected = data && sel >= 0 && sel < data.nodes.length && componentName(data.nodes[sel].node) === component;
+      if (entry.matches.length === 1 && stillSelected) navTo({ kind: 'detail', id: entry.matches[0].component.id });
+      else renderInspector();
+    };
+    if (entry.status === 'done') { settle(); return; }
+    renderInspector();
+    entry.promise.then(settle);
+  }
+
+  function jumpHtml(component) {
+    const entry = componentLookups.get(lookupKey(component));
+    const name = esc(component);
+    if (entry && entry.status === 'loading') {
+      return '<button type="button" class="uitree-jump is-loading" disabled>Looking up ' + name + '…</button>';
+    }
+    if (entry && entry.incomplete) {
+      return '<button type="button" class="uitree-jump" data-jump="' + name + '" title="' +
+        esc('Some showcase trees failed to load') + '">Retry: open ' + name + ' ↗</button>';
+    }
+    if (entry && !entry.matches.length) {
+      const none = esc(entry.isSelf ? 'This is ' + component + "'s showcase entry" : 'No showcase entry for ' + component);
+      return '<button type="button" class="uitree-jump" disabled title="' + none + '">' + none + '</button>';
+    }
+    if (entry && entry.matches.length > 1) {
+      return '<div class="uitree-jump-list"><span class="label">Shown in</span>' +
+        entry.matches.map((m) =>
+          '<button type="button" class="uitree-jump-pick" data-pick="' + esc(m.component.id) + '">' +
+          '<span class="name">' + esc(m.component.name) + '</span>' +
+          (m.component.group ? '<span class="sub">' + esc(m.component.group) + '</span>' : '') +
+          '</button>').join('') +
+        '</div>';
+    }
+    return '<button type="button" class="uitree-jump" data-jump="' + name + '">Open ' + name + ' ↗</button>';
+  }
+
   function fmt(n) {
     return String(Math.round(n * 10) / 10);
   }
@@ -331,7 +429,7 @@
     const node = data.nodes[index].node;
     const b = node.bounds;
     const rows = [
-      node.callers ? { label: 'Component', value: node.callers.join(' › ') } : null,
+      node.callers ? { label: 'Component', value: node.callers.join(' › '), after: jumpHtml(componentName(node)) } : null,
       {
         label: 'Element',
         value: elementName(node) + (node.id ? ' · @id/' + node.id : '') + (node.source ? ' · ' + node.source : ''),
@@ -353,7 +451,8 @@
         esc(nodeLabel(data.nodes[i].node)) + '</button>').join('') +
       '</div>' +
       rows.map((r) =>
-        '<div class="metarow"><span class="label">' + esc(r.label) + '</span><span class="value">' + esc(r.value) + '</span></div>').join('') +
+        '<div class="metarow"><span class="label">' + esc(r.label) + '</span><span class="value">' + esc(r.value) + '</span>' +
+        (r.after || '') + '</div>').join('') +
       (node.textStyle ? textStyleHtml(node.textStyle) : '');
   }
 
@@ -891,6 +990,7 @@
       }
     }
 
+    let lastPressPanned = false;
     canvasEl.addEventListener('mousedown', (e) => {
       if (state.compareCat || e.target.closest('button')) return;
       e.preventDefault();
@@ -910,10 +1010,23 @@
       const up = (ev) => {
         window.removeEventListener('mousemove', move);
         window.removeEventListener('mouseup', up);
+        lastPressPanned = panning;
         if (!panning && inspectUrl) selectAt(ev.clientX, ev.clientY);
       };
       window.addEventListener('mousemove', move);
       window.addEventListener('mouseup', up);
+    });
+
+    // Double-click: pin the component the node under the cursor belongs to and open its entry.
+    canvasEl.addEventListener('dblclick', (e) => {
+      const data = currentTree();
+      if (!inspectUrl || !data || lastPressPanned || e.target.closest('button')) return;
+      const index = componentNodeOf(data.nodes, hitTest(e.clientX, e.clientY));
+      if (index < 0) return;
+      state.inspectSel = index;
+      state.inspectHover = -1;
+      paintInspect();
+      openComponent(componentName(data.nodes[index].node));
     });
 
     canvasEl.addEventListener('mousemove', (e) => {
@@ -1068,8 +1181,13 @@
   /* -------------------------------------------------------------- wiring */
 
   document.addEventListener('click', (e) => {
-    const target = e.target.closest('[data-action], [data-nav], [data-pick], [data-view], [data-state], [data-compare], [data-frame], [data-uinode]');
+    const target = e.target.closest('[data-action], [data-nav], [data-pick], [data-view], [data-state], [data-compare], [data-frame], [data-uinode], [data-jump]');
     if (!target) return;
+
+    if (target.dataset.jump) {
+      openComponent(target.dataset.jump);
+      return;
+    }
 
     if (target.dataset.uinode) {
       state.inspectSel = Number(target.dataset.uinode);
