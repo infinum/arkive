@@ -69,4 +69,6 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+
+    testImplementation(libs.junit)
 }
