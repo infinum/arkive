@@ -4,6 +4,9 @@ package com.infinum.arkive.composeutils.uitree
 
 import android.view.View
 import androidx.compose.runtime.tooling.CompositionData
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -97,8 +100,18 @@ private class NodeBuilder(
         )
     }
 
+    // LayoutInfo.coordinates is the node's inner coordinator, which excludes its own modifiers
+    // (padding, background); the head modifier sits on the outer one — the box the snapshot shows.
+    // localBoundingBoxOf collapses an empty rect to Rect.Zero, so zero-area nodes are placed by origin.
     private fun bounds(info: LayoutInfo): UiBounds {
-        val rect = rootCoordinates.localBoundingBoxOf(info.coordinates, clipBounds = false)
+        val outer = info.getModifierInfo().firstOrNull()?.coordinates ?: info.coordinates
+        val width = outer.size.width.toFloat()
+        val height = outer.size.height.toFloat()
+        val rect = if (width > 0f && height > 0f) {
+            rootCoordinates.localBoundingBoxOf(outer, clipBounds = false)
+        } else {
+            Rect(rootCoordinates.localPositionOf(outer, Offset.Zero), Size(width, height))
+        }
         return UiBounds(rect.left / density, rect.top / density, rect.width / density, rect.height / density)
     }
 }
