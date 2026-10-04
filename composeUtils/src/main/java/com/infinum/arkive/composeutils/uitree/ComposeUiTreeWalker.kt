@@ -3,6 +3,7 @@
 package com.infinum.arkive.composeutils.uitree
 
 import android.view.View
+import android.view.ViewGroup
 import androidx.compose.runtime.tooling.CompositionData
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -11,6 +12,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.LayoutInfo
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.ViewRootForTest
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -59,7 +61,7 @@ internal class ComposeUiTreeWalker(
             density = density,
             width = rootInfo.width / density,
             height = rootInfo.height / density,
-            root = UiTreePruning.prune(root),
+            root = UiTreePruning.prune(attachHostedViews(root, rootInfo, density)),
         )
     }
 
@@ -68,6 +70,36 @@ internal class ComposeUiTreeWalker(
             reportedOtherWindows = true
             log("Arkive: ui tree for $shotId covers the captured window only — $count node(s) elsewhere (e.g. dialogs) skipped")
         }
+    }
+
+    // AndroidView holders sit under AndroidComposeView inside compose-internal containers
+    // (androidx.compose.ui.*); the first non-internal view on each path is app content. Views
+    // directly under AndroidComposeView are its own plumbing (the 1x1 frame-rate view), never hosted.
+    private fun attachHostedViews(root: UiTreeNode, rootInfo: LayoutInfo, density: Float): UiTreeNode {
+        val composeView = view as? ViewGroup ?: return root
+        val origin = rootInfo.coordinates.positionInRoot()
+        val hosted = mutableListOf<UiTreeNode>()
+        collectHostedViews(composeView, 0f, 0f) { hostedView, x, y ->
+            hosted += ViewTreeBuilder.node(hostedView, x - origin.x, y - origin.y, density)
+        }
+        return hosted.fold(root, UiTreeInterop::attach)
+    }
+
+    private fun collectHostedViews(parent: ViewGroup, x: Float, y: Float, onFound: (View, Float, Float) -> Unit) {
+        for (index in 0 until parent.childCount) {
+            val child = parent.getChildAt(index)
+            val childX = x + child.left - parent.scrollX + child.translationX
+            val childY = y + child.top - parent.scrollY + child.translationY
+            if (child.javaClass.name.startsWith(COMPOSE_INTERNAL_PREFIX) && child is ViewGroup) {
+                collectHostedViews(child, childX, childY, onFound)
+            } else if (parent !== view && !child.javaClass.name.startsWith(COMPOSE_INTERNAL_PREFIX)) {
+                onFound(child, childX, childY)
+            }
+        }
+    }
+
+    private companion object {
+        const val COMPOSE_INTERNAL_PREFIX = "androidx.compose.ui."
     }
 }
 
