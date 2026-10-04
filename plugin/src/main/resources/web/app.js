@@ -305,8 +305,10 @@
     if (ts.fontWeight != null) parts.push('w' + ts.fontWeight);
     if (ts.lineHeight != null) parts.push('line ' + fmt(ts.lineHeight) + 'sp');
     if (ts.maxLines != null) parts.push('max ' + ts.maxLines + (ts.maxLines === 1 ? ' line' : ' lines'));
+    // Only a well-formed #RRGGBBAA reaches the style attribute; anything else stays plain text.
+    const swatch = /^#[0-9A-F]{8}$/i.test(ts.color || '') ? '<span class="swatch" style="background:' + ts.color + '"></span>' : '';
     return '<div class="metarow"><span class="label">Text style</span><span class="value uitree-style">' +
-      (ts.color ? '<span class="swatch" style="background:' + esc(ts.color) + '"></span>' + esc(ts.color) + ' · ' : '') +
+      (ts.color ? swatch + esc(ts.color) + ' · ' : '') +
       esc(parts.join(' · ')) +
       (ts.overflow ? ' <span class="badge-warn">⚠ overflow</span>' : '') +
       '</span></div>';

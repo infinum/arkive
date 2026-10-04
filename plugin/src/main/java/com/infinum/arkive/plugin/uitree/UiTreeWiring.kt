@@ -3,7 +3,6 @@ package com.infinum.arkive.plugin.uitree
 import com.infinum.arkive.plugin.consumers.ConsumerAdapter
 import com.infinum.arkive.plugin.consumers.addDependencyWhenConfigurationExists
 import com.infinum.arkive.plugin.utils.UiTreeArgumentProvider
-import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
@@ -20,7 +19,7 @@ internal object UiTreeWiring {
 
     /** Build-dir-relative directory the test JVM writes [variant]'s trees into. */
     fun relativeDirectory(variant: String): String =
-        "arkive${File.separator}uitree${File.separator}${variant.ifEmpty { "default" }}"
+        "arkive/uitree/${variant.ifEmpty { "default" }}"
 
     fun wireDependencies(project: Project, adapter: ConsumerAdapter) {
         project.addDependencyWhenConfigurationExists(
