@@ -8,6 +8,9 @@ data class ComponentVariant(
     @SerialName("category") val category: String,
     @SerialName("variant") val variant: String,
     @SerialName("snapshotPath") val snapshotPath: String,
+    // Module-relative `uitree/<shotId>.json`; null when no tree was captured (uiTree off,
+    // or the walk failed). Optional so showcases written before UI trees still decode.
+    @SerialName("uiTreePath") val uiTreePath: String? = null,
 )
 
 @Serializable
@@ -15,6 +18,7 @@ data class ShowcaseItem(
     @SerialName("component") val component: Component,
     @SerialName("snapshotPath") val snapshotPath: String,
     @SerialName("variants") val variants: List<ComponentVariant>,
+    @SerialName("uiTreePath") val uiTreePath: String? = null,
 )
 
 @Serializable
