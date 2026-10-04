@@ -495,6 +495,8 @@ kbd {
 .uitree-row.is-active { background: var(--inf-ink-900); color: #fff; }
 .uitree-row .sub { color: var(--inf-ink-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .uitree-row.is-active .sub { color: var(--inf-ink-300); }
+.uitree-row .kind { color: var(--inf-ink-400); }
+.uitree-row.is-active .kind { color: var(--inf-ink-300); }
 
 /* ------------------------------------------------------------ responsive */
 /* Tablets: shrink the fixed columns before the drawer kicks in. */

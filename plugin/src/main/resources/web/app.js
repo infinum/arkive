@@ -234,8 +234,17 @@
     return entry && entry.status === 'ok' ? entry.data : null;
   }
 
-  function nodeLabel(node) {
+  function elementName(node) {
     return node.composable || node.view || 'Node';
+  }
+
+  // callers sit on a component's outermost node, outermost first: the last is the component.
+  function componentName(node) {
+    return node.callers ? node.callers[node.callers.length - 1] : null;
+  }
+
+  function nodeLabel(node) {
+    return componentName(node) || elementName(node);
   }
 
   function fmt(n) {
@@ -293,7 +302,9 @@
     if (shown < 0) { label.style.display = 'none'; return; }
     const node = data.nodes[shown].node;
     const b = node.bounds;
-    label.textContent = nodeLabel(node) + ' · ' + fmt(b[2]) + ' × ' + fmt(b[3]) + ' dp';
+    const component = componentName(node);
+    label.textContent = (component ? component + ' › ' : '') + elementName(node) + ' · ' +
+      fmt(b[2]) + ' × ' + fmt(b[3]) + ' dp';
     label.style.display = 'block';
     label.style.left = (b[0] * data.tree.density) + 'px';
     label.style.top = (b[1] * data.tree.density) + 'px';
@@ -320,10 +331,13 @@
     const node = data.nodes[index].node;
     const b = node.bounds;
     const rows = [
+      node.callers ? { label: 'Component', value: node.callers.join(' › ') } : null,
+      {
+        label: 'Element',
+        value: elementName(node) + (node.id ? ' · @id/' + node.id : '') + (node.source ? ' · ' + node.source : ''),
+      },
+      node.view && node.composable ? { label: 'View', value: node.view } : null,
       { label: 'Bounds', value: fmt(b[0]) + ', ' + fmt(b[1]) + ' · ' + fmt(b[2]) + ' × ' + fmt(b[3]) + ' dp' },
-      node.source ? { label: 'Source', value: node.source } : null,
-      node.callers ? { label: 'Called from', value: node.callers.join(' › ') } : null,
-      node.view ? { label: 'View', value: node.view + (node.id ? ' · @id/' + node.id : '') } : null,
       node.role ? { label: 'Role', value: node.role } : null,
       node.text != null ? { label: 'Text', value: node.text } : null,
       node.editableText != null ? { label: 'Editable text', value: node.editableText } : null,
@@ -350,6 +364,7 @@
         '<button type="button" class="uitree-row' + (i === state.inspectSel ? ' is-active' : '') + '" data-uinode="' + i +
         '" style="padding-left:' + (8 + n.depth * 12) + 'px">' +
         '<span class="name">' + esc(nodeLabel(n.node)) + '</span>' +
+        (componentName(n.node) ? '<span class="kind">' + esc(elementName(n.node)) + '</span>' : '') +
         (n.node.text ? '<span class="sub">' + esc(n.node.text.slice(0, 40)) + '</span>' : '') +
         '</button>').join('') +
       '</details>';
