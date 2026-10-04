@@ -542,6 +542,9 @@ kbd {
 
   .detail-body { display: block; overflow-y: auto; }
   .canvas { height: 52vh; height: 52dvh; min-height: 300px; }
+  /* The zoombar (with Inspect) no longer leaves room beside the size badge: stack it above. */
+  .zoombar { max-width: calc(100% - 32px); }
+  .dimbadge { bottom: 60px; }
   .panel { width: auto; border-left: none; border-top: 1px solid var(--inf-ink-200); overflow-y: visible; }
 
   .canvas-compare { padding: 20px; gap: 18px; }
