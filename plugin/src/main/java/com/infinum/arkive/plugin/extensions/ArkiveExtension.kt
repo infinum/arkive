@@ -28,6 +28,15 @@ open class ArkiveExtension @Inject constructor(
     val snapshotRetention: Property<SnapshotRetention> = objects.property(SnapshotRetention::class.java)
         .convention(SnapshotRetention.NONE)
 
+    /**
+     * Writes a UI tree (hierarchy, dp bounds, semantics, text style, composable names and
+     * source lines) next to every snapshot, for agents and the showcase's inspector.
+     * Informational only — never a golden, never verified. Applies to both engines; toggling
+     * it never re-runs KSP.
+     */
+    val uiTree: Property<Boolean> = objects.property(Boolean::class.java)
+        .convention(true)
+
     /** Selector for [engine]: the Roborazzi engine (JDK 17+, renders CMP resources). */
     @Suppress("PropertyName", "VariableNaming")
     val Roborazzi: RoborazziSelector = RoborazziSelector

@@ -9,6 +9,7 @@ import com.infinum.arkive.plugin.extensions.ArkiveExtension.Companion.ENABLE_VAR
 import com.infinum.arkive.plugin.extensions.SnapshotRetention
 import com.infinum.arkive.plugin.tasks.GenerateShowcaseTask
 import com.infinum.arkive.plugin.tasks.GenerateWebShowcaseTask
+import com.infinum.arkive.plugin.uitree.UiTreeWiring
 import com.infinum.arkive.plugin.utils.RetentionArgumentProvider
 import com.infinum.arkive.plugin.utils.capFirst
 import com.infinum.arkive.plugin.utils.showcaseModuleName
@@ -78,6 +79,7 @@ class ArkivePlugin : Plugin<Project> {
 
         selection.applyCurrentEngine()
         adapter.wireDependencies()
+        UiTreeWiring.wireDependencies(project, adapter)
         forwardSnapshotsDirToTests(project, adapter)
         project.afterEvaluate {
             val engine = selection.engine
@@ -169,6 +171,8 @@ class ArkivePlugin : Plugin<Project> {
         variant: String,
     ) {
         with(project) {
+            val arkiveExtension = extensions.getByType(ArkiveExtension::class.java)
+            UiTreeWiring.forwardToTests(project, adapter, variant, arkiveExtension.uiTree)
             tasks.register(
                 showcaseTaskName(variant),
                 GenerateShowcaseTask::class.java,
@@ -187,6 +191,8 @@ class ArkivePlugin : Plugin<Project> {
                 val extension = project.extensions.findByType(ArkiveExtension::class.java)
                 task.designFileKey = extension?.designFileKey?.get().orEmpty()
                 task.snapshotRetention = snapshotRetentionOf(project).name
+                task.uiTreePath = UiTreeWiring.relativeDirectory(variant)
+                task.uiTreeEnabled = arkiveExtension.uiTree.get()
                 // Task configuration runs at realization, after the script body — the
                 // selection is final by then.
                 task.dependsOn(selection.engine.recordTaskName(adapter, variant))
@@ -197,6 +203,7 @@ class ArkivePlugin : Plugin<Project> {
                     files(
                         layout.projectDirectory.dir(adapter.snapshotsPath()),
                         layout.buildDirectory.dir(adapter.kspResourcesPath(variant)),
+                        layout.buildDirectory.dir(UiTreeWiring.relativeDirectory(variant)),
                     ),
                 )
             }

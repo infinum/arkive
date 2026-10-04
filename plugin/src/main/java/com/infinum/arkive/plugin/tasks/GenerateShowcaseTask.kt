@@ -7,6 +7,7 @@ import com.infinum.arkive.plugin.generators.ShowcaseGeneratorImpl
 import com.infinum.arkive.plugin.services.GrabbedSnapshot
 import com.infinum.arkive.plugin.services.KSPMetaDataLoader
 import com.infinum.arkive.plugin.services.SnapshotsGrabberImpl
+import com.infinum.arkive.plugin.services.UiTreeGrabber
 import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.writers.ShowcaseWriterImpl
 import java.io.File
@@ -67,6 +68,17 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     var snapshotRetention = SnapshotRetention.NONE.name
 
+    /** The test JVM's UI-tree dir for this variant, relative to the build dir; from UiTreeWiring. */
+    @get:Input
+    var uiTreePath = ""
+
+    /**
+     * With `uiTree` off, trees an earlier enabled run left on disk are ignored — the showcase
+     * then carries no uiTreePath at all.
+     */
+    @get:Input
+    var uiTreeEnabled = true
+
     // NOTE: the engine's record-task dependency is wired at registration (ArkivePlugin.
     // addTaskWithVariant). Never register listeners from this class's init — tasks can
     // be realized lazily from guarded contexts (e.g. findByName inside a projectsEvaluated
@@ -109,7 +121,13 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         logger.warn("Loading metadata for variant: $variant")
         val metadata = metadataLoader.loadMetaData()
 
-        val moduleItems = generator.generateShowcase(grabbed.map { it.relativePath }, metadata)
+        val uiTreeGrabber = UiTreeGrabber(buildDir.get().asFile.resolve(uiTreePath))
+        val uiTrees = if (uiTreeEnabled) uiTreeGrabber.available() else emptyMap()
+        val moduleItems = generator.generateShowcase(
+            grabbed.map { it.relativePath },
+            metadata,
+            uiTreeGrabber.relativePaths(uiTrees),
+        )
 
         // Per-component resilience must not compound into a silent total failure: if the
         // processor collected components but not a single snapshot matched, recording
@@ -124,6 +142,8 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
             )
         }
 
+        val pairedTrees = uiTreeGrabber.copyReferenced(moduleItems, uiTrees, outputDirectory.get().asFile)
+        logger.info("Arkive: paired $pairedTrees ui tree(s) with the showcase")
         applyRetention(grabbed, moduleItems)
         writer.write(
             outputDir = outputDirectory.get().asFile,
