@@ -43,9 +43,22 @@ internal fun UiTreeRecorder(
     directory: File,
     content: @Composable () -> Unit,
 ) {
-    currentComposer.collectParameterInformation()
+    // These runtime APIs are internal and may change under a future Compose: compute the
+    // setup once, outside composition of the content (try/catch cannot wrap composable
+    // calls), and on failure render the preview untouched rather than fail the shot.
+    val composer = currentComposer
     val tables = remember { mutableSetOf<CompositionData>() }
-    tables.add(currentComposer.compositionData)
+    val inspectionTables = remember {
+        runCatching {
+            composer.collectParameterInformation()
+            tables.add(composer.compositionData)
+            LocalInspectionTables provides tables
+        }.onFailure { e -> println("Arkive: ui tree skipped for $shotId: ${e.message ?: e}") }.getOrNull()
+    }
+    if (inspectionTables == null) {
+        content()
+        return
+    }
     val view = LocalView.current
     val session = remember(shotId, directory) {
         val walker = ComposeUiTreeWalker(shotId, view, tables, AppPackages(appPackages))
@@ -61,7 +74,7 @@ internal fun UiTreeRecorder(
             observer.dispose()
         }
     }
-    CompositionLocalProvider(LocalInspectionTables provides tables) {
+    CompositionLocalProvider(inspectionTables) {
         Layout(
             content = content,
             modifier = Modifier

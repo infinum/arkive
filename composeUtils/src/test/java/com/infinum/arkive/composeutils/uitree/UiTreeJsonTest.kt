@@ -72,6 +72,53 @@ class UiTreeJsonTest {
     }
 
     @Test
+    fun writesSemanticsAndViewFields() {
+        val tree = UiTree(
+            id = "x",
+            density = 1f,
+            width = 10f,
+            height = 10f,
+            root = UiTreeNode(
+                bounds = UiBounds(0f, 0f, 10f, 10f),
+                view = "EditText",
+                viewId = "email",
+                role = "Checkbox",
+                editableText = "a@b.c",
+                contentDescription = "Email",
+                testTag = "email_field",
+                actions = listOf("click", "setText"),
+                state = UiState(enabled = false, selected = true, toggle = "on", focused = false),
+            ),
+        )
+
+        val expected = """
+            {
+              "schemaVersion": 1,
+              "id": "x",
+              "density": 1,
+              "size": [10, 10],
+              "root": {
+                "view": "EditText",
+                "id": "email",
+                "bounds": [0, 0, 10, 10],
+                "role": "Checkbox",
+                "editableText": "a@b.c",
+                "contentDescription": "Email",
+                "testTag": "email_field",
+                "actions": ["click", "setText"],
+                "state": {
+                  "enabled": false,
+                  "selected": true,
+                  "toggle": "on",
+                  "focused": false
+                }
+              }
+            }
+        """.trimIndent() + "\n"
+        assertEquals(expected, UiTreeJson.write(tree))
+    }
+
+    @Test
     fun omitsNullAndEmptyFields() {
         val json = UiTreeJson.write(UiTree("x", 1f, 10f, 10f, UiTreeNode(bounds = UiBounds(0f, 0f, 10f, 10f))))
 

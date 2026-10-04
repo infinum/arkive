@@ -91,6 +91,8 @@ internal class ComposeUiTreeWalker(
             val childX = x + child.left - parent.scrollX + child.translationX
             val childY = y + child.top - parent.scrollY + child.translationY
             if (child.javaClass.name.startsWith(COMPOSE_INTERNAL_PREFIX) && child is ViewGroup) {
+                // Recursed only to find hosted Views; a ComposeView inside a hosted View is
+                // emitted as View nodes (ViewTreeBuilder), not walked as a nested compose tree.
                 collectHostedViews(child, childX, childY, onFound)
             } else if (parent !== view && !child.javaClass.name.startsWith(COMPOSE_INTERNAL_PREFIX)) {
                 onFound(child, childX, childY)

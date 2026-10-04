@@ -15,13 +15,20 @@ internal class ViewUiTreeWalker(
         val content = host.takeIf { it.childCount == 1 }?.getChildAt(0) ?: host
         val x = if (content === host) 0f else content.left + content.translationX
         val y = if (content === host) 0f else content.top + content.translationY
+        val root = ViewTreeBuilder.node(content, x, y, density)
         return UiTree(
             id = shotId,
             density = density,
             width = host.width / density,
             height = host.height / density,
-            root = UiTreePruning.prune(ViewTreeBuilder.node(content, x, y, density)),
+            // A <merge>-rooted layout inflates straight into the host; name it by what it is
+            // to the app (a FrameLayout), not by Arkive's internal host class.
+            root = UiTreePruning.prune(if (content === host) root.copy(view = HOST_VIEW) else root),
         )
+    }
+
+    private companion object {
+        const val HOST_VIEW = "FrameLayout"
     }
 }
 
