@@ -4,13 +4,13 @@ import com.infinum.arkive.metadata.model.ArkiveShowcase
 import com.infinum.arkive.metadata.toJson
 import java.io.File
 
-interface ShowcaseMultiModuleWriter {
+internal interface ShowcaseMultiModuleWriter {
     fun write(outputDir: File, showcase: ArkiveShowcase)
 }
 
 private const val FILE_NAME = "arkive-showcase.json"
 
-class ShowcaseMultiModuleWriterImpl : ShowcaseMultiModuleWriter {
+internal class ShowcaseMultiModuleWriterImpl : ShowcaseMultiModuleWriter {
     override fun write(outputDir: File, showcase: ArkiveShowcase) {
         outputDir.resolve(FILE_NAME).writeText(toJson(showcase))
     }

@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.Density
 private const val PREVIEW_TEXT = "Hello, World"
 
 @Composable
-fun DensityVariant(
+public fun DensityVariant(
     scale: Float,
     component: @Composable () -> Unit,
 ) {
@@ -27,7 +27,7 @@ fun DensityVariant(
 
 @Preview
 @Composable
-fun PreviewDensityVariant() {
+private fun PreviewDensityVariant() {
     DensityVariant(1f) {
         Button(onClick = {}) {
             Text(PREVIEW_TEXT)
@@ -37,7 +37,7 @@ fun PreviewDensityVariant() {
 
 @Preview
 @Composable
-fun Preview2xDensityVariant() {
+private fun Preview2xDensityVariant() {
     DensityVariant(2f) {
         Button(onClick = {}) {
             Text(PREVIEW_TEXT)
@@ -47,7 +47,7 @@ fun Preview2xDensityVariant() {
 
 @Preview
 @Composable
-fun Preview3xDensityVariant() {
+private fun Preview3xDensityVariant() {
     DensityVariant(3f) {
         Button(onClick = {}) {
             Text(PREVIEW_TEXT)

@@ -1,0 +1,198 @@
+public final class com/infinum/arkive/metadata/JsonUtilsKt {
+	public static final fun getJson ()Lkotlinx/serialization/json/Json;
+}
+
+public final class com/infinum/arkive/metadata/model/ArkiveModule {
+	public static final field Companion Lcom/infinum/arkive/metadata/model/ArkiveModule$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/infinum/arkive/metadata/model/ArkiveModule;
+	public static synthetic fun copy$default (Lcom/infinum/arkive/metadata/model/ArkiveModule;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/infinum/arkive/metadata/model/ArkiveModule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDesignFileKey ()Ljava/lang/String;
+	public final fun getItems ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/infinum/arkive/metadata/model/ArkiveModule$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/infinum/arkive/metadata/model/ArkiveModule$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/infinum/arkive/metadata/model/ArkiveModule;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/infinum/arkive/metadata/model/ArkiveModule;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ArkiveModule$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ArkiveShowcase {
+	public static final field Companion Lcom/infinum/arkive/metadata/model/ArkiveShowcase$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/infinum/arkive/metadata/model/ArkiveShowcase;
+	public static synthetic fun copy$default (Lcom/infinum/arkive/metadata/model/ArkiveShowcase;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/infinum/arkive/metadata/model/ArkiveShowcase;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getModules ()Ljava/util/List;
+	public final fun getProjectName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/infinum/arkive/metadata/model/ArkiveShowcase$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/infinum/arkive/metadata/model/ArkiveShowcase$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/infinum/arkive/metadata/model/ArkiveShowcase;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/infinum/arkive/metadata/model/ArkiveShowcase;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ArkiveShowcase$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/Component {
+	public static final field Companion Lcom/infinum/arkive/metadata/model/Component$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Lcom/infinum/arkive/metadata/model/Component;
+	public static synthetic fun copy$default (Lcom/infinum/arkive/metadata/model/Component;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/infinum/arkive/metadata/model/Component;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDesignNodeId ()Ljava/lang/String;
+	public final fun getExtraMetadata ()Ljava/util/List;
+	public final fun getFileName ()Ljava/lang/String;
+	public final fun getFunctionName ()Ljava/lang/String;
+	public final fun getGroup ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPackageName ()Ljava/lang/String;
+	public final fun getTags ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/infinum/arkive/metadata/model/Component$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/infinum/arkive/metadata/model/Component$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/infinum/arkive/metadata/model/Component;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/infinum/arkive/metadata/model/Component;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/Component$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ComponentVariant {
+	public static final field Companion Lcom/infinum/arkive/metadata/model/ComponentVariant$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/infinum/arkive/metadata/model/ComponentVariant;
+	public static synthetic fun copy$default (Lcom/infinum/arkive/metadata/model/ComponentVariant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/infinum/arkive/metadata/model/ComponentVariant;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getSnapshotPath ()Ljava/lang/String;
+	public final fun getVariant ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/infinum/arkive/metadata/model/ComponentVariant$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/infinum/arkive/metadata/model/ComponentVariant$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/infinum/arkive/metadata/model/ComponentVariant;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/infinum/arkive/metadata/model/ComponentVariant;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ComponentVariant$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ComponentsMetaData {
+	public static final field Companion Lcom/infinum/arkive/metadata/model/ComponentsMetaData$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/infinum/arkive/metadata/model/ComponentsMetaData;
+	public static synthetic fun copy$default (Lcom/infinum/arkive/metadata/model/ComponentsMetaData;Ljava/util/List;ILjava/lang/Object;)Lcom/infinum/arkive/metadata/model/ComponentsMetaData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponents ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/infinum/arkive/metadata/model/ComponentsMetaData$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/infinum/arkive/metadata/model/ComponentsMetaData$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/infinum/arkive/metadata/model/ComponentsMetaData;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/infinum/arkive/metadata/model/ComponentsMetaData;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ComponentsMetaData$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ShowcaseItem {
+	public static final field Companion Lcom/infinum/arkive/metadata/model/ShowcaseItem$Companion;
+	public fun <init> (Lcom/infinum/arkive/metadata/model/Component;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Lcom/infinum/arkive/metadata/model/Component;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Lcom/infinum/arkive/metadata/model/Component;Ljava/lang/String;Ljava/util/List;)Lcom/infinum/arkive/metadata/model/ShowcaseItem;
+	public static synthetic fun copy$default (Lcom/infinum/arkive/metadata/model/ShowcaseItem;Lcom/infinum/arkive/metadata/model/Component;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/infinum/arkive/metadata/model/ShowcaseItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponent ()Lcom/infinum/arkive/metadata/model/Component;
+	public final fun getSnapshotPath ()Ljava/lang/String;
+	public final fun getVariants ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/infinum/arkive/metadata/model/ShowcaseItem$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/infinum/arkive/metadata/model/ShowcaseItem$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/infinum/arkive/metadata/model/ShowcaseItem;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/infinum/arkive/metadata/model/ShowcaseItem;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/infinum/arkive/metadata/model/ShowcaseItem$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

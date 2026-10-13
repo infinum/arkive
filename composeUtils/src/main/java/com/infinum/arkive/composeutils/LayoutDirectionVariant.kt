@@ -12,7 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 
 @Composable
-fun LayoutDirectionVariant(
+public fun LayoutDirectionVariant(
     isLtr: Boolean,
     component: @Composable () -> Unit,
 ) {
@@ -25,7 +25,7 @@ fun LayoutDirectionVariant(
 
 @Preview
 @Composable
-fun PreviewEnglishLtrLayoutDirectionVariant() {
+private fun PreviewEnglishLtrLayoutDirectionVariant() {
     LayoutDirectionVariant(isLtr = true) {
         Button(onClick = {}) {
             Text(
@@ -39,7 +39,7 @@ fun PreviewEnglishLtrLayoutDirectionVariant() {
 
 @Preview
 @Composable
-fun PreviewEnglishRtlLayoutDirectionVariant() {
+private fun PreviewEnglishRtlLayoutDirectionVariant() {
     LayoutDirectionVariant(isLtr = false) {
         Button(onClick = {}) {
             Text(
@@ -53,7 +53,7 @@ fun PreviewEnglishRtlLayoutDirectionVariant() {
 
 @Preview
 @Composable
-fun PreviewArabicLtrLayoutDirectionVariant() {
+private fun PreviewArabicLtrLayoutDirectionVariant() {
     LayoutDirectionVariant(isLtr = true) {
         Button(onClick = {}) {
             Text(
@@ -67,7 +67,7 @@ fun PreviewArabicLtrLayoutDirectionVariant() {
 
 @Preview
 @Composable
-fun PreviewArabicRtlLayoutDirectionVariant() {
+private fun PreviewArabicRtlLayoutDirectionVariant() {
     LayoutDirectionVariant(isLtr = false) {
         Button(onClick = {}) {
             Text(

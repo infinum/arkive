@@ -20,7 +20,7 @@ import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.testing.Test
 import org.gradle.process.CommandLineArgumentProvider
 
-class ArkivePlugin : Plugin<Project> {
+public class ArkivePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         if (project == project.rootProject) {
             // Root application hosts the aggregate task. It must be registered eagerly:
@@ -360,7 +360,7 @@ class ArkivePlugin : Plugin<Project> {
             }
     }
 
-    companion object {
+    private companion object {
         private const val PLUGIN_ID = "com.infinum.arkive"
         private const val VERIFY_SHOWCASE_TASK = "verifyShowcase"
         private const val GENERATED_TEST_CLASS = "com.infinum.arkive.ArkiveSnapshotTestGenerator"

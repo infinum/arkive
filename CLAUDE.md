@@ -47,6 +47,8 @@ Gradle).
   `./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build`
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
+- Regenerate public-API dumps after an intentional API change: `./gradlew updateKotlinAbi`
+  (see "Public API tracking")
 - Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
   unit suite so far — it covers the showcase filename parsing)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
@@ -90,6 +92,33 @@ explicit `group`/`version` assignment, because the publish plugin only sets
 *publication* coordinates — without it the plugin jar ships "unspecified" dependency
 coordinates. Per-module artifact ids/names live in each module's `gradle.properties`
 (`POM_ARTIFACT_ID`/`POM_NAME`/`POM_DESCRIPTION`); shared POM fields in the root one.
+
+## Public API tracking
+
+Every published module compiles in **explicit API mode** (`explicitApi()` in its `kotlin {}`
+block): effectively-public declarations must say `public`, so nothing leaks by default.
+The intended surface is small — keep everything else `internal`:
+- plugin: `ArkivePlugin` + the DSL (`ArkiveExtension`, the selectors,
+  `RoborazziEngineOptions`, `SnapshotRetention`). Task types and KSP-arg constants are internal.
+- processor/testprocessor: only the `SymbolProcessorProvider`s (ServiceLoader needs them public).
+- metadata: all models + `toJson`/`fromJson` (processor and plugin use them across
+  artifacts); the backing `json` is `@PublishedApi internal`.
+- composeUtils: the `*Variant` wrappers generated code calls; its `@Preview`s are private.
+- annotations: both annotations.
+
+ABI dumps come from **KGP's built-in ABI validation** (`abiValidation { enabled }`, opt-in
+`ExperimentalAbiValidation`), not the binary-compatibility-validator plugin — it adds nothing
+to this build's deliberately fragile classpath. Dumps live in `<module>/api/` (`annotations`
+also has a `.klib.api` for the non-JVM targets; Linux hosts infer the Apple targets from it).
+`check` runs `checkKotlinAbi`, so CI's module build enforces them; after an intentional
+change run `./gradlew updateKotlinAbi` and commit the diff. A removed/changed line is a
+breaking change (see Version bumping). `config/detekt.yml` turns off
+`RedundantVisibilityModifierRule`, which fights explicit API mode without type resolution.
+
+**composeUtils has no dump**: under AGP 9's built-in Kotlin, KGP never registers its ABI
+setup action, so `abiValidation` doesn't exist there (verified on KGP 2.3.21). Explicit API
+mode still applies. Its wrappers are only called by code generated in the same build
+against the same Arkive version, so cross-version binary drift can't reach consumers.
 
 ## Compatibility constraints (do not remove)
 

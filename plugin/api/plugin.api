@@ -1,0 +1,42 @@
+public final class com/infinum/arkive/plugin/ArkivePlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public class com/infinum/arkive/plugin/extensions/ArkiveExtension {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
+	public final fun engine (Lcom/infinum/arkive/plugin/extensions/PaparazziSelector;)V
+	public final fun engine (Lcom/infinum/arkive/plugin/extensions/RoborazziSelector;)V
+	public final fun engine (Lcom/infinum/arkive/plugin/extensions/RoborazziSelector;Lorg/gradle/api/Action;)V
+	public final fun getDesignFileKey ()Lorg/gradle/api/provider/Property;
+	public final fun getEnablePreviewParameters ()Lorg/gradle/api/provider/Property;
+	public final fun getEnableVariants ()Lorg/gradle/api/provider/Property;
+	public final fun getMultiModuleVariant ()Lorg/gradle/api/provider/Property;
+	public final fun getPaparazzi ()Lcom/infinum/arkive/plugin/extensions/PaparazziSelector;
+	public final fun getRoborazzi ()Lcom/infinum/arkive/plugin/extensions/RoborazziSelector;
+	public final fun getSnapshotRetention ()Lorg/gradle/api/provider/Property;
+}
+
+public final class com/infinum/arkive/plugin/extensions/PaparazziSelector {
+	public static final field INSTANCE Lcom/infinum/arkive/plugin/extensions/PaparazziSelector;
+}
+
+public class com/infinum/arkive/plugin/extensions/RoborazziEngineOptions {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
+	public final fun getDevice ()Lorg/gradle/api/provider/Property;
+}
+
+public final class com/infinum/arkive/plugin/extensions/RoborazziSelector {
+	public static final field INSTANCE Lcom/infinum/arkive/plugin/extensions/RoborazziSelector;
+}
+
+public final class com/infinum/arkive/plugin/extensions/SnapshotRetention : java/lang/Enum {
+	public static final field ALL Lcom/infinum/arkive/plugin/extensions/SnapshotRetention;
+	public static final field BASE Lcom/infinum/arkive/plugin/extensions/SnapshotRetention;
+	public static final field NONE Lcom/infinum/arkive/plugin/extensions/SnapshotRetention;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/infinum/arkive/plugin/extensions/SnapshotRetention;
+	public static fun values ()[Lcom/infinum/arkive/plugin/extensions/SnapshotRetention;
+}
+

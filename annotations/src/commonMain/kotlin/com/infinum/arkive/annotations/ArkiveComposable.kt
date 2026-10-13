@@ -3,7 +3,7 @@ package com.infinum.arkive.annotations
 @MustBeDocumented
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.FUNCTION)
-annotation class ArkiveComposable(
+public annotation class ArkiveComposable(
     val name: String = "",
     val group: String = "",
     val skip: Boolean = false,

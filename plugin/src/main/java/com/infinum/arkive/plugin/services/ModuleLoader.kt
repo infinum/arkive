@@ -7,7 +7,7 @@ import org.gradle.api.logging.Logger
 
 private const val ARKIVE_SHOWCASE_FILE = "arkive-showcase.json"
 
-interface ModuleLoader {
+internal interface ModuleLoader {
     fun loadModules(outputDir: File): List<ArkiveModule>
 }
 
@@ -17,7 +17,7 @@ interface ModuleLoader {
  * time by the plugin — the loader itself never touches the Gradle model, so the task
  * stays configuration-cache safe.
  */
-class ModuleLoaderImpl(
+internal class ModuleLoaderImpl(
     private val moduleShowcaseDirs: Map<String, File>,
     private val logger: Logger,
 ) : ModuleLoader {

@@ -5,19 +5,19 @@ import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 
-open class ArkiveExtension @Inject constructor(
+public open class ArkiveExtension @Inject constructor(
     objects: ObjectFactory,
 ) {
-    val multiModuleVariant: Property<String> = objects.property(String::class.java)
+    public val multiModuleVariant: Property<String> = objects.property(String::class.java)
         .convention("")
 
-    val enablePreviewParameters: Property<Boolean> = objects.property(Boolean::class.java)
+    public val enablePreviewParameters: Property<Boolean> = objects.property(Boolean::class.java)
         .convention(true)
 
-    val enableVariants: Property<Boolean> = objects.property(Boolean::class.java)
+    public val enableVariants: Property<Boolean> = objects.property(Boolean::class.java)
         .convention(false)
 
-    val designFileKey: Property<String> = objects.property(String::class.java)
+    public val designFileKey: Property<String> = objects.property(String::class.java)
         .convention("")
 
     /**
@@ -25,16 +25,16 @@ open class ArkiveExtension @Inject constructor(
      * [SnapshotRetention.NONE] (default), [SnapshotRetention.BASE] for base-only golden
      * testing, or [SnapshotRetention.ALL].
      */
-    val snapshotRetention: Property<SnapshotRetention> = objects.property(SnapshotRetention::class.java)
+    public val snapshotRetention: Property<SnapshotRetention> = objects.property(SnapshotRetention::class.java)
         .convention(SnapshotRetention.NONE)
 
     /** Selector for [engine]: the Roborazzi engine (JDK 17+, renders CMP resources). */
     @Suppress("PropertyName", "VariableNaming")
-    val Roborazzi: RoborazziSelector = RoborazziSelector
+    public val Roborazzi: RoborazziSelector = RoborazziSelector
 
     /** Selector for [engine]: the Paparazzi engine (requires a JDK 21+ Gradle daemon). */
     @Suppress("PropertyName", "VariableNaming")
-    val Paparazzi: PaparazziSelector = PaparazziSelector
+    public val Paparazzi: PaparazziSelector = PaparazziSelector
 
     internal val roborazziOptions: RoborazziEngineOptions =
         objects.newInstance(RoborazziEngineOptions::class.java)
@@ -51,40 +51,40 @@ open class ArkiveExtension @Inject constructor(
      * `engine(...)` (and isn't covered by the `arkive.engine` property) fails the build.
      */
     @Suppress("UnusedParameter")
-    fun engine(selector: RoborazziSelector, action: Action<RoborazziEngineOptions>) {
+    public fun engine(selector: RoborazziSelector, action: Action<RoborazziEngineOptions>) {
         action.execute(roborazziOptions)
         onEngineSelected(ENGINE_ROBORAZZI)
     }
 
     /** Selects the Roborazzi engine with default options. */
     @Suppress("UnusedParameter")
-    fun engine(selector: RoborazziSelector) {
+    public fun engine(selector: RoborazziSelector) {
         onEngineSelected(ENGINE_ROBORAZZI)
     }
 
     /** Selects the Paparazzi engine. Requires a JDK 21+ Gradle daemon. */
     @Suppress("UnusedParameter")
-    fun engine(selector: PaparazziSelector) {
+    public fun engine(selector: PaparazziSelector) {
         onEngineSelected(ENGINE_PAPARAZZI)
     }
 
-    companion object {
-        const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
-        const val ENABLE_VARIANTS = "enableVariants"
-        const val DEVICE = "arkive.device"
-        const val ENGINE_ROBORAZZI = "roborazzi"
-        const val ENGINE_PAPARAZZI = "paparazzi"
+    internal companion object {
+        internal const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
+        internal const val ENABLE_VARIANTS = "enableVariants"
+        internal const val DEVICE = "arkive.device"
+        internal const val ENGINE_ROBORAZZI = "roborazzi"
+        internal const val ENGINE_PAPARAZZI = "paparazzi"
     }
 }
 
 /** Type-safe selector token for `engine(Roborazzi) { ... }`. */
-object RoborazziSelector
+public object RoborazziSelector
 
 /** Type-safe selector token for `engine(Paparazzi)`. */
-object PaparazziSelector
+public object PaparazziSelector
 
 /** Engine-scoped options: everything here only makes sense on the Roborazzi engine. */
-open class RoborazziEngineOptions @Inject constructor(
+public open class RoborazziEngineOptions @Inject constructor(
     objects: ObjectFactory,
 ) {
     /**
@@ -94,6 +94,6 @@ open class RoborazziEngineOptions @Inject constructor(
      * `w1920dp-h1080dp-mdpi`. Changing it regenerates the test and re-records —
      * goldens recorded on another device won't match.
      */
-    val device: Property<String> = objects.property(String::class.java)
+    public val device: Property<String> = objects.property(String::class.java)
         .convention("")
 }
