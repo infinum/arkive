@@ -178,7 +178,10 @@ directory afterwards:
   containing just `internal object ArkivePlaceholder` — in `src/test/java` (android) or
   `src/androidHostTest/kotlin` (KMP).
 - Private previews never reach the catalogue — raise them to `internal`.
-- Arkive applies the selected engine's Gradle plugin itself — the consumer must not apply
-  a conflicting Roborazzi/Paparazzi version.
+- Arkive applies the selected engine's Gradle plugin itself, and never carries one on its
+  own classpath: a Roborazzi/Paparazzi plugin the consumer already applies or declares
+  (e.g. `apply false` in the root build) is used as-is, any version; otherwise Arkive
+  resolves its tested version from the project's repositories (needs `mavenCentral()`);
+  if that fails, the error names the plugin line to add.
 - Latest published version: `https://repo1.maven.org/maven2/com/infinum/arkive/plugin/maven-metadata.xml`
   (`<latest>` element). Always pin a concrete version in the consumer's build.

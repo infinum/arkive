@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.arkive)
     alias(libs.plugins.detekt.plugin)
+    // The consumer's own engine plugin: Arkive must use it rather than provide one.
+    alias(libs.plugins.roborazzi)
 }
 
 arkive {

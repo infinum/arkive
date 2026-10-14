@@ -110,9 +110,11 @@ plugins {
 ```
 
 An `arkive { engine(…) }` block per module is mandatory — the build fails until you
-choose a snapshot engine (see [Engines](#engines)). Don't apply Roborazzi or Paparazzi
-yourself — Arkive brings its own. Toolchain prerequisites are listed under
-[Requirements](#requirements).
+choose a snapshot engine (see [Engines](#engines)). You don't need to declare Roborazzi
+or Paparazzi — Arkive applies the selected engine's plugin, and if your build already
+has one, Arkive uses yours (see
+[Already using Roborazzi or Paparazzi?](#already-using-roborazzi-or-paparazzi)).
+Toolchain prerequisites are listed under [Requirements](#requirements).
 
 ### Kotlin Multiplatform / Compose Multiplatform
 
@@ -312,9 +314,18 @@ those tests — the build fails fast with an explanation if it is.
 
 ### Already using Roborazzi or Paparazzi?
 
-Arkive coexists with an existing snapshot-testing setup — but don't apply the engine's
-plugin yourself alongside Arkive; Arkive applies the one the `arkive.engine` property
-selects (an existing application is detected, just keep versions from conflicting):
+Arkive coexists with an existing snapshot-testing setup and keeps your engine version.
+It never ships an engine plugin on its own classpath; for the selected engine it:
+
+- uses the plugin your module already applies, or the one on your build classpath
+  (e.g. declared `apply false` in the root build) — your version wins;
+- otherwise resolves it itself — Roborazzi 1.72.0 / Paparazzi 2.0.0-alpha05, the
+  versions Arkive is tested against — from your project's repositories (needs
+  `mavenCentral()`, which Android builds already have). If that ever fails, the error
+  shows the one line that declares the engine yourself.
+
+On Roborazzi, Arkive also adds the 1.72.0 test runtime, so Gradle resolves your module's
+Roborazzi runtime to the newer of yours and Arkive's. Beyond that:
 
 - Your own tests, goldens, and `recordRoborazzi`/`verifyRoborazzi` (or
   `recordPaparazzi`/`verifyPaparazzi`) workflows keep working unchanged. Arkive only ever

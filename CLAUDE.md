@@ -101,13 +101,28 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
   is the compiler version itself (2.3.21). Removing any of it silently breaks consumers.
   AGP 8 consumers and the classic KMP layout (`kotlin.multiplatform` +
   `com.android.library`, which AGP 9 rejects outright) are served by Arkive 0.0.3.
-- Both engine plugins (Paparazzi AND Roborazzi) must stay `runtimeOnly` in `:plugin` and
-  OFF the root buildscript classpath — nothing in this build applies them, and their
-  transitive android-tools jars would fight the root build's AGP on the classpath.
-  Paparazzi's dependency additionally carries a `TargetJvmVersion=21` attribute
-  override: this build targets 17 and strict variant matching would otherwise refuse to
-  resolve Paparazzi's Java-21 metadata. The jar is harmless on a consumer's 17 daemon as
-  long as its classes never load (engine=roborazzi).
+- Neither engine plugin (Paparazzi NOR Roborazzi) may be a dependency of `:plugin` — not
+  even `runtimeOnly`. Runtime deps are published, so the engine jars (with their plugin
+  descriptors) landed on every consumer's build classpath: consumers declaring their own
+  engine either had it silently replaced by ours (same scope; Paparazzi 2 is Java 21
+  bytecode, so JDK 17 builds broke) or failed plugin resolution with "already on the
+  classpath with an unknown version" (Arkive in a parent scope — which the README's
+  root application creates). `EnginePluginProvisioning` supplies the engine at apply
+  time instead: the module's own applied plugin → the plugin on its build classpath
+  (consumer's version wins) → else resolve the catalog's version (stamped into
+  `arkive.properties`) via a detached configuration, instrument the jars with
+  `CachedClasspathTransformer` + `InstrumentingClassTransform`, and apply it from a
+  locked child of the module's `ClassLoaderScope` — all INTERNAL Gradle API, each layer
+  load-bearing (found the hard way, both on `:sample`):
+  a plain `URLClassLoader` fails task validation ("loaded with an unknown classloader" —
+  Gradle can't fingerprint Roborazzi's test-task action); a scope over RAW jars passes
+  that but breaks the configuration cache (Roborazzi's `onlyIf` lambdas are hidden
+  classes the cache can't load back — instrumentation makes lambdas serializable, as
+  Gradle does for every build-script classpath). Verified on `:sample` (provisioned
+  Roborazzi): store, load, and "Reusing configuration cache". A Gradle that changes these internals
+  yields a LinkageError/ServiceLookupException → an error telling the consumer to
+  declare the plugin (step 2, no internals). The engines also stay OFF the root
+  buildscript classpath — their transitive android-tools jars would fight this build's AGP.
 - **All modules target JDK 17 bytecode** (explicit `JavaVersion.VERSION_17` +
   `jvmTarget = JVM_17`; the annotations jvm target pins it via `compilations.all`).
   Consumers commonly pin their Gradle JDK to 17 (Studio sync runs the plugin in that
@@ -157,7 +172,9 @@ Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../eng
   tasks per build variant on `android {}` flavors but after the test task on the AGP KMP
   library plugin (`recordRoborazziAndroidHostTest`, NOT `...AndroidMain`).
 - The Roborazzi engine injects roborazzi/roborazzi-compose/robolectric/ui-test-junit4
-  into the adapter's test configuration (versions hardcoded in `RoborazziEngine`), flips
+  into the adapter's test configuration (roborazzi at `ArkiveVersion.roborazzi`, the
+  catalog version stamped into `arkive.properties`; robolectric/ui-test-junit4
+  hardcoded in `RoborazziEngine`), flips
   `includeAndroidResources` reflectively on `android {}` flavors, and declares the golden
   dir as a test-task input — without that, editing a golden leaves the test UP-TO-DATE
   and verify silently "passes" (found the hard way).
@@ -232,8 +249,8 @@ Modules and how they compose at a consumer's build time:
   (`ArkiveShowcase` → modules → items → component + variants).
 - **composeUtils** — runtime wrappers the generated variant code composes previews in
   (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`); on the consumer's classpath.
-- **plugin** — applies the selected engine's plugin by id (kept off the consumer's
-  compile classpath), injects the runtime/KSP dependencies at `ArkiveVersion.current`,
+- **plugin** — applies the selected engine's plugin (the consumer's if it has one,
+  otherwise provisioned — see Compatibility constraints), injects the runtime/KSP dependencies at `ArkiveVersion.current`,
   forwards extension flags (`enablePreviewParameters`, `enableVariants`) and the engine
   name as KSP args, `snapshotRetention` as the `arkive.snapshot.retention` system property
   and the adapter's golden dir as `arkive.snapshots.dir` on the consumer's Test tasks
