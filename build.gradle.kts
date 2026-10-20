@@ -113,13 +113,15 @@ allprojects {
 // versions are chosen by the Kotlin Gradle plugin, so without these resolutions the only
 // other way to move them is a Kotlin upgrade, which the klib floor rules out.
 //
-// After changing these, regenerate the lock: ./gradlew kotlinUpgradeYarnLock
+// After changing these, regenerate the lock: ./gradlew kotlinUpgradeYarnLock --rerun-tasks
+// (rootPackageJson doesn't track resolutions as an input, so a plain run stays UP-TO-DATE).
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java).configureEach {
     rootProject.extensions.configure(
         org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension::class.java,
     ) {
         resolution("js-yaml", "4.3.2") // CVE-2026-84375
-        resolution("serialize-javascript", "7.1.1") // GHSA-5c6j-r48x-rmvq, CVE-2026-34043
+        resolution("serialize-javascript", "7.1.2") // GHSA-5c6j-r48x-rmvq, CVE-2026-34043, CVE-2026-97711
         resolution("diff", "8.0.3") // CVE-2026-24001
+        resolution("brace-expansion", "2.1.7") // CVE-2026-102276, CVE-2026-102277, CVE-2026-102278
     }
 }
