@@ -30,6 +30,7 @@ buildscript {
             classpath("org.apache.commons:commons-lang3:3.18.0")
             classpath("org.jdom:jdom2:2.0.6.1")
             classpath("org.bitbucket.b_c:jose4j:0.9.7")
+            classpath("com.google.guava:guava:33.7.2-jre")
         }
     }
 }
@@ -58,8 +59,9 @@ allprojects {
 //
 // Upgrading the DECLARING plugin does not fix any of them: AGP 9.4.1 (the newest) still
 // ships bouncycastle 1.80.2 — below the 1.84/1.85 these advisories need — along with the
-// same jetifier-processor 1.0.0-beta10 and bundletool 1.18.3 as 9.3.1, and Dokka's only
-// jsoup fix is in the 2.3.0-Beta prerelease. Pinning the transitives is the fix.
+// same jetifier-processor 1.0.0-beta10, bundletool 1.18.3 and guava 33.4.0 as 9.3.1,
+// and Dokka's only jsoup fix is in the 2.3.0-Beta prerelease. Pinning the transitives is
+// the fix.
 //
 // :plugin repeats the Paparazzi-side coordinates as published dependency CONSTRAINTS,
 // because only constraints travel to consumers via Gradle Module Metadata.
@@ -73,6 +75,7 @@ val securityFloors = mapOf(
     "org.jdom:jdom2" to "2.0.6.1",
     "org.bitbucket.b_c:jose4j" to "0.9.7",
     "org.jsoup:jsoup" to "1.23.2",
+    "com.google.guava:guava" to "33.7.2-jre",
 )
 
 // Raise only, never lower: if a plugin ever ships something newer than a floor, it wins.
@@ -120,7 +123,8 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.j
         org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension::class.java,
     ) {
         resolution("js-yaml", "4.3.2") // CVE-2026-84375
-        resolution("serialize-javascript", "7.1.2") // GHSA-5c6j-r48x-rmvq, CVE-2026-34043, CVE-2026-97711
+        // 7.1.3: a function body ending in a bare </script was emitted unescaped (XSS)
+        resolution("serialize-javascript", "7.1.3") // GHSA-5c6j-r48x-rmvq, CVE-2026-34043, CVE-2026-97711
         resolution("diff", "8.0.3") // CVE-2026-24001
         resolution("brace-expansion", "2.1.7") // CVE-2026-102276, CVE-2026-102277, CVE-2026-102278
     }
