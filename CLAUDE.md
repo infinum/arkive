@@ -278,9 +278,15 @@ Everything flavor-specific lives behind `ConsumerAdapter`
   rejects this layout outright, and 0.0.4+ requires AGP 9, so the adapter is
   effectively dormant (kept for reference; classic-layout consumers use 0.0.3).
   Selection: the
-  android plugin id alone is ambiguous, so `select` arms both Kotlin hooks
-  (`kotlin-android` → plain, `kotlin.multiplatform` → legacy) with an afterEvaluate
-  fallback to plain (built-in Kotlin / java-only).
+  android plugin id alone is ambiguous, so `select` decides in AGP's `finalizeDsl`
+  (`kotlin.multiplatform` applied → legacy, anything else → plain). One decision point
+  for built-in Kotlin, `kotlin-android` and java-only alike — the samples run
+  `android.builtInKotlin=false` + `kotlin-android`, so a separate built-in-Kotlin path
+  would go untested. **Never `afterEvaluate`** here: AGP locks `onVariants` in its own
+  afterEvaluate, registered before any `withPlugin(android)` hook runs ("too late to add
+  actions"). Anything configured from the callback — including an engine plugin applied
+  via the `arkive.engine` property — can't call `finalizeDsl` itself (AGP throws "too
+  late to call `finalizeDsl`"); Roborazzi 1.72/1.77 and Paparazzi 2.0.0-alpha05 don't.
 
 **klib forward-compatibility (both KMP adapters):** annotations klibs are built with the
 repo's Kotlin and are NOT readable by consumers on older Kotlin — merely being on the
