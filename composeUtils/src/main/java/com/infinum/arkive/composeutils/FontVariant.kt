@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.Density
 private const val PREVIEW_TEXT = "Hello, World"
 
 @Composable
-fun FontVariant(
+public fun FontVariant(
     scale: Float,
     component: @Composable () -> Unit,
 ) {
@@ -27,7 +27,7 @@ fun FontVariant(
 
 @Preview
 @Composable
-fun PreviewFontVariant() {
+private fun PreviewFontVariant() {
     FontVariant(1f) {
         Button(onClick = {}) {
             Text(PREVIEW_TEXT)
@@ -37,7 +37,7 @@ fun PreviewFontVariant() {
 
 @Preview
 @Composable
-fun Preview2xFontVariant() {
+private fun Preview2xFontVariant() {
     FontVariant(2f) {
         Button(onClick = {}) {
             Text(PREVIEW_TEXT)
@@ -47,7 +47,7 @@ fun Preview2xFontVariant() {
 
 @Preview
 @Composable
-fun Preview3xFontVariant() {
+private fun Preview3xFontVariant() {
     FontVariant(3f) {
         Button(onClick = {}) {
             Text(PREVIEW_TEXT)

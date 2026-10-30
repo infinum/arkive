@@ -18,7 +18,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
  * [EngineTestGenerator] — this processor only reads the `arkive.engine` KSP arg
  * (forwarded by the Arkive Gradle plugin) and writes whatever the generator builds.
  */
-class ArkiveTestProcessor internal constructor(
+internal class ArkiveTestProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val generator: EngineTestGenerator,
@@ -51,7 +51,7 @@ class ArkiveTestProcessor internal constructor(
     }
 }
 
-class ArkiveTestProcessorProvider : SymbolProcessorProvider {
+public class ArkiveTestProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor = ArkiveTestProcessor(

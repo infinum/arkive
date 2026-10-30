@@ -4,11 +4,11 @@ import com.infinum.arkive.metadata.model.ComponentVariant
 import com.infinum.arkive.metadata.model.ComponentsMetaData
 import com.infinum.arkive.metadata.model.ShowcaseItem
 
-interface ShowcaseGenerator {
+internal interface ShowcaseGenerator {
     fun generateShowcase(snapshots: List<String>, metadata: ComponentsMetaData): List<ShowcaseItem>
 }
 
-class ShowcaseGeneratorImpl(
+internal class ShowcaseGeneratorImpl(
     private val onMissingSnapshot: (String) -> Unit = {},
     private val onMalformedVariant: (String) -> Unit = {},
 ) : ShowcaseGenerator {

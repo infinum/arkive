@@ -1,0 +1,41 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64, js, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, watchosArm32, watchosArm64, watchosSimulatorArm64, watchosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.infinum.arkive:annotations>
+open annotation class com.infinum.arkive.annotations/ArkiveComposable : kotlin/Annotation { // com.infinum.arkive.annotations/ArkiveComposable|null[0]
+    constructor <init>(kotlin/String = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Array<kotlin/String> = ..., kotlin/Array<kotlin/String> = ..., kotlin/String = ...) // com.infinum.arkive.annotations/ArkiveComposable.<init>|<init>(kotlin.String;kotlin.String;kotlin.Boolean;kotlin.Array<kotlin.String>;kotlin.Array<kotlin.String>;kotlin.String){}[0]
+
+    final val designNodeId // com.infinum.arkive.annotations/ArkiveComposable.designNodeId|{}designNodeId[0]
+        final fun <get-designNodeId>(): kotlin/String // com.infinum.arkive.annotations/ArkiveComposable.designNodeId.<get-designNodeId>|<get-designNodeId>(){}[0]
+    final val extraMetadata // com.infinum.arkive.annotations/ArkiveComposable.extraMetadata|{}extraMetadata[0]
+        final fun <get-extraMetadata>(): kotlin/Array<kotlin/String> // com.infinum.arkive.annotations/ArkiveComposable.extraMetadata.<get-extraMetadata>|<get-extraMetadata>(){}[0]
+    final val group // com.infinum.arkive.annotations/ArkiveComposable.group|{}group[0]
+        final fun <get-group>(): kotlin/String // com.infinum.arkive.annotations/ArkiveComposable.group.<get-group>|<get-group>(){}[0]
+    final val name // com.infinum.arkive.annotations/ArkiveComposable.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.infinum.arkive.annotations/ArkiveComposable.name.<get-name>|<get-name>(){}[0]
+    final val skip // com.infinum.arkive.annotations/ArkiveComposable.skip|{}skip[0]
+        final fun <get-skip>(): kotlin/Boolean // com.infinum.arkive.annotations/ArkiveComposable.skip.<get-skip>|<get-skip>(){}[0]
+    final val tags // com.infinum.arkive.annotations/ArkiveComposable.tags|{}tags[0]
+        final fun <get-tags>(): kotlin/Array<kotlin/String> // com.infinum.arkive.annotations/ArkiveComposable.tags.<get-tags>|<get-tags>(){}[0]
+}
+
+open annotation class com.infinum.arkive.annotations/ArkiveView : kotlin/Annotation { // com.infinum.arkive.annotations/ArkiveView|null[0]
+    constructor <init>(kotlin/String = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Array<kotlin/String> = ..., kotlin/Array<kotlin/String> = ..., kotlin/String = ...) // com.infinum.arkive.annotations/ArkiveView.<init>|<init>(kotlin.String;kotlin.String;kotlin.Boolean;kotlin.Array<kotlin.String>;kotlin.Array<kotlin.String>;kotlin.String){}[0]
+
+    final val designNodeId // com.infinum.arkive.annotations/ArkiveView.designNodeId|{}designNodeId[0]
+        final fun <get-designNodeId>(): kotlin/String // com.infinum.arkive.annotations/ArkiveView.designNodeId.<get-designNodeId>|<get-designNodeId>(){}[0]
+    final val extraMetadata // com.infinum.arkive.annotations/ArkiveView.extraMetadata|{}extraMetadata[0]
+        final fun <get-extraMetadata>(): kotlin/Array<kotlin/String> // com.infinum.arkive.annotations/ArkiveView.extraMetadata.<get-extraMetadata>|<get-extraMetadata>(){}[0]
+    final val group // com.infinum.arkive.annotations/ArkiveView.group|{}group[0]
+        final fun <get-group>(): kotlin/String // com.infinum.arkive.annotations/ArkiveView.group.<get-group>|<get-group>(){}[0]
+    final val name // com.infinum.arkive.annotations/ArkiveView.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.infinum.arkive.annotations/ArkiveView.name.<get-name>|<get-name>(){}[0]
+    final val skip // com.infinum.arkive.annotations/ArkiveView.skip|{}skip[0]
+        final fun <get-skip>(): kotlin/Boolean // com.infinum.arkive.annotations/ArkiveView.skip.<get-skip>|<get-skip>(){}[0]
+    final val tags // com.infinum.arkive.annotations/ArkiveView.tags|{}tags[0]
+        final fun <get-tags>(): kotlin/Array<kotlin/String> // com.infinum.arkive.annotations/ArkiveView.tags.<get-tags>|<get-tags>(){}[0]
+}

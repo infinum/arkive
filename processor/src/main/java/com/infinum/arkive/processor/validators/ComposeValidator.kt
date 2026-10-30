@@ -9,7 +9,7 @@ import com.google.devtools.ksp.symbol.Modifier
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.specs.ComposeVariantSpec.Companion.PREVIEW_PARAMETER_ANNOTATION_NAMES
 
-class ComposeValidator(
+internal class ComposeValidator(
     private val logger: KSPLogger,
 ) : Validator<ComposeHolder> {
     private val KSDeclaration.hasValidScope: Boolean

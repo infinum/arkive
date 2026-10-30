@@ -8,7 +8,7 @@ import com.infinum.arkive.metadata.toJson
 import com.infinum.arkive.processor.models.Holder
 import java.io.File
 
-class MetaDataSpec(
+internal class MetaDataSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<Holder>,
 ) : Spec {

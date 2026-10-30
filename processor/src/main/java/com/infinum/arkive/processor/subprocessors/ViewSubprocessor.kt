@@ -7,7 +7,7 @@ import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.repository.ComponentRepository
 import com.infinum.arkive.processor.specs.ViewSpec
 
-class ViewSubprocessor(
+internal class ViewSubprocessor(
     private val componentRepository: ComponentRepository,
 ) : Subprocessor {
     override fun process(

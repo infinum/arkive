@@ -13,7 +13,7 @@ import com.infinum.arkive.processor.subprocessors.ComposeSubprocessor
 import com.infinum.arkive.processor.subprocessors.MetaDataSubprocessor
 import com.infinum.arkive.processor.subprocessors.ViewSubprocessor
 
-class ArkiveProcessor(
+internal class ArkiveProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val options: ArkiveOptions,
@@ -42,7 +42,7 @@ class ArkiveProcessor(
     }
 }
 
-class ArkiveProcessorProvider : SymbolProcessorProvider {
+public class ArkiveProcessorProvider : SymbolProcessorProvider {
     override fun create(
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor {
@@ -61,7 +61,7 @@ class ArkiveProcessorProvider : SymbolProcessorProvider {
         )
     }
 
-    companion object {
+    private companion object {
         private const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
         private const val ENABLE_VARIANTS = "enableVariants"
     }
