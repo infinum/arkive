@@ -2,6 +2,7 @@ package com.infinum.arkive.plugin.engines
 
 import com.infinum.arkive.plugin.consumers.ConsumerAdapter
 import com.infinum.arkive.plugin.consumers.addDependencyWhenConfigurationExists
+import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -12,22 +13,27 @@ import org.gradle.api.Project
  * into. The engine also names itself into a KSP arg so the test processor generates
  * the matching test class.
  *
- * Selection happens eagerly at plugin apply time from the `arkive.engine` Gradle
- * property (module or root `gradle.properties`, or `-Parkive.engine=`) — a property,
- * NOT the `arkive {}` DSL, for two reasons:
- * - The engine's Gradle plugin must be applied while AGP's variant API is still open;
- *   extension values are only readable at afterEvaluate, which is too late.
- * - Only the chosen engine's classes ever load. Paparazzi ships Java 21 bytecode, so a
- *   consumer on a JDK 17 Gradle daemon can use Arkive as long as Paparazzi's jar stays
- *   an unloaded classpath entry — property-based selection guarantees that.
+ * The engine's Gradle plugin is never on Arkive's own classpath: [apply] uses the
+ * consumer's when it has one and provides it otherwise (see [EnginePluginProvisioning]).
+ * Either way only the selected engine's classes ever load — Paparazzi ships Java 21
+ * bytecode, so that is what keeps a JDK 17 daemon on Roborazzi working.
  */
 internal interface SnapshotEngineAdapter {
 
     /** Property value, KSP arg value, and log-friendly name of the engine. */
     val engineName: String
 
-    /** Id of the engine's Gradle plugin, applied by id so it stays off compile classpaths. */
+    /** Id of the engine's Gradle plugin. */
     val pluginId: String
+
+    /** `group:name` of the engine's Gradle plugin artifact. */
+    val pluginModule: String
+
+    /** Version of the engine's Gradle plugin Arkive provides when the consumer has none. */
+    val pluginVersion: String
+
+    val pluginCoordinates: String
+        get() = "$pluginModule:$pluginVersion"
 
     /** The engine's snapshot-recording task for [variant] on [adapter]'s flavor. */
     fun recordTaskName(adapter: ConsumerAdapter, variant: String): String
@@ -36,9 +42,7 @@ internal interface SnapshotEngineAdapter {
     fun verifyTaskName(adapter: ConsumerAdapter, variant: String): String
 
     fun apply(project: Project) {
-        if (!project.pluginManager.hasPlugin(pluginId)) {
-            project.pluginManager.apply(pluginId)
-        }
+        EnginePluginProvisioning.apply(project, this)
     }
 
     /**
@@ -103,6 +107,9 @@ internal object PaparazziEngine : SnapshotEngineAdapter {
 
     override val engineName = NAME
     override val pluginId = "app.cash.paparazzi"
+    override val pluginModule = "app.cash.paparazzi:paparazzi-gradle-plugin"
+    override val pluginVersion: String
+        get() = ArkiveVersion.paparazzi
 
     override fun recordTaskName(adapter: ConsumerAdapter, variant: String) =
         "recordPaparazzi${variant.capFirst}"
@@ -121,7 +128,6 @@ internal object PaparazziEngine : SnapshotEngineAdapter {
 internal object RoborazziEngine : SnapshotEngineAdapter {
     const val NAME = "roborazzi"
 
-    private const val ROBORAZZI_VERSION = "1.72.0"
     private const val ROBOLECTRIC_DEPENDENCY = "org.robolectric:robolectric:4.15.1"
 
     // Compile floor for the compose test host; consumers on newer Compose win by
@@ -131,6 +137,11 @@ internal object RoborazziEngine : SnapshotEngineAdapter {
 
     override val engineName = NAME
     override val pluginId = "io.github.takahirom.roborazzi"
+    override val pluginModule = "io.github.takahirom.roborazzi:roborazzi-gradle-plugin"
+
+    // One version for the plugin Arkive provides and the runtime it injects.
+    override val pluginVersion: String
+        get() = ArkiveVersion.roborazzi
 
     override fun recordTaskName(adapter: ConsumerAdapter, variant: String) =
         "recordRoborazzi${adapter.roborazziTaskSuffix(variant)}"
@@ -145,8 +156,8 @@ internal object RoborazziEngine : SnapshotEngineAdapter {
 
     override fun wireTestDependencies(project: Project, testImplementationConfigurationName: String) {
         listOf(
-            "io.github.takahirom.roborazzi:roborazzi:$ROBORAZZI_VERSION",
-            "io.github.takahirom.roborazzi:roborazzi-compose:$ROBORAZZI_VERSION",
+            "io.github.takahirom.roborazzi:roborazzi:$pluginVersion",
+            "io.github.takahirom.roborazzi:roborazzi-compose:$pluginVersion",
             ROBOLECTRIC_DEPENDENCY,
             UI_TEST_JUNIT4_DEPENDENCY,
         ).forEach { notation ->

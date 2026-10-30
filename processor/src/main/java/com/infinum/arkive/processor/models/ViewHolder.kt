@@ -17,8 +17,8 @@ data class ViewHolder(
     override val fileName: String,
 ) : Holder {
     // This id should be used in the generated json file to include more info about the component.
-    // Dash-joined for the same reasons as ComposeHolder.functionId: uniqueness and
-    // unambiguous '_' boundaries in snapshot filenames.
+    // Dash-joined for the same reasons as ComposeHolder.functionId (uniqueness); see there
+    // for how '_' inside names is handled when snapshot files are matched back to ids.
     override val functionId: String
         get() {
             val validPackageName = packageName.replace('.', '-')

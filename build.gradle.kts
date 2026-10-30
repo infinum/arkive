@@ -15,9 +15,10 @@ buildscript {
         classpath(libs.kotlin.plugin)
         classpath(libs.dokka.plugin)
         classpath(libs.vanniktech.publish.plugin)
-        // Do NOT add paparazzi here: nothing in this build applies it (it is :plugin's
-        // implementation dependency only), and its newer com.android.tools jars would
-        // outrank this build's deliberately old AGP on the classpath and break it.
+        // Do NOT add paparazzi or roborazzi here: nothing in this build applies them (the
+        // published plugin provisions them at the consumer, see EnginePluginProvisioning),
+        // and Paparazzi's newer com.android.tools jars would outrank this build's
+        // deliberately old AGP on the classpath and break it.
 
         // Security floors for transitives the plugins above drag in — none of these is
         // declared by Arkive. They must be pinned HERE rather than by the securityFloors
@@ -63,8 +64,8 @@ allprojects {
 // and Dokka's only jsoup fix is in the 2.3.0-Beta prerelease. Pinning the transitives is
 // the fix.
 //
-// :plugin repeats the Paparazzi-side coordinates as published dependency CONSTRAINTS,
-// because only constraints travel to consumers via Gradle Module Metadata.
+// EnginePluginProvisioning (in :plugin) repeats the Paparazzi-side coordinates as
+// constraints on the classpath it resolves when it provides an engine to a consumer.
 val securityFloors = mapOf(
     "org.bouncycastle:bcprov-jdk18on" to "1.86",
     "org.bouncycastle:bcpkix-jdk18on" to "1.86",

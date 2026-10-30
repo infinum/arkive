@@ -6,24 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Arkive is a Gradle plugin (`com.infinum.arkive`) that generates a browsable web showcase
 ("catalogue") of an Android app's Compose previews and views, recording snapshots on the
-JVM through one of two engines: **Roborazzi (default)** or Paparazzi — see "Snapshot
-engines" below. Published to Maven Central under `com.infinum.arkive`.
+JVM through one of two engines, **Roborazzi** or **Paparazzi**, chosen per module (there
+is no default) — see "Snapshot engines" below. Published to Maven Central under `com.infinum.arkive`.
 
 ## Two builds, two toolchains (read first)
 
 The repo is **two Gradle builds**, deliberately:
 
-- **Root build** — the published modules. Pinned to the **oldest supported toolchain of
-  the AGP 9 era**: Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1 (compileOnly — the consumer
-  AGP floor). The Kotlin version here IS the public `@ArkiveComposable`-in-commonMain
-  floor: klibs are not forward-compatible, so the annotations klibs are only readable
-  by consumers on Kotlin ≥ the version that built them (2.3.21). **Do not bump this
+- **Root build** — the published modules, on a **deliberately pinned toolchain**:
+  Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1 (a compileOnly API dependency, not the consumer
+  floor — consumers need AGP 9.x; the samples run 9.2.1). The Kotlin version here IS
+  the public `@ArkiveComposable`-in-commonMain floor: klibs are not forward-compatible,
+  so the annotations klibs are only readable by consumers on Kotlin ≥ the version that
+  built them (2.3.21). **Do not bump this
   toolchain casually — raising it is a breaking change for KMP consumers.** (JVM
   artifacts are protected separately by the 2.2 language floor; AGP 9 itself requires
   KGP 2.2.10+, so no reachable consumer is below it.)
-- **`samples/`** — a standalone build with its own wrapper on the **newest toolchain**
-  (Gradle 9.6, AGP 9.2, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
-  samples simulate real consumers and prove the older-library/newer-consumer direction.
+- **`samples/`** — a standalone build with its own wrapper and `gradle/libs.versions.toml`
+  (Gradle 9.6.1, AGP 9.2.1, Kotlin 2.4.0, CMP 1.11.1, KSP 2.3.11). The samples simulate
+  real consumers; their Kotlin being NEWER than the root's is what proves the
+  older-library/newer-consumer direction.
 
 The samples consume the **published** plugin from mavenLocal, so bootstrap first:
 
@@ -38,15 +40,17 @@ stale mavenLocal jars are the most common source of "my change didn't take effec
 confusion. Use `--refresh-dependencies` on the consumer side after republishing the same
 version; if stale-jar symptoms persist (e.g. a FileNotFoundException about a
 `.kotlin_module` entry), also delete `~/.gradle/caches/modules-2/files-2.1/com.infinum.arkive`.
-Never run samples tasks through the root wrapper (`-p samples` would use the wrong
-Gradle).
+Always run samples tasks from `samples/` with its own wrapper, never via `-p samples` from
+the root — the two wrappers happen to match today (both 9.6.1), but the samples' Gradle is
+theirs to move independently.
 
 ## Commands
 
 - Build + test + detekt for all publishable modules:
   `./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build`
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
-  issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
+  issues allowed — includes formatting rules like trailing commas, and complexity rules
+  like no labeled expressions)
 - Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
   unit suite so far — it covers the showcase filename parsing)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
@@ -74,21 +78,23 @@ Gradle).
   CI bootstrap (`publishToMavenLocal`) works keyless. Published versions are immutable.
   There is no more `deployAll` and no OSSRH staging API dance.
 
-CI (`.github/workflows/quality_checks.yml`) runs the same bootstrap-then-build flow; the
-sample showcase deploys to GitHub Pages on merges to `main`.
+CI (`.github/workflows/quality_checks.yml`) runs the same bootstrap-then-build flow
+(detekt, the module builds, the samples' `generateWebShowcase`); a separate workflow,
+`deploy_showcase.yml`, publishes the sample showcase to GitHub Pages on pushes to `main`.
 
 ## Version bumping
 
 The version is declared in **two** places that must move together:
-`gradle.properties` (`VERSION_NAME`, the source of truth — the publish plugin and
-`config.gradle.kts`'s `releaseConfig` both read it) and
+`gradle.properties` (`VERSION_NAME`, the source of truth, read by the publish plugin;
+`config.gradle.kts`'s `releaseConfig` is unused) and
 `samples/gradle/libs.versions.toml` (`arkive` — the samples pin the published version
 like any consumer). Kotlin code never hardcodes it —
 `ArkiveVersion` reads `arkive.properties`, stamped by `processResources` from
-`project.version` in `plugin/build.gradle.kts`; that module (alone) must keep its
-explicit `group`/`version` assignment, because the publish plugin only sets
-*publication* coordinates — without it the plugin jar ships "unspecified" dependency
-coordinates. Per-module artifact ids/names live in each module's `gradle.properties`
+`project.version` in `plugin/build.gradle.kts`. `maven-publish.gradle` sets the
+*project's* `group`/`version` on every published module, because the publish plugin only
+sets *publication* coordinates — without it the plugin jar ships "unspecified" dependency
+coordinates and the KMP klib names in module metadata lose their version. Per-module
+artifact ids/names live in each module's `gradle.properties`
 (`POM_ARTIFACT_ID`/`POM_NAME`/`POM_DESCRIPTION`); shared POM fields in the root one.
 
 ## Compatibility constraints (do not remove)
@@ -96,18 +102,34 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
 - The root build's toolchain (Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1) is the
   compatibility mechanism — see "Two builds, two toolchains". The **Kotlin 2.2
   language/api floor** blocks in each module's build file keep the JVM metadata story
-  explicit (`coreLibrariesVersion = 2.2.21` on the JVM-only modules; :annotations must
-  NOT set it — the js/wasm/native stdlib ABI has to match the compiler). The klib floor
+  explicit (`coreLibrariesVersion = 2.2.21` on plugin, processor, testprocessor and
+  metadata; `:composeUtils` has the language/api floor but no `coreLibrariesVersion`;
+  :annotations must NOT set it — the js/wasm/native stdlib ABI has to match the compiler). The klib floor
   is the compiler version itself (2.3.21). Removing any of it silently breaks consumers.
   AGP 8 consumers and the classic KMP layout (`kotlin.multiplatform` +
   `com.android.library`, which AGP 9 rejects outright) are served by Arkive 0.0.3.
-- Both engine plugins (Paparazzi AND Roborazzi) must stay `runtimeOnly` in `:plugin` and
-  OFF the root buildscript classpath — nothing in this build applies them, and their
-  transitive android-tools jars would fight the root build's AGP on the classpath.
-  Paparazzi's dependency additionally carries a `TargetJvmVersion=21` attribute
-  override: this build targets 17 and strict variant matching would otherwise refuse to
-  resolve Paparazzi's Java-21 metadata. The jar is harmless on a consumer's 17 daemon as
-  long as its classes never load (engine=roborazzi).
+- Neither engine plugin (Paparazzi NOR Roborazzi) may be a dependency of `:plugin` — not
+  even `runtimeOnly`. Runtime deps are published, so the engine jars (with their plugin
+  descriptors) landed on every consumer's build classpath: consumers declaring their own
+  engine either had it silently replaced by ours (same scope; Paparazzi 2 is Java 21
+  bytecode, so JDK 17 builds broke) or failed plugin resolution with "already on the
+  classpath with an unknown version" (Arkive in a parent scope — which the README's
+  root application creates). `EnginePluginProvisioning` supplies the engine at apply
+  time instead: the module's own applied plugin → the plugin on its build classpath
+  (consumer's version wins) → else resolve the catalog's version (stamped into
+  `arkive.properties`) via a detached configuration, instrument the jars with
+  `CachedClasspathTransformer` + `InstrumentingClassTransform`, and apply it from a
+  locked child of the module's `ClassLoaderScope` — all INTERNAL Gradle API, each layer
+  load-bearing (found the hard way, both on `:sample`):
+  a plain `URLClassLoader` fails task validation ("loaded with an unknown classloader" —
+  Gradle can't fingerprint Roborazzi's test-task action); a scope over RAW jars passes
+  that but breaks the configuration cache (Roborazzi's `onlyIf` lambdas are hidden
+  classes the cache can't load back — instrumentation makes lambdas serializable, as
+  Gradle does for every build-script classpath). Verified on `:sample` (provisioned
+  Roborazzi): store, load, and "Reusing configuration cache". A Gradle that changes these internals
+  yields a LinkageError/ServiceLookupException → an error telling the consumer to
+  declare the plugin (step 2, no internals). The engines also stay OFF the root
+  buildscript classpath — their transitive android-tools jars would fight this build's AGP.
 - **All modules target JDK 17 bytecode** (explicit `JavaVersion.VERSION_17` +
   `jvmTarget = JVM_17`; the annotations jvm target pins it via `compilations.all`).
   Consumers commonly pin their Gradle JDK to 17 (Studio sync runs the plugin in that
@@ -117,20 +139,23 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
   consumers; the rest exist so a `commonMain` dependency resolves everywhere). Apple
   targets are built on a macOS host — deploys run from macOS; the Linux CI bootstrap
   skips them, and the samples only need the jvm artifact.
-  Dokka javadoc cannot render KMP modules, so `maven-publish.gradle` attaches empty
-  javadoc jars to KMP publications (kotlinx convention) — don't re-apply `dokka.gradle`
-  there.
-- `plugin/build.gradle.kts` sets `group`/`version` on the project itself — required for the
-  Gradle plugin marker POM. A deploy without it once published the marker as version
-  `unspecified` on Central (visible there forever).
+  Dokka javadoc cannot render KMP modules, so `:annotations` doesn't apply `dokka.gradle`
+  and the vanniktech publish plugin falls back to empty javadoc jars for its KMP
+  publications (kotlinx convention) — don't re-apply `dokka.gradle` there.
+- `maven-publish.gradle` sets `group`/`version` on every published *project* (not just
+  its publications) — required for the Gradle plugin marker POM and the KMP klib names.
+  A deploy without it once published the marker as version `unspecified` on Central
+  (visible there forever).
 - `:plugin` depends on `project(":metadata")`, not the published artifact (POM coordinates
   map correctly anyway); this keeps fresh checkouts buildable.
 - Root `build.gradle.kts` must NOT put the arkive plugin on the buildscript classpath.
 
 ## Snapshot engines
 
-Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../engines/`):
-`RoborazziEngine` (default) and `PaparazziEngine`. Selection, by priority:
+Engine behaviour lives behind `SnapshotEngineAdapter` (`plugin/.../engines/`):
+`RoborazziEngine` and `PaparazziEngine`. Selection, the Paparazzi JDK guard and the
+engine-scoped options live in `EngineSelection` (ArkivePlugin) and `ArkiveExtension`.
+Selection, by priority:
 1. the **`arkive.engine` Gradle property** (module or root gradle.properties, or `-P`) —
    overrides everything, with a warning when it conflicts with the DSL;
 2. the **`engine(Roborazzi) { …options… }` / `engine(Paparazzi)` DSL call** — selection
@@ -139,15 +164,19 @@ Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../eng
    chosen engine's plugin is applied on the spot. `Property.set`-style selection is
    impossible — property values are only readable at afterEvaluate, after the window;
 3. **there is NO default** — a module that selects nothing fails at afterEvaluate with an
-   instructive GradleException (the error text contains the exact block to paste). The
+   instructive GradleException (the error text contains the exact block to paste).
+   Caveat: only the PLUGIN enforces this — the testprocessor silently generates the
+   Roborazzi test when the `arkive.engine` KSP arg is absent or unrecognised
+   (`ArkiveTestProcessor`), e.g. when forwarding the KSP args failed (which only warns). The
    engine-read that enforces this must stay OUTSIDE the KSP-arg try/catch in
    ArkivePlugin.addExtension, or the error degrades into a warning. All engine-dependent
    wiring (test deps, KSP args, test-task config, task dependsOn) reads the selection at
    afterEvaluate/task-realization time, so it always follows the final choice. Only the
    chosen engine's classes ever load (Paparazzi is Java-21 bytecode; a JDK<21 daemon
    selecting paparazzi gets a clear GradleException, not UnsupportedClassVersionError).
-   The samples declare `engine(Roborazzi)` explicitly; flip either to paparazzi per-run
-   via `-Parkive.engine=paparazzi`.
+   The samples declare `engine(Roborazzi)` explicitly. `-Parkive.engine=paparazzi` flips
+   EVERY module of the run at once; to flip one, set `arkive.engine` in that module's
+   `gradle.properties`.
 
 - Per-engine JDK floor: roborazzi ⇒ Gradle JDK 17+; paparazzi ⇒ 21+ (alpha03+ bytecode).
 - The engine reaches the testprocessor as the `arkive.engine` KSP arg (so switching
@@ -157,7 +186,9 @@ Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../eng
   tasks per build variant on `android {}` flavors but after the test task on the AGP KMP
   library plugin (`recordRoborazziAndroidHostTest`, NOT `...AndroidMain`).
 - The Roborazzi engine injects roborazzi/roborazzi-compose/robolectric/ui-test-junit4
-  into the adapter's test configuration (versions hardcoded in `RoborazziEngine`), flips
+  into the adapter's test configuration (roborazzi at `ArkiveVersion.roborazzi`, the
+  catalog version stamped into `arkive.properties`; robolectric/ui-test-junit4
+  hardcoded in `RoborazziEngine`), flips
   `includeAndroidResources` reflectively on `android {}` flavors, and declares the golden
   dir as a test-task input — without that, editing a golden leaves the test UP-TO-DATE
   and verify silently "passes" (found the hard way).
@@ -182,12 +213,17 @@ Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../eng
   open item. It records via `captureRoboImage(filePath)` straight into the adapter's
   golden dir with the same `com.infinum.arkive_`-prefixed names, so
   grabber/retention/verify are engine-agnostic.
-  Its `@Before` reflectively runs `Robolectric.setupContentProvider(AndroidContextProvider)`
+  Its `@Before` runs `Robolectric.setupContentProvider(AndroidContextProvider)` (only the
+  provider class is looked up reflectively; ANY failure there is swallowed silently)
   — the CMP-resources context fix (Robolectric does not auto-create manifest providers in
   library unit tests; `PreviewContextConfigurationEffect` is inspection-mode-gated and
   does NOT work). Roborazzi's verify diff artifacts go to `build/outputs/roborazzi/`,
-  never the golden dir. The engine also defaults Test-task `maxHeapSize` to 2g when the
-  consumer set none (Robolectric's framework baseline alone drowns Gradle's 512m default).
+  never the golden dir.
+- Both engines (the base adapter's `configureTestTasks`) default EVERY `Test` task in the
+  module to `maxHeapSize = 2g` when it is null (Robolectric's framework baseline alone
+  drowns Gradle's 512m default; layoutlib too on large apps). Unverified: whether the
+  property is ever null — if Gradle stores its 512m default in it, the guard never fires.
+  Printing `maxHeapSize` from a consumer's Test task settles it.
 - testprocessor structure: `ArkiveTestProcessor` is engine-agnostic plumbing; each engine
   has its own generator class (`generators/PaparazziTestGenerator`,
   `generators/RoborazziTestGenerator` behind `EngineTestGenerator`) that owns its complete
@@ -209,22 +245,30 @@ Everything engine-specific lives behind `SnapshotEngineAdapter` (`plugin/.../eng
 Modules and how they compose at a consumer's build time:
 
 - **annotations** — `@ArkiveComposable` / `@ArkiveView` (SOURCE retention; on the consumer's
-  compile classpath). Multiplatform: sources in `commonMain`, published for every KMP
-  target so KMP consumers can annotate common previews.
-- **processor** (KSP, wired to the consumer's `kspDebug`) — collectors
+  compile classpath). Multiplatform: sources in `commonMain`, published for a broad KMP
+  target matrix (jvm, js, wasmJs, Apple, linux, mingw) so KMP consumers can annotate
+  common previews.
+- **processor** (KSP; `kspDebug` on plain android — per-adapter configuration names under
+  "Consumer adapters") — collectors
   (`ArkiveComposableCollector`, `PreviewCollector` for plain `@Preview`s, `ArkiveViewCollector`)
-  → validators (drop `skip=true`, private functions, bad parameters; `@ArkiveComposable`
-  problems should error, plain-`@Preview` problems skip) → specs generate into
-  `com.infinum.arkive`: `ComposeVariants.kt` (one wrapper per component, **named by the
+  → validators (drop `skip=true`, non-visible functions, bad parameters; visibility
+  problems — private/protected function, private provider — are errors on
+  `@ArkiveComposable` and silent skips on plain `@Preview`; invalid parameters and every
+  `@ArkiveView` problem drop silently) → specs generate into
+  `com.infinum.arkive`: `ComposeVariants.kt` (two wrappers per component — base `<id>` and
+  `<id>_variants` — **named by the
   unique component id** `<pkg>-<function>` dash-joined and lowercased — bare names collide
   across packages, and `_`-joined ids collided too since `_` is legal in identifiers),
-  `ArkiveComposeShoot`/`ArkiveViewShoot` (runners that call every wrapper under per-component
-  try/catch), and `components_meta_data.json` (KSP resources).
-- **testprocessor** (KSP, `kspTestDebug`) — generates `ArkiveSnapshotTestGenerator`,
+  `ArkiveComposeShoot` (calls every base/`_variants` wrapper under per-component
+  try/catch), `ArkiveViewShoot` (calls each `@ArkiveView` function directly, NO try/catch —
+  under Paparazzi one crashing view ends the views test), and `components_meta_data.json`
+  (KSP resources).
+- **testprocessor** (KSP; `kspTestDebug` on plain android) — generates `ArkiveSnapshotTestGenerator`,
   keyed on the `arkive.engine` KSP arg via per-engine generator classes (see "Snapshot
   engines"): the Roborazzi test (parameterized per snapshot, `@GraphicsMode(NATIVE)`,
   `@Config(sdk=[35])`, explicit-filePath captures, CMP ContentProvider setup in
-  `@Before`) or the Paparazzi test (single-method, SHRINK rendering,
+  `@Before`) or the Paparazzi test (three all-components methods — base, variants,
+  views — SHRINK rendering,
   `android:Theme.Translucent.NoTitleBar` for transparent backgrounds, a RuleChain that
   absorbs Paparazzi's teardown re-throws). It cannot see the annotations (SOURCE
   retention, different compilation) — hence the shooter indirection.
@@ -232,16 +276,19 @@ Modules and how they compose at a consumer's build time:
   (`ArkiveShowcase` → modules → items → component + variants).
 - **composeUtils** — runtime wrappers the generated variant code composes previews in
   (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`); on the consumer's classpath.
-- **plugin** — applies the selected engine's plugin by id (kept off the consumer's
-  compile classpath), injects the runtime/KSP dependencies at `ArkiveVersion.current`,
-  forwards extension flags (`enablePreviewParameters`, `enableVariants`) and the engine
-  name as KSP args, `snapshotRetention` as the `arkive.snapshot.retention` system property
+- **plugin** — applies the selected engine's plugin (the consumer's if it has one,
+  otherwise provisioned — see Compatibility constraints), injects the runtime/KSP
+  dependencies at `ArkiveVersion.current`, forwards extension flags
+  (`enablePreviewParameters`, `enableVariants`), the engine name and the Roborazzi device
+  (`arkive.device`) as KSP args, `snapshotRetention` as the `arkive.snapshot.retention` system property
   and the adapter's golden dir as `arkive.snapshots.dir` on the consumer's Test tasks
   (read at test runtime, so changing retention never invalidates KSP codegen), and
   registers tasks: per-variant `generateShowcase<Variant>` (depends on the engine's record
-  task), per-variant `verifyShowcase<Variant>` (depends on the engine's verify task,
-  scopes the test run to Arkive's generated test class via a `taskGraph.whenReady` filter,
-  and fails fast when retention is NONE), and root `generateWebShowcase`. Applying the
+  task), `verifyShowcase<Variant>` only for variants that have a generated test class —
+  debug build types, KMP `androidMain` (depends on the engine's verify task, scopes the
+  test run to Arkive's generated test class via a `taskGraph.whenReady` filter, and fails
+  fast when retention is NONE or when combined with check/build/test/record), and root
+  `generateWebShowcase`. Applying the
   plugin to the consumer's **root** project registers the aggregate task eagerly —
   required under `org.gradle.configureondemand`, where task-name resolution happens before
   `projectsEvaluated` callbacks fire.
@@ -253,7 +300,7 @@ Everything flavor-specific lives behind `ConsumerAdapter`
 `ConsumerAdapter.select` picks exactly one adapter per module via `withPlugin` hooks:
 
 - **AndroidConsumerAdapter** (`com.android.application` / `com.android.library`):
-  build-type variants via AndroidComponents `onVariants`, eager deps into
+  every variant (flavors included, e.g. `uatDebug`) via AndroidComponents `onVariants`, eager deps into
   `implementation`/`kspDebug`/`kspTestDebug`, KSP output `build/generated/ksp/<variant>/resources`,
   goldens `src/test/snapshots`, test task `test<Variant>UnitTest`.
 - **KmpConsumerAdapter** (`com.android.kotlin.multiplatform.library`, AGP 9+): single
@@ -307,11 +354,12 @@ Never register Gradle listeners from a task's `init` block (see the note in
 `GenerateShowcaseTask`): with several arkive modules, `findByName` inside a
 `projectsEvaluated` callback realizes tasks in a guarded context where that's illegal.
 
-Showcase pipeline inside `GenerateShowcaseTask`: Paparazzi records into
-the adapter's snapshot dir → `SnapshotsGrabber` copies out **only files prefixed
+Showcase pipeline: the selected engine's record task (a dependency of
+`GenerateShowcaseTask`) records into the adapter's snapshot dir → `SnapshotsGrabber` copies out **only files prefixed
 `com.infinum.arkive_`** (a consumer's own goldens are never touched) → the generator builds
 the JSON, dropping components with no recorded snapshot (a failed preview logs and skips;
-it must not abort the run) → `snapshotRetention` (NONE default/BASE/ALL) decides what
+it must not abort the run — but if NOT ONE collected component recorded, the task fails
+loudly, since that is a wholesale recording failure) → `snapshotRetention` (NONE default/BASE/ALL) decides what
 survives in the golden directory, decided from the generated items, not filenames.
 Because NONE *consumes* the goldens, a re-run whose record task was up-to-date grabs
 zero snapshots — the task then KEEPS the previously generated showcase instead of
@@ -321,8 +369,16 @@ overwriting it with an empty one (regenerate-from-nothing was a real bug: every 
 `<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
 
 Snapshot filename convention everything relies on:
-`<testclass>_<componentId>.png` for base, `<testclass>_<componentId>_<category>_<value>.png`
-for variants.
+`com.infinum.arkive_ArkiveSnapshotTestGenerator[_<testMethod>]_<componentId>.png` for base,
+`…_<componentId>_<category>_<value>.png` for variants. Paparazzi inserts the test-method
+segment, Roborazzi doesn't; matching is suffix-based, so both work. Categories and values
+never contain `_` (parameter categories are emitted as `param-<name>`, `_`→`-`), but ids
+can — function and package names may contain `_`, so `Card_Header`'s id extends `Card`'s
+and contains its `_<id>_` marker. `ShowcaseGeneratorImpl` therefore gives each file to the
+LONGEST id it matches as a base (nothing after the id) or a variant (exactly
+`_<category>_<value>`). Residual, unfixable by parsing: a function literally named like
+another component's variant (`Card_Density_Ldpi` beside `Card` with variants on) writes
+the very same filename.
 
 **Web template** (`plugin/src/main/resources/web/`: `index.html`, `app.js`, `styles.css`,
 mirrored in `ShowcaseWebGenerator`) — a dependency-free vanilla-JS SPA with hash routing,
@@ -337,17 +393,22 @@ verify system property the active engine itself sets (`paparazzi.test.verify` /
 `roborazzi.test.verify`; the shooter ORs both, the generated test reads its own engine's).
 Three cooperating layers:
 
-- The generated shooter (`ComposeRunnerSpec`) collects per-component `AssertionError`s in
-  verify mode and throws one aggregate error naming every mismatched component; other
-  `Throwable`s (render crashes) stay skip-logged in both modes — a preview that never
-  recorded has no golden, so verify must not fail on it.
-- The generated test (`ArkiveTestProcessor`) reads `arkive.snapshot.retention` and
-  self-skips verification the retention policy has no goldens for (everything under NONE,
-  the variants test under BASE) — this keeps a consumer's own plain `verifyPaparazzi` runs
-  green instead of failing on golden-less Arkive snapshots. The RuleChain absorber
-  swallows teardown re-throws only in record mode.
+- Paparazzi path: the generated shooter (`ComposeRunnerSpec`) collects per-component
+  `AssertionError`s in verify mode and throws one aggregate error naming every mismatched
+  component. Roborazzi path: the shooter only collects the parameters, and each
+  per-snapshot test fails on its own mismatch. On both, other `Throwable`s (render
+  crashes) stay skip-logged — a preview that never recorded has no golden, so verify
+  must not fail on it.
+- The generated test (the per-engine generators behind `ArkiveTestProcessor`) reads
+  `arkive.snapshot.retention` and self-skips verification the retention policy has no
+  goldens for (everything under NONE, the variants under BASE) — this keeps a consumer's
+  own plain `verifyPaparazzi`/`verifyRoborazzi*` runs green instead of failing on
+  golden-less Arkive snapshots. The Paparazzi test's RuleChain absorber swallows teardown
+  re-throws only in record mode; the Roborazzi RuleChain absorbs nothing (per-test
+  try/catch keeps it resilient).
 - `verifyShowcase<Variant>` is the public entry point (see plugin bullet above).
 
-Verified end-to-end on the sample (BASE retention, 31 base goldens): corrupted golden →
+Verified end-to-end on the sample under Paparazzi (BASE retention, 31 base goldens) — not
+re-run since the Roborazzi engine landed: corrupted golden →
 aggregate failure naming the component; missing golden → failure; retention NONE → plain
 `verifyPaparazzi` stays green even with goldens missing, `verifyShowcase` fails fast.
