@@ -55,6 +55,7 @@ arkive {
     enablePreviewParameters.set(true)  // expand @PreviewParameter values
     designFileKey.set("...")           // Figma file key — powers per-component Figma links
     snapshotRetention.set(SnapshotRetention.NONE)  // NONE (default) | BASE | ALL — what stays as goldens
+    uiTree.set(true)                   // UI tree JSON next to every snapshot (default); false skips it
     multiModuleVariant.set("uatDebug") // REQUIRED when the module has flavors — the root
                                        // aggregate defaults to "debug", which doesn't exist
                                        // in a flavored module; wrong/missing value = module
@@ -117,6 +118,7 @@ dependency and is collected regardless of Kotlin version.
 |---|---|
 | Module showcase JSON | `<module>/build/generated/arkive/showcase/arkive-showcase.json` |
 | Module snapshot images | `<module>/build/generated/arkive/showcase/images/` |
+| Module UI trees | `<module>/build/generated/arkive/showcase/uitree/<shotId>.json` (one per snapshot — see "UI trees") |
 | Aggregated site | `<root>/build/generated/arkive/showcase/` (serve with `python3 -m http.server`; `file://` fails — the JSON is fetched) |
 | Golden directory | `<module>/src/test/snapshots/images/` (only files prefixed `com.infinum.arkive_` belong to Arkive) |
 | Verify failure deltas | Roborazzi: `<module>/build/outputs/roborazzi/*_compare.png`; Paparazzi: `<module>/build/paparazzi/failures/<variant>/` |
@@ -130,16 +132,52 @@ dependency and is collected regardless of Kotlin version.
 - `<componentId>` = `<package>-<functionName>` lowercased and dash-joined (dashes can't
   appear in identifiers, so ids never collide and `_` marks only the id/variant
   boundaries).
+- UI trees: `uitree/<shotId>.json` with `<shotId>` = `<componentId>` or
+  `<componentId>_<category>_<value>` — no test-class prefix. Match trees to PNGs
+  case-insensitively (Paparazzi lowercases PNG names).
 
 ## Showcase JSON shape (the parts skills use)
 
 ```
 module { name, designFileKey?, items: [ { component: { id, name, group, designNodeId? },
-                                          snapshotPath, variants: [...] } ] }
+                                          snapshotPath, uiTreePath?,
+                                          variants: [ { category, variant, snapshotPath, uiTreePath? } ] } ] }
 ```
 
 `designFileKey` (module-level) + `designNodeId` (per component) resolve to
 `https://www.figma.com/design/<fileKey>/?node-id=<nodeId>`.
+
+## UI trees (per-snapshot JSON)
+
+Every snapshot (base, every variant, `@ArkiveView`) gets a tree, referenced by `uiTreePath`.
+The path is null when `uiTree` is off, the walk failed for that shot, or the preview draws
+nothing in the captured main window (dialog-only previews — dialogs and popups are not covered).
+
+```json
+{ "schemaVersion": 1, "id": "<shotId>", "density": 2.625, "size": [360, 48],
+  "root": { "composable": "Row", "callers": ["PrimaryButton"], "source": "Buttons.kt:39",
+            "bounds": [0, 0, 360, 48], "children": [ … ] } }
+```
+
+- `bounds` = `[x, y, w, h]` in **dp** from the snapshot's top-left, the node's outer box
+  including its own padding (what the snapshot shows for that node); `px = dp × density`.
+  Text sizes are sp. With `Modifier.padding(…)` placed before `.background(…)`, the outer
+  box includes that outer padding, so sibling gaps computed from bounds can be smaller
+  than the visible gaps — when they disagree, trust the visible pixels.
+- `composable` = the innermost composable called from the module's own code that emitted
+  the node; `source` = that call's `File.kt:line`; `callers` = the outer calls from the
+  module's own code between a node and its nearest emitted ancestor, outermost first, so
+  they sit on the outermost node a component emits — a screen's shared components appear
+  here. Library-only nodes keep a name but carry no `source`. Views carry `view` (class)
+  and `id`.
+- Semantics, present only when set: `role`, `text`, `editableText`, `contentDescription`,
+  `testTag`, `actions` (`click`, `longClick`, `scroll`, …), `state` (`enabled`,
+  `selected`, `toggle`, `focused`).
+- `textStyle` on text nodes: `fontSize`, `fontWeight`, `lineHeight`, `color`
+  (`#RRGGBBAA`), `maxLines`, `overflow` (`true` = the text exceeded `maxLines` or was
+  ellipsized; horizontal clipping of `softWrap = false` text is not detected).
+- **Informational only**: never a golden, never verified, never in the golden directory,
+  untouched by `snapshotRetention`. A visual match is still judged with the image.
 
 ## Failure semantics (important, counter-intuitive)
 

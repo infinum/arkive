@@ -46,11 +46,20 @@
     palette: false,
     pq: '',
     pi: 0,
+    inspect: false,
+    inspectSel: -1,
+    inspectHover: -1,
+    inspectTreeOpen: false,
   };
 
   let canvasEl = null;
   let stageEl = null;
   let toastTimer = null;
+
+  const CLICK_SLOP = 3;
+  const treeCache = new Map();
+  const componentLookups = new Map();
+  let inspectUrl = null;
 
   const $ = (sel, root) => (root || document).querySelector(sel);
 
@@ -141,7 +150,7 @@
     });
     const groups = [{
       category: 'Base',
-      items: [{ variant: 'Default', snapshotPath: item.snapshotPath }],
+      items: [{ variant: 'Default', snapshotPath: item.snapshotPath, uiTreePath: item.uiTreePath || null }],
     }];
     Object.keys(cats).sort().forEach((c) => groups.push({ category: c, items: sortVariants(c, cats[c]) }));
     return groups;
@@ -189,6 +198,339 @@
       .join('');
   }
 
+  /* ------------------------------------------------------------ ui tree */
+
+  // uiTreePath is module-relative ("uitree/<shotId>.json"); trees sit beside images/.
+  function treeUrl(moduleName, uiTreePath) {
+    const base = String(uiTreePath).split(/[\\/]/).pop();
+    return encodeURIComponent(moduleName) + '/uitree/' + encodeURIComponent(base);
+  }
+
+  function flattenTree(root) {
+    const nodes = [];
+    (function visit(node, parent, depth) {
+      const index = nodes.length;
+      nodes.push({ node: node, parent: parent, depth: depth });
+      (node.children || []).forEach((child) => visit(child, index, depth + 1));
+    })(root, -1, 0);
+    return nodes;
+  }
+
+  // Fetched lazily the first time Inspect needs a state's tree, then cached per path.
+  function loadTree(url) {
+    let entry = treeCache.get(url);
+    if (!entry) {
+      entry = { status: 'loading', data: null, error: null };
+      entry.promise = fetch(url)
+        .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then((tree) => { entry.status = 'ok'; entry.data = { tree: tree, nodes: flattenTree(tree.root) }; })
+        .catch((err) => { entry.status = 'error'; entry.error = err.message; });
+      treeCache.set(url, entry);
+    }
+    return entry;
+  }
+
+  function currentTree() {
+    const entry = inspectUrl ? treeCache.get(inspectUrl) : null;
+    return entry && entry.status === 'ok' ? entry.data : null;
+  }
+
+  function elementName(node) {
+    return node.composable || node.view || 'Node';
+  }
+
+  // callers sit on a component's outermost node, outermost first: the last is the component.
+  function componentName(node) {
+    return node.callers ? node.callers[node.callers.length - 1] : null;
+  }
+
+  function nodeLabel(node) {
+    return componentName(node) || elementName(node);
+  }
+
+  // The nearest node at or above index that a component emitted (it carries callers).
+  function componentNodeOf(nodes, index) {
+    let i = index;
+    while (i >= 0 && !nodes[i].node.callers) i = nodes[i].parent;
+    return i;
+  }
+
+  // An item shows a component when its base tree's root was emitted by it (or under it).
+  function showsComponent(root, component) {
+    return root.composable === component || (root.callers || []).indexOf(component) > -1;
+  }
+
+  function lookupKey(component) {
+    return state.route.id + '|' + component;
+  }
+
+  // Which other items show component? Base trees load lazily (shared treeCache), in
+  // parallel: the open item's module first, the other modules only when it has none.
+  // A miss with failed fetches is incomplete: the next request retries those trees.
+  function lookupComponent(component) {
+    const key = lookupKey(component);
+    let entry = componentLookups.get(key);
+    if (entry && !entry.incomplete) return entry;
+    const id = state.route.id;
+    const current = findItem(id);
+    const home = current ? current.module : null;
+    const candidates = allItems().filter((it) => it.uiTreePath);
+    entry = { status: 'loading', matches: [], isSelf: false, failed: false, incomplete: false };
+    const search = (items) => Promise.all(items.map((it) => {
+      const url = treeUrl(it.module, it.uiTreePath);
+      const cached = treeCache.get(url);
+      if (cached && cached.status === 'error' && url !== inspectUrl) treeCache.delete(url);
+      const tree = loadTree(url);
+      return tree.promise.then(() => {
+        if (tree.status !== 'ok') { entry.failed = true; return null; }
+        return showsComponent(tree.data.tree.root, component) ? it : null;
+      });
+    })).then((found) => found.filter(Boolean));
+    // The open item takes part only to tell "this is its entry" apart from "it has none".
+    entry.promise = search(candidates.filter((it) => it.module === home))
+      .then((found) => {
+        entry.isSelf = found.some((it) => it.component.id === id);
+        const others = found.filter((it) => it.component.id !== id);
+        return others.length ? others : search(candidates.filter((it) => it.module !== home));
+      })
+      .then((found) => {
+        entry.status = 'done';
+        entry.matches = found;
+        entry.incomplete = entry.failed && !found.length;
+      });
+    componentLookups.set(key, entry);
+    return entry;
+  }
+
+  function openComponent(component) {
+    const origin = state.route.id;
+    const entry = lookupComponent(component);
+    const settle = () => {
+      if (state.route.kind !== 'detail' || state.route.id !== origin) return;
+      // Navigate only if the pinned node still belongs to this component (no stale jumps).
+      const data = currentTree();
+      const sel = state.inspectSel;
+      const stillSelected = data && sel >= 0 && sel < data.nodes.length && componentName(data.nodes[sel].node) === component;
+      if (entry.matches.length === 1 && stillSelected) navTo({ kind: 'detail', id: entry.matches[0].component.id });
+      else renderInspector();
+    };
+    if (entry.status === 'done') { settle(); return; }
+    renderInspector();
+    entry.promise.then(settle);
+  }
+
+  function jumpHtml(component) {
+    const entry = componentLookups.get(lookupKey(component));
+    const name = esc(component);
+    if (entry && entry.status === 'loading') {
+      return '<button type="button" class="uitree-jump is-loading" disabled>Looking up ' + name + '…</button>';
+    }
+    if (entry && entry.incomplete) {
+      return '<button type="button" class="uitree-jump" data-jump="' + name + '" title="' +
+        esc('Some showcase trees failed to load') + '">Retry: open ' + name + ' ↗</button>';
+    }
+    if (entry && !entry.matches.length) {
+      const none = esc(entry.isSelf ? 'This is ' + component + "'s showcase entry" : 'No showcase entry for ' + component);
+      return '<button type="button" class="uitree-jump" disabled title="' + none + '">' + none + '</button>';
+    }
+    if (entry && entry.matches.length > 1) {
+      return '<div class="uitree-jump-list"><span class="label">Shown in</span>' +
+        entry.matches.map((m) =>
+          '<button type="button" class="uitree-jump-pick" data-pick="' + esc(m.component.id) + '">' +
+          '<span class="name">' + esc(m.component.name) + '</span>' +
+          (m.component.group ? '<span class="sub">' + esc(m.component.group) + '</span>' : '') +
+          '</button>').join('') +
+        '</div>';
+    }
+    return '<button type="button" class="uitree-jump" data-jump="' + name + '">Open ' + name + ' ↗</button>';
+  }
+
+  function fmt(n) {
+    return String(Math.round(n * 10) / 10);
+  }
+
+  // Deepest node containing the point (dp); among equals, the later one (drawn on top).
+  function nodeAt(nodes, x, y) {
+    let hit = -1;
+    let depth = -1;
+    nodes.forEach((n, i) => {
+      const b = n.node.bounds;
+      if (x >= b[0] && y >= b[1] && x <= b[0] + b[2] && y <= b[1] + b[3] && n.depth >= depth) {
+        hit = i;
+        depth = n.depth;
+      }
+    });
+    return hit;
+  }
+
+  function hitTest(clientX, clientY) {
+    const data = currentTree();
+    const shot = $('#shot');
+    if (!data || !shot || !shot.naturalWidth) return -1;
+    const rect = shot.getBoundingClientRect();
+    const toPx = shot.naturalWidth / rect.width;
+    return nodeAt(
+      data.nodes,
+      (clientX - rect.left) * toPx / data.tree.density,
+      (clientY - rect.top) * toPx / data.tree.density,
+    );
+  }
+
+  function placeBox(el, data, index) {
+    if (!el) return;
+    if (index < 0) { el.style.display = 'none'; return; }
+    const b = data.nodes[index].node.bounds;
+    const d = data.tree.density;
+    el.style.display = 'block';
+    el.style.left = (b[0] * d) + 'px';
+    el.style.top = (b[1] * d) + 'px';
+    el.style.width = (b[2] * d) + 'px';
+    el.style.height = (b[3] * d) + 'px';
+  }
+
+  function paintInspect() {
+    const layer = $('#uitree-layer');
+    const data = currentTree();
+    if (!layer || !data) return;
+    layer.style.setProperty('--inv', String(1 / state.zoom));
+    placeBox($('#uitree-hover'), data, state.inspectHover);
+    placeBox($('#uitree-sel'), data, state.inspectSel);
+    const label = $('#uitree-label');
+    const shown = state.inspectHover >= 0 ? state.inspectHover : state.inspectSel;
+    if (shown < 0) { label.style.display = 'none'; return; }
+    const node = data.nodes[shown].node;
+    const b = node.bounds;
+    const component = componentName(node);
+    label.textContent = (component ? component + ' › ' : '') + elementName(node) + ' · ' +
+      fmt(b[2]) + ' × ' + fmt(b[3]) + ' dp';
+    label.style.display = 'block';
+    label.style.left = (b[0] * data.tree.density) + 'px';
+    label.style.top = (b[1] * data.tree.density) + 'px';
+  }
+
+  function textStyleHtml(ts) {
+    const parts = [];
+    if (ts.fontSize != null) parts.push(fmt(ts.fontSize) + 'sp');
+    if (ts.fontWeight != null) parts.push('w' + ts.fontWeight);
+    if (ts.lineHeight != null) parts.push('line ' + fmt(ts.lineHeight) + 'sp');
+    if (ts.maxLines != null) parts.push('max ' + ts.maxLines + (ts.maxLines === 1 ? ' line' : ' lines'));
+    // Only a well-formed #RRGGBBAA reaches the style attribute; anything else stays plain text.
+    const swatch = /^#[0-9A-F]{8}$/i.test(ts.color || '') ? '<span class="swatch" style="background:' + ts.color + '"></span>' : '';
+    return '<div class="metarow"><span class="label">Text style</span><span class="value uitree-style">' +
+      (ts.color ? swatch + esc(ts.color) + ' · ' : '') +
+      esc(parts.join(' · ')) +
+      (ts.overflow ? ' <span class="badge-warn">⚠ overflow</span>' : '') +
+      '</span></div>';
+  }
+
+  function selectedNodeHtml(data, index) {
+    const path = [];
+    for (let i = index; i >= 0; i = data.nodes[i].parent) path.unshift(i);
+    const node = data.nodes[index].node;
+    const b = node.bounds;
+    const rows = [
+      node.callers ? { label: 'Component', value: node.callers.join(' › '), after: jumpHtml(componentName(node)) } : null,
+      {
+        label: 'Element',
+        value: elementName(node) + (node.id ? ' · @id/' + node.id : '') + (node.source ? ' · ' + node.source : ''),
+      },
+      node.view && node.composable ? { label: 'View', value: node.view } : null,
+      { label: 'Bounds', value: fmt(b[0]) + ', ' + fmt(b[1]) + ' · ' + fmt(b[2]) + ' × ' + fmt(b[3]) + ' dp' },
+      node.role ? { label: 'Role', value: node.role } : null,
+      node.text != null ? { label: 'Text', value: node.text } : null,
+      node.editableText != null ? { label: 'Editable text', value: node.editableText } : null,
+      node.contentDescription ? { label: 'Content description', value: node.contentDescription } : null,
+      node.testTag ? { label: 'Test tag', value: node.testTag } : null,
+      node.actions ? { label: 'Actions', value: node.actions.join(', ') } : null,
+      node.state ? { label: 'State', value: Object.keys(node.state).map((k) => k + ': ' + node.state[k]).join(', ') } : null,
+    ].filter(Boolean);
+    return '<div class="uitree-crumbs">' +
+      path.map((i, n) =>
+        (n ? '<span class="sep">›</span>' : '') +
+        '<button type="button" class="' + (i === index ? 'is-here' : '') + '" data-uinode="' + i + '">' +
+        esc(nodeLabel(data.nodes[i].node)) + '</button>').join('') +
+      '</div>' +
+      rows.map((r) =>
+        '<div class="metarow"><span class="label">' + esc(r.label) + '</span><span class="value">' + esc(r.value) + '</span>' +
+        (r.after || '') + '</div>').join('') +
+      (node.textStyle ? textStyleHtml(node.textStyle) : '');
+  }
+
+  function treeListHtml(data) {
+    return '<details class="uitree-list"' + (state.inspectTreeOpen ? ' open' : '') + '>' +
+      '<summary>Node tree</summary>' +
+      data.nodes.map((n, i) =>
+        '<button type="button" class="uitree-row' + (i === state.inspectSel ? ' is-active' : '') + '" data-uinode="' + i +
+        '" style="padding-left:' + (8 + n.depth * 12) + 'px">' +
+        '<span class="name">' + esc(nodeLabel(n.node)) + '</span>' +
+        (componentName(n.node) ? '<span class="kind">' + esc(elementName(n.node)) + '</span>' : '') +
+        (n.node.text ? '<span class="sub">' + esc(n.node.text.slice(0, 40)) + '</span>' : '') +
+        '</button>').join('') +
+      '</details>';
+  }
+
+  function renderInspector() {
+    const root = $('#inspector');
+    if (!root) return;
+    const entry = inspectUrl ? treeCache.get(inspectUrl) : null;
+    const ok = entry && entry.status === 'ok';
+    const head = '<div class="panel-title-row"><span class="panel-title">Inspector</span>' +
+      (ok ? '<span class="panel-count">' + esc(plural(entry.data.nodes.length, 'node', 'nodes')) + '</span>' : '') +
+      '</div>';
+    if (!entry || entry.status === 'loading') {
+      root.innerHTML = head + '<p class="panel-note">Loading UI tree…</p>';
+      return;
+    }
+    if (entry.status === 'error') {
+      root.innerHTML = head + '<p class="panel-note">UI tree unavailable (' + esc(entry.error) + ').</p>';
+      return;
+    }
+    const data = entry.data;
+    root.innerHTML = head +
+      (state.inspectSel >= 0
+        ? selectedNodeHtml(data, state.inspectSel)
+        : '<p class="panel-note">Hover the snapshot to outline a node, click to pin it, <kbd>Esc</kbd> to clear.</p>') +
+      treeListHtml(data);
+    const details = $('.uitree-list', root);
+    details.addEventListener('toggle', () => { state.inspectTreeOpen = details.open; });
+    root.querySelectorAll('.uitree-row').forEach((row) => {
+      row.addEventListener('mouseenter', () => { state.inspectHover = Number(row.dataset.uinode); paintInspect(); });
+      row.addEventListener('mouseleave', () => { state.inspectHover = -1; paintInspect(); });
+    });
+  }
+
+  function startInspect(url) {
+    inspectUrl = url;
+    const entry = loadTree(url);
+    renderInspector();
+    paintInspect();
+    if (entry.status === 'loading') {
+      entry.promise.then(() => {
+        if (inspectUrl === url) {
+          renderInspector();
+          paintInspect();
+        }
+      });
+    }
+  }
+
+  function selectAt(clientX, clientY) {
+    state.inspectSel = hitTest(clientX, clientY);
+    state.inspectHover = -1;
+    renderInspector();
+    paintInspect();
+  }
+
+  function toggleInspect() {
+    if (state.route.kind !== 'detail' || state.compareCat || state.bezel) return;
+    // The button only exists when the active state has a UI tree.
+    if (!document.querySelector('[data-action="toggle-inspect"]')) return;
+    state.inspect = !state.inspect;
+    state.inspectSel = -1;
+    state.inspectHover = -1;
+    renderDetail();
+  }
+
   /* ------------------------------------------------------------ routing */
 
   function parseHash() {
@@ -231,6 +573,8 @@
       state.panX = 0;
       state.panY = 0;
       state.dims = null;
+      state.inspectSel = -1;
+      state.inspectHover = -1;
     }
     state.route = route;
     state.palette = false;
@@ -406,7 +750,7 @@
   function flatStates(groups) {
     const flat = [];
     groups.forEach((g) => g.items.forEach((s) =>
-      flat.push({ key: g.category + '|' + s.variant, category: g.category, variant: s.variant, snapshotPath: s.snapshotPath })));
+      flat.push({ key: g.category + '|' + s.variant, category: g.category, variant: s.variant, snapshotPath: s.snapshotPath, uiTreePath: s.uiTreePath || null })));
     return flat;
   }
 
@@ -428,6 +772,10 @@
     const frameDef = FRAMES.find((f) => f.key === state.frame) || FRAMES[1];
     const shotSrc = snapUrl(item.module, active.snapshotPath);
     const shotLabel = c.name + ' · ' + active.variant;
+    const hasTree = !!active.uiTreePath;
+    const inspectBlocked = !!compareGroup || state.bezel;
+    const inspecting = state.inspect && hasTree && !inspectBlocked;
+    if (!inspecting) inspectUrl = null;
 
     let canvasInner;
     if (compareGroup) {
@@ -449,13 +797,21 @@
         '</div></div>';
     } else {
       canvasInner = '<div class="canvas-solo"><div class="stage" id="stage">' +
-        '<div class="sheet"><img id="shot" src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '"></div>' +
+        '<div class="sheet"><img id="shot" src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '">' +
+        (inspecting
+          ? '<div class="uitree-layer" id="uitree-layer">' +
+            '<div class="uitree-box is-hover" id="uitree-hover"></div>' +
+            '<div class="uitree-box is-sel" id="uitree-sel"></div>' +
+            '<div class="uitree-label" id="uitree-label"></div>' +
+            '</div>'
+          : '') +
+        '</div>' +
         '</div></div>';
     }
 
     const hint = compareGroup
       ? 'compare · ' + compareGroup.category
-      : 'drag to pan · ' + MOD_KEY + ' + scroll to zoom';
+      : (inspecting ? 'hover to outline · click to pin · esc clears' : 'drag to pan · ' + MOD_KEY + ' + scroll to zoom');
 
     const stateSection =
       '<div class="panel-section">' +
@@ -561,11 +917,20 @@
       '<span class="divider"></span>' +
       '<button type="button" class="text" data-action="zoom-fit">Fit</button>' +
       '<button type="button" class="text" data-action="zoom-actual">1:1</button>' +
+      (hasTree
+        ? '<span class="divider"></span>' +
+          '<button type="button" class="text' + (inspecting ? ' is-on' : '') + '" data-action="toggle-inspect"' +
+          (inspectBlocked
+            ? ' disabled title="Inspect works on the single snapshot (no compare, no device frame)"'
+            : ' title="Inspect the UI tree (I)"') +
+          '>Inspect</button>'
+        : '') +
       '</div>' +
       '<div class="dimbadge" id="dim-label">' + (state.dims ? state.dims.w + ' × ' + state.dims.h + ' px' : 'measuring…') + '</div>' +
       '<div class="canvas-hint">' + esc(hint) + '</div>' +
       '</div>' +
-      '<aside class="panel" id="panel">' + stateSection + canvasSection + sourceSection + designSection + '</aside>' +
+      '<aside class="panel" id="panel">' + (inspecting ? '<div class="panel-section" id="inspector"></div>' : '') +
+      stateSection + canvasSection + sourceSection + designSection + '</aside>' +
       '</div>' +
       '</div>';
 
@@ -579,6 +944,7 @@
     stageEl = $('#stage');
     updateStage();
     bindCanvas(item);
+    if (inspecting) startInspect(treeUrl(item.module, active.uiTreePath));
   }
 
   function updateStage() {
@@ -588,6 +954,7 @@
     }
     const label = $('#zoom-label');
     if (label) label.textContent = Math.round(state.zoom * 100) + '%';
+    if (inspectUrl) paintInspect();
   }
 
   function measure(img) {
@@ -623,6 +990,7 @@
       }
     }
 
+    let lastPressPanned = false;
     canvasEl.addEventListener('mousedown', (e) => {
       if (state.compareCat || e.target.closest('button')) return;
       e.preventDefault();
@@ -630,17 +998,51 @@
       const sy = e.clientY;
       const ox = state.panX;
       const oy = state.panY;
+      let panning = false;
       const move = (ev) => {
+        // A press that moves less than CLICK_SLOP stays a click (inspect selection).
+        if (!panning && Math.hypot(ev.clientX - sx, ev.clientY - sy) < CLICK_SLOP) return;
+        panning = true;
         state.panX = ox + (ev.clientX - sx);
         state.panY = oy + (ev.clientY - sy);
         updateStage();
       };
-      const up = () => {
+      const up = (ev) => {
         window.removeEventListener('mousemove', move);
         window.removeEventListener('mouseup', up);
+        lastPressPanned = panning;
+        if (!panning && inspectUrl) selectAt(ev.clientX, ev.clientY);
       };
       window.addEventListener('mousemove', move);
       window.addEventListener('mouseup', up);
+    });
+
+    // Double-click: pin the component the node under the cursor belongs to and open its entry.
+    canvasEl.addEventListener('dblclick', (e) => {
+      const data = currentTree();
+      if (!inspectUrl || !data || lastPressPanned || e.target.closest('button')) return;
+      const index = componentNodeOf(data.nodes, hitTest(e.clientX, e.clientY));
+      if (index < 0) return;
+      state.inspectSel = index;
+      state.inspectHover = -1;
+      paintInspect();
+      openComponent(componentName(data.nodes[index].node));
+    });
+
+    canvasEl.addEventListener('mousemove', (e) => {
+      if (!inspectUrl || e.buttons) return;
+      const index = hitTest(e.clientX, e.clientY);
+      if (index !== state.inspectHover) {
+        state.inspectHover = index;
+        paintInspect();
+      }
+    });
+
+    canvasEl.addEventListener('mouseleave', () => {
+      if (inspectUrl && state.inspectHover >= 0) {
+        state.inspectHover = -1;
+        paintInspect();
+      }
     });
 
     canvasEl.addEventListener('wheel', (e) => {
@@ -779,8 +1181,20 @@
   /* -------------------------------------------------------------- wiring */
 
   document.addEventListener('click', (e) => {
-    const target = e.target.closest('[data-action], [data-nav], [data-pick], [data-view], [data-state], [data-compare], [data-frame]');
+    const target = e.target.closest('[data-action], [data-nav], [data-pick], [data-view], [data-state], [data-compare], [data-frame], [data-uinode], [data-jump]');
     if (!target) return;
+
+    if (target.dataset.jump) {
+      openComponent(target.dataset.jump);
+      return;
+    }
+
+    if (target.dataset.uinode) {
+      state.inspectSel = Number(target.dataset.uinode);
+      renderInspector();
+      paintInspect();
+      return;
+    }
 
     if (target.dataset.pick) {
       navTo({ kind: 'detail', id: target.dataset.pick });
@@ -801,6 +1215,8 @@
       state.stateKey = target.dataset.state;
       state.compareCat = null;
       state.dims = null;
+      state.inspectSel = -1;
+      state.inspectHover = -1;
       renderDetail();
       return;
     }
@@ -822,6 +1238,7 @@
       case 'toggle-sidebar': document.body.classList.toggle('sidebar-open'); break;
       case 'close-sidebar': document.body.classList.remove('sidebar-open'); break;
       case 'copy': copyPreviewFn(); break;
+      case 'toggle-inspect': toggleInspect(); break;
       case 'toggle-bezel':
         state.bezel = !state.bezel;
         renderDetail();
@@ -850,6 +1267,21 @@
       e.preventDefault();
       openPalette();
       return;
+    }
+    const typing = e.target.closest && e.target.closest('input, textarea');
+    if (!state.palette && !typing && state.route.kind === 'detail' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault();
+        toggleInspect();
+        return;
+      }
+      if (e.key === 'Escape' && inspectUrl && (state.inspectSel >= 0 || state.inspectHover >= 0)) {
+        state.inspectSel = -1;
+        state.inspectHover = -1;
+        renderInspector();
+        paintInspect();
+        return;
+      }
     }
     if (!state.palette) return;
     if (e.key === 'Escape') {

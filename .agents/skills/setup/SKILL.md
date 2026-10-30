@@ -95,6 +95,7 @@ arkive {
     multiModuleVariant.set("uatDebug")   // critical when the module has flavors — see below
     // enableVariants.set(true)          // richer catalogue, slower recording — ask, don't assume
     // designFileKey.set("...")          // Figma file key, if the team has one (enables /arkive:design-loop tier 1)
+    // uiTree.set(false)                 // skip the per-snapshot UI tree JSON (on by default)
 }
 ```
 

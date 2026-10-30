@@ -14,6 +14,9 @@ and failure behavior.
 goldens. Code-vs-*design* (Figma/specs, judged by eye) is `/arkive:design-loop` — it
 needs no goldens at all. Don't conflate them.
 
+UI tree files (`uitree/*.json`) are not goldens: they are never verified, never written to
+the golden directory, and retention ignores them.
+
 **Version gate (do this first):** check the project's pinned arkive version.
 `verifyShowcase` exists from **0.0.3**; on anything older, verification silently cannot
 fail. If the pin is older, upgrade first (`/arkive:setup` covers resolving latest).

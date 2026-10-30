@@ -47,8 +47,12 @@ Gradle).
   `./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build`
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
-- Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
-  unit suite so far — it covers the showcase filename parsing)
+- Single test: `./gradlew :composeUtils:testDebugUnitTest --tests '*UiTreeJsonTest'` (or
+  `:plugin:test --tests 'ShowcaseGeneratorImplTest'`). Unit suites: composeUtils' uitree
+  core (JSON, pruning, assembly, attribution, semantics mapping, interop, session),
+  processor (`ComposeRunnerSpecTest`, `ModulePackagesTest`), testprocessor (`ViewHostTest`),
+  metadata (`ShowcaseJsonCompatibilityTest`), plugin (`ShowcaseGeneratorImplTest`,
+  `UiTreeGrabberTest`)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
   and builds the site):
   `cd samples && ./gradlew generateWebShowcase` → output at
@@ -231,7 +235,14 @@ Modules and how they compose at a consumer's build time:
 - **metadata** — kotlinx-serialization models shared by processor and plugin
   (`ArkiveShowcase` → modules → items → component + variants).
 - **composeUtils** — runtime wrappers the generated variant code composes previews in
-  (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`); on the consumer's classpath.
+  (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`), plus UI-tree capture
+  (`uitree/`): `ArkiveUiTreeCapture` wraps every shot in a pass-through `Layout` whose
+  `drawWithContent` hook walks layout nodes + unmerged semantics + recorded slot tables
+  on the drawn frame (the capture IS a draw, so no engine is involved), and
+  `ArkiveUiTreeViews.host` does the same for `@ArkiveView`. Pass-through unless the test JVM
+  has `arkive.uitree.dir`. Pure core (model, JSON, attribution, assembly, pruning, session)
+  is JVM-unit-tested; `ui-tooling-data` is compileOnly (consumer-rules `-dontwarn`) and
+  injected test-only by the plugin. On the consumer's classpath.
 - **plugin** — applies the selected engine's plugin by id (kept off the consumer's
   compile classpath), injects the runtime/KSP dependencies at `ArkiveVersion.current`,
   forwards extension flags (`enablePreviewParameters`, `enableVariants`) and the engine
@@ -320,15 +331,28 @@ overwriting it with an empty one (regenerate-from-nothing was a real bug: every 
 `GenerateWebShowcaseTask` (root) aggregates each module's output into
 `<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
 
+UI trees ride alongside, never through the golden dir: the plugin sets
+`arkive.uitree.dir = build/arkive/uitree/<variant>/` on the variant's test task (declared
+output; `arkive { uiTree }` → system property, never a KSP arg). The shooter's runner is
+wrapped once in `ComposeRunnerSpec`, with the module's own packages (from KSP) so calls
+from app code get `source`/`callers`. `GenerateShowcaseTask` pairs trees to items by
+lowercased shot id (Paparazzi lowercases PNG names), copies only paired ones to
+`<module>/uitree/`, and writes `uiTreePath`. Trees are informational: never verified,
+never retained/consumed. CI fails if any snapshot lacks a tree or the known sample trees
+lose expected content (`.github/scripts/check_uitree.py`).
+
 Snapshot filename convention everything relies on:
 `<testclass>_<componentId>.png` for base, `<testclass>_<componentId>_<category>_<value>.png`
-for variants.
+for variants. UI trees: `<shotId>.json` (`<componentId>[_<category>_<value>]`, no test-class prefix).
 
 **Web template** (`plugin/src/main/resources/web/`: `index.html`, `app.js`, `styles.css`,
 mirrored in `ShowcaseWebGenerator`) — a dependency-free vanilla-JS SPA with hash routing,
 designed for GitHub Pages (relative paths only). It fetches `arkive-showcase.json` and
 resolves images as `<module>/images/<basename(snapshotPath)>`. No build step, no CDN, no
 bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added).
+The detail view's Inspect toggle (`I`) lazily fetches
+`<module>/uitree/<basename(uiTreePath)>` and overlays node boxes inside the transformed
+stage.
 
 ## Golden verification (verifyShowcase)
 

@@ -69,4 +69,9 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+    // UI-tree capture only runs in Arkive's generated unit tests, where the Gradle plugin
+    // injects ui-tooling-data; consumers' apps never carry it (see consumer-rules.pro).
+    compileOnly(libs.compose.ui.tooling.data)
+
+    testImplementation(libs.junit)
 }

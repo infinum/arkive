@@ -283,6 +283,69 @@ One gotcha worth knowing: a module with an **empty test source set** records not
 skips compilations with no sources). Add a tiny `internal object ArkivePlaceholder` in
 `src/test/java` — `/arkive:setup` does this for you.
 
+### UI trees
+
+Next to every snapshot Arkive writes a UI tree — `uitree/<shotId>.json` beside `images/`
+in the showcase. It holds the layout hierarchy, bounds in dp, semantics (text, content
+descriptions, roles, actions, state), text style (size, weight, line height, color, and
+whether it overflowed), and the composable that emitted each node with its `File.kt:line`.
+The showcase's detail view has an **Inspect** toggle (`I`) that outlines nodes on the
+snapshot, and agents read the files directly (the `find` and `design-loop` skills use them).
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "com-example-ui-previewprimarybutton",
+  "density": 2.625,
+  "size": [166.86, 52.19],
+  "root": {
+    "composable": "Row",
+    "callers": ["PrimaryButton"],
+    "source": "Buttons.kt:39",
+    "bounds": [0, 0, 166.86, 52.19],
+    "children": [
+      {
+        "composable": "Text",
+        "source": "Buttons.kt:53",
+        "bounds": [56.38, 16.38, 82.29, 19.81],
+        "text": "Start hike",
+        "textStyle": { "fontSize": 16, "fontWeight": 700, "color": "#FFFFFFFF", "overflow": false }
+      }
+    ]
+  }
+}
+```
+
+- **Location**: each showcase item (and variant) in `arkive-showcase.json` carries a
+  `uiTreePath`, relative to its module's showcase directory; it is absent when no tree
+  was captured.
+- `schemaVersion` is `1`; `id` is the shot id; `density` is px per dp; `size` is the snapshot's
+  `[width, height]` in dp.
+- `bounds` is `[x, y, width, height]` in **dp** from the snapshot's top-left — the node's
+  *outer* box, including its own padding. Pixels: `px = dp × density`. Text sizes are sp.
+- `composable` is the innermost call from your module's code that emitted the node, `source`
+  that call's `File.kt:line`, and `callers` your outer calls between the node and its nearest
+  emitted ancestor (they sit on a component's outermost node).
+- Hosted Views (`AndroidView`, `@ArkiveView`) carry `view` (class name) and `id` (resource
+  entry name).
+- Semantics, only when set: `role`, `text`, `editableText`, `contentDescription`, `testTag`,
+  `actions`, and `state` (`enabled`, `selected`, `toggle`, `focused`).
+- `textStyle` on text nodes: `fontSize`, `fontWeight`, `lineHeight`, `color` (`#RRGGBBAA`),
+  `maxLines`, and `overflow` — true when the text exceeded `maxLines` or was ellipsized
+  (horizontal clipping of `softWrap = false` text is not detected).
+- Only the captured main window is covered: dialogs and popups are not, and a dialog-only
+  preview gets no tree.
+
+Trees are captured by Arkive's own runtime, inside the composition, on the frame the engine
+draws — identically under Roborazzi and Paparazzi. They are informational only: never
+goldens, never verified, untouched by `snapshotRetention`. Turn them off per module:
+
+```kotlin
+arkive {
+    uiTree.set(false)
+}
+```
+
 ## Snapshot testing
 
 The catalogue always receives every recorded snapshot. `snapshotRetention` controls what
