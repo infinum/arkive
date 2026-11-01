@@ -96,7 +96,7 @@ dependencies {
         runtimeOnly("org.bouncycastle:bcutil-jdk18on:1.86") {
             because("Bouncy Castle modules must resolve as a set")
         }
-        runtimeOnly("org.apache.commons:commons-compress:1.27.1") {
+        runtimeOnly("org.apache.commons:commons-compress:1.28.0") {
             because("CVE-2024-25710, CVE-2024-26308 (<1.26.0)")
         }
         runtimeOnly("org.apache.httpcomponents:httpclient:4.5.14") {
