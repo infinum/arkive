@@ -917,10 +917,8 @@ style:
     active: true
   RedundantHigherOrderMapUsage:
     active: false
-  # Off: every published module uses Kotlin's explicit API mode, which REQUIRES `public`.
-  # The rule only recognises explicit API mode under type resolution, which `detekt` lacks.
   RedundantVisibilityModifierRule:
-    active: false
+    active: true
   ReturnCount:
     active: true
     max: 2

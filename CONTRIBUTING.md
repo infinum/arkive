@@ -43,8 +43,11 @@ with your change:
 ./gradlew updateKotlinAbi
 ```
 
-Reviewers read the `.api` diff to spot breaking changes: a removed or changed line breaks
-consumers and needs a major version bump; added lines are a minor bump.
+Reviewers read the `.api` diff to spot breaking changes. Only `plugin` and `annotations` are
+compiled against by consumers: in their dumps, a removed or changed line breaks consumers and
+needs a major version bump; added lines are a minor bump. The `metadata`, `processor` and
+`testprocessor` dumps are only used by other Arkive artifacts, which always ship at the same
+version, so changes there don't break consumers.
 
 ## Guidelines for pull requests
 

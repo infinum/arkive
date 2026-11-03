@@ -111,9 +111,21 @@ ABI dumps come from **KGP's built-in ABI validation** (`abiValidation { enabled 
 to this build's deliberately fragile classpath. Dumps live in `<module>/api/` (`annotations`
 also has a `.klib.api` for the non-JVM targets; Linux hosts infer the Apple targets from it).
 `check` runs `checkKotlinAbi`, so CI's module build enforces them; after an intentional
-change run `./gradlew updateKotlinAbi` and commit the diff. A removed/changed line is a
-breaking change (see Version bumping). `config/detekt.yml` turns off
-`RedundantVisibilityModifierRule`, which fights explicit API mode without type resolution.
+change run `./gradlew updateKotlinAbi` and commit the diff. What a changed line means
+depends on the dump:
+- `plugin.api`, `annotations.api`/`.klib.api` — **consumer-facing** (build scripts,
+  convention plugins compiled against the plugin jar, annotated sources). A removed/changed
+  line is a breaking change (see Version bumping).
+- `metadata.api`, `processor.api`, `testprocessor.api` — **internal Arkive contract**: only
+  other Arkive artifacts link them, always resolved together at `ArkiveVersion.current`, and
+  no consumer compiles against them. A changed line only means those artifacts must ship
+  together, which they always do — e.g. a new optional field on a metadata data class
+  rewrites its `<init>`/`copy`/`componentN` lines without breaking anyone. (Plugin ↔
+  processor really talk through `components_meta_data.json`, which no dump covers.)
+
+`config/detekt-explicit-api.yml`, layered over `detekt.yml` by `detekt.gradle` (published
+modules only — the samples keep the rule), turns off `RedundantVisibilityModifierRule`,
+which fights explicit API mode without type resolution.
 
 **composeUtils has no dump**: under AGP 9's built-in Kotlin, KGP never registers its ABI
 setup action, so `abiValidation` doesn't exist there (verified on KGP 2.3.21). Explicit API
