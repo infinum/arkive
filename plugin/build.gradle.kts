@@ -23,19 +23,19 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-// Stamp the plugin version and the Kotlin it was built with into arkive.properties so
-// runtime code (injected dependency coordinates, klib-compatibility checks, task cache
-// keys) never hardcodes them. See ArkiveVersion.kt.
+// Stamp the plugin version, the Kotlin it was built with, and the engine versions into
+// arkive.properties so runtime code (injected dependency coordinates, klib-compatibility
+// checks, task cache keys, engine provisioning) never hardcodes them. See ArkiveVersion.kt.
 tasks.processResources {
-    val arkiveVersion = version.toString()
-    val arkiveKotlinVersion = project.getKotlinPluginVersion()
-    inputs.property("arkiveVersion", arkiveVersion)
-    inputs.property("arkiveKotlinVersion", arkiveKotlinVersion)
+    val stamped = mapOf(
+        "arkiveVersion" to version.toString(),
+        "arkiveKotlinVersion" to project.getKotlinPluginVersion(),
+        "paparazziVersion" to libs.versions.paparazzi.get(),
+        "roborazziVersion" to libs.versions.roborazzi.get(),
+    )
+    stamped.forEach { (key, value) -> inputs.property(key, value) }
     filesMatching("arkive.properties") {
-        expand(
-            "arkiveVersion" to arkiveVersion,
-            "arkiveKotlinVersion" to arkiveKotlinVersion,
-        )
+        expand(stamped)
     }
 }
 
@@ -54,58 +54,17 @@ dependencies {
     // Project dependency (not the published artifact) so a fresh checkout can build
     // without any prior publish; the POM still maps it to com.infinum.arkive:metadata.
     implementation(project(":metadata"))
-    // runtimeOnly keeps both engines' plugins off BOTH compile classpaths: the consumer's
-    // (the engine applies its plugin by id at runtime, see SnapshotEngineAdapter.apply;
-    // the DSL plugin classloader includes runtime deps) and our own — they are built with
-    // much newer Kotlin than this deliberately-old library build compiles with.
-    // Paparazzi additionally needs its Java-21 variant metadata overridden: this module
-    // targets 17, and strict variant matching would otherwise refuse to resolve it. The
-    // jar only ever LOADS when a consumer picks engine=paparazzi (which requires JDK 21);
-    // an unloaded classpath entry is harmless on a 17 daemon.
-    runtimeOnly(libs.paparazzi.plugin) {
-        attributes {
-            attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
-        }
-    }
-    runtimeOnly(libs.roborazzi.plugin)
+    // NO dependency on either engine's Gradle plugin, not even runtimeOnly: runtime deps
+    // are published, so they would land on the consumer's build classpath together with
+    // their plugin descriptors. A consumer declaring its own Paparazzi/Roborazzi then
+    // either had its version silently replaced by ours (same classloader scope) or failed
+    // plugin resolution with "already on the classpath with an unknown version" (Arkive
+    // in a parent scope, e.g. the root build). The engine is supplied at apply time
+    // instead — see EnginePluginProvisioning; its versions are stamped into
+    // arkive.properties above.
     compileOnly(libs.gradle.android)
 
     testImplementation(libs.junit)
-
-    // Security floors for Paparazzi's transitives. These MUST be dependency constraints
-    // rather than a resolutionStrategy: constraints are published into this module's
-    // Gradle Module Metadata, so they follow the plugin into a CONSUMER's daemon —
-    // which is where the exposure actually is. paparazzi-gradle-plugin is runtimeOnly,
-    // so it sits in the published POM at scope=runtime and drags
-    // com.android.tools:sdk-common:31.13.2 into every consumer that applies Arkive,
-    // whichever engine they select.
-    //
-    // There is no upgrade that fixes this: 2.0.0-alpha05 is Paparazzi's newest release,
-    // and it pins sdk-common 31.13.2 itself, so bumping AGP here changes nothing.
-    // Pinning the transitives is the only available remedy.
-    //
-    // Keep in sync with the securityFloors map in the root build.gradle.kts, which
-    // covers the same coordinates on this build's own (unpublished) classpaths.
-    constraints {
-        runtimeOnly("org.bouncycastle:bcprov-jdk18on:1.86") {
-            because("CVE-2026-8763, CVE-2026-13506 (<1.85), CVE-2026-0636 (<1.84), CVE-2025-14813 (<=1.80.1)")
-        }
-        runtimeOnly("org.bouncycastle:bcpkix-jdk18on:1.86") {
-            because("CVE-2026-5588 (<1.84)")
-        }
-        runtimeOnly("org.bouncycastle:bcutil-jdk18on:1.86") {
-            because("Bouncy Castle modules must resolve as a set")
-        }
-        runtimeOnly("org.apache.commons:commons-compress:1.27.1") {
-            because("CVE-2024-25710, CVE-2024-26308 (<1.26.0)")
-        }
-        runtimeOnly("org.apache.httpcomponents:httpclient:4.5.14") {
-            because("CVE-2020-13956 (<4.5.13)")
-        }
-        runtimeOnly("com.google.guava:guava:33.7.2-jre") {
-            because("CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization DoS (<=33.7.1)")
-        }
-    }
 }
 
 // Publish with a Kotlin 2.2 floor: AGP 9 (our consumer floor) itself requires KGP

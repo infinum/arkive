@@ -9,6 +9,11 @@ plugins {
     alias(libs.plugins.compose.multiplatform) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.detekt.plugin) apply false
+    // Arkive in the root scope, as the README tells consumers to apply it. Roborazzi is
+    // deliberately NOT declared here: :sampleCmp declares it in its own plugins block —
+    // the layout that used to fail resolution while Arkive carried the engines on its
+    // classpath — and :sample has none at all, so Arkive must provide it.
+    alias(libs.plugins.arkive) apply false
 }
 
 // Same detekt setup as the library build, sharing its config file. The plugin itself is

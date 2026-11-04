@@ -26,59 +26,69 @@ internal class ShowcaseGeneratorImpl(
         metadata: ComponentsMetaData,
         uiTrees: Map<String, String>,
     ): List<ShowcaseItem> {
+        val idsLongestFirst = metadata.components.map { it.id }.distinct().sortedByDescending { it.length }
+        val resolved = snapshots.mapNotNull { resolve(it, idsLongestFirst, uiTrees) }
         // A component whose snapshot never materialized (e.g. its preview failed to render
         // and was skipped at test time) is dropped with a warning instead of failing the task.
         // Its tree, if any, is therefore never referenced.
         return metadata.components.mapNotNull { component ->
-            val snapshotPath = snapshots.findSnapshot(component.id)
-            if (snapshotPath == null) {
+            val owned = resolved.filter { it.componentId == component.id }
+            val base = owned.firstOrNull { it.variant == null }
+            if (base == null) {
                 onMissingSnapshot(component.id)
                 null
             } else {
                 ShowcaseItem(
                     component = component,
-                    snapshotPath = snapshotPath,
-                    variants = snapshots.findVariants(component.id, uiTrees),
+                    snapshotPath = base.snapshot,
+                    variants = owned.mapNotNull { it.variant },
                     uiTreePath = uiTrees[component.id.lowercase()],
                 )
             }
         }
     }
 
-    // Snapshot filenames are <testclass>_<id>.png (base) and <testclass>_<id>_<category>_<value>.png
-    // (variants). Component ids are dash-joined and never contain '_', so "_<id>.png" and
-    // "_<id>_" match exactly one component — they cannot match inside a longer id, and one
-    // component's base can never be claimed as another's variant.
-
-    private fun List<String>.findSnapshot(id: String): String? {
-        return find {
-            it.endsWith("_$id.png")
+    // Snapshot filenames are <prefix>_<id>.png (base) and <prefix>_<id>_<category>_<value>.png
+    // (variants; the processor keeps '_' out of categories and values). Ids are dash-joined,
+    // but function and package names may contain '_' — so one component's id can extend
+    // another's at a '_' (Card / Card_Header), and the shorter id's "_<id>_" marker then
+    // matches the longer one's files. Each snapshot therefore goes to the LONGEST id it
+    // matches as either a base (nothing after the id) or a variant (exactly category_value).
+    private fun resolve(snapshot: String, idsLongestFirst: List<String>, uiTrees: Map<String, String>): ResolvedSnapshot? {
+        val name = snapshot.substringBeforeLast('.')
+        val resolved = idsLongestFirst.firstNotNullOfOrNull { id -> resolveAgainst(snapshot, name, id, uiTrees) }
+        if (resolved == null && idsLongestFirst.any { "_${it}_" in name }) {
+            onMalformedVariant(snapshot)
         }
+        return resolved
     }
 
-    private fun List<String>.findVariants(id: String, uiTrees: Map<String, String>): List<ComponentVariant> {
+    private fun resolveAgainst(snapshot: String, name: String, id: String, uiTrees: Map<String, String>): ResolvedSnapshot? {
         val marker = "_${id}_"
-        return filter {
-            it.contains(marker)
-        }.mapNotNull { snapshot ->
-            val variantBlock = snapshot
-                .substring(snapshot.indexOf(marker) + marker.length)
-                .substringBeforeLast('.')
-                .split("_")
-
-            if (variantBlock.size < 2) {
-                onMalformedVariant(snapshot)
-                null
-            } else {
-                ComponentVariant(
-                    category = variantBlock.first(),
-                    // A category may itself contain '_' (e.g. a preview-parameter name);
-                    // everything after the first block is the variant value.
-                    variant = variantBlock.drop(1).joinToString("_"),
-                    snapshotPath = snapshot,
-                    uiTreePath = uiTrees["${id}_${variantBlock.joinToString("_")}".lowercase()],
-                )
-            }
+        return when {
+            name.endsWith("_$id") -> ResolvedSnapshot(id, snapshot, variant = null)
+            marker in name -> name.substringAfter(marker)
+                .split('_')
+                .takeIf { blocks -> blocks.size == 2 && blocks.none(String::isEmpty) }
+                ?.let { (category, value) ->
+                    ResolvedSnapshot(
+                        componentId = id,
+                        snapshot = snapshot,
+                        variant = ComponentVariant(
+                            category = category,
+                            variant = value,
+                            snapshotPath = snapshot,
+                            uiTreePath = uiTrees["${id}_${category}_$value".lowercase()],
+                        ),
+                    )
+                }
+            else -> null
         }
     }
+
+    private data class ResolvedSnapshot(
+        val componentId: String,
+        val snapshot: String,
+        val variant: ComponentVariant?,
+    )
 }

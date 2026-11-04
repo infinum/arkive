@@ -9,6 +9,7 @@ appcompat = "1.7.1"
 cardview = "1.0.0"
 constraintlayout = "2.2.1"
 detekt = "1.23.8"
+roborazzi = "1.72.0"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -20,6 +21,7 @@ compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMu
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 arkive = { id = "com.infinum.arkive", version.ref = "arkive" }
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
