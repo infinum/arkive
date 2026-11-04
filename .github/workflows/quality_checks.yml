@@ -84,9 +84,14 @@ jobs:
         run: ./gradlew publishToMavenLocal
 
       # End-to-end over both consumers: the android sample (Peak) and the KMP sample
-      # (Brew) run the full KSP → Paparazzi → showcase pipeline, and the root task
+      # (Brew) run the full KSP → Roborazzi → showcase pipeline, and the root task
       # aggregates them into the final catalogue. The samples are a standalone build
       # with their own (newer) toolchain — see samples/settings.gradle.kts.
       - name: Generate the full web showcase (android + KMP consumers)
         working-directory: samples
         run: ./gradlew generateWebShowcase
+
+      # Every snapshot must ship with a parseable UI tree, and known sample trees must
+      # carry the content the web inspector and the agent skills rely on.
+      - name: Check every snapshot has a UI tree
+        run: python3 .github/scripts/check_uitree.py samples/build/generated/arkive/showcase

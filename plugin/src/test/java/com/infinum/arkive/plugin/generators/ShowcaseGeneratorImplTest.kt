@@ -90,6 +90,57 @@ class ShowcaseGeneratorImplTest {
         )
     }
 
+    @Test
+    fun baseAndVariantTreesArePairedWithTheirSnapshots() {
+        val id = "com-app-ui-card"
+        val items = generator.generateShowcase(
+            snapshots = listOf(snapshot(id), snapshot("${id}_font_1.5")),
+            metadata = metadata(id),
+            uiTrees = mapOf(id to "uitree/$id.json", "${id}_font_1.5" to "uitree/${id}_font_1.5.json"),
+        )
+
+        assertEquals("uitree/$id.json", items.single().uiTreePath)
+        assertEquals("uitree/${id}_font_1.5.json", items.single().variants.single().uiTreePath)
+    }
+
+    // Paparazzi lowercases snapshot filenames; the tree keeps the runner's original name.
+    @Test
+    fun pairingSurvivesPaparazziLowercasingSnapshotNames() {
+        val id = "com-app-ui-card"
+        val items = generator.generateShowcase(
+            snapshots = listOf(snapshot(id), snapshot("${id}_layoutdirection_ltr")),
+            metadata = metadata(id),
+            uiTrees = mapOf("${id}_layoutdirection_ltr" to "uitree/${id}_layoutDirection_LTR.json"),
+        )
+
+        assertEquals("uitree/${id}_layoutDirection_LTR.json", items.single().variants.single().uiTreePath)
+    }
+
+    @Test
+    fun snapshotWithoutTreeHasNoTreePath() {
+        val id = "com-app-ui-card"
+        val items = generator.generateShowcase(
+            snapshots = listOf(snapshot(id), snapshot("${id}_font_1.5")),
+            metadata = metadata(id),
+        )
+
+        assertEquals(null, items.single().uiTreePath)
+        assertEquals(null, items.single().variants.single().uiTreePath)
+    }
+
+    @Test
+    fun treeWithoutSnapshotIsNeverReferenced() {
+        val card = "com-app-ui-card"
+        val ghost = "com-app-ui-ghost"
+        val items = generator.generateShowcase(
+            snapshots = listOf(snapshot(card)),
+            metadata = metadata(card, ghost),
+            uiTrees = mapOf(card to "uitree/$card.json", ghost to "uitree/$ghost.json"),
+        )
+
+        assertEquals(listOf("uitree/$card.json"), items.map { it.uiTreePath })
+    }
+
     private fun snapshot(name: String) = "images/$TEST_CLASS_PREFIX$name.png"
 
     private fun metadata(vararg ids: String) = ComponentsMetaData(

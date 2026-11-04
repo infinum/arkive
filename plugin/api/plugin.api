@@ -16,6 +16,7 @@ public class com/infinum/arkive/plugin/extensions/ArkiveExtension {
 	public final fun getPaparazzi ()Lcom/infinum/arkive/plugin/extensions/PaparazziSelector;
 	public final fun getRoborazzi ()Lcom/infinum/arkive/plugin/extensions/RoborazziSelector;
 	public final fun getSnapshotRetention ()Lorg/gradle/api/provider/Property;
+	public final fun getUiTree ()Lorg/gradle/api/provider/Property;
 }
 
 public final class com/infinum/arkive/plugin/extensions/PaparazziSelector {

@@ -18,6 +18,7 @@ java {
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.junit)
 }
 
 // Publish with a Kotlin 2.2 floor: AGP 9 (our consumer floor) itself requires KGP

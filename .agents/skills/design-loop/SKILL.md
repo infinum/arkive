@@ -71,6 +71,8 @@ ask what the screen should look like **before** judging; never invent the requir
    component id (see the cheatsheet's filename convention). If it's missing, the preview
    crashed — the build log has an `Arkive: no snapshot recorded for component` warning
    (re-run with `--info` for the crash message); fix that first.
+   Its UI tree is `uitree/<componentId>.json` next to `images/` (the item's `uiTreePath`) —
+   hierarchy, dp bounds, text style; schema in the cheatsheet.
 5. **Fetch the design truth** for the tier you're on.
 6. **Compare in a single turn:** Read the snapshot PNG (renders visually), fetch/hold the
    design truth, and enumerate every observable difference — colors, spacing, alignment,
@@ -78,6 +80,14 @@ ask what the screen should look like **before** judging; never invent the requir
    Saying "matches" or "looks close" without listed concrete observations is a rule
    violation: either list the diffs, or state specifically that none are visible. Never
    declare a match from reading your own code.
+
+   **Measured pass** (when the tree exists and the design truth has numbers — e.g. the
+   Figma MCP server's design context): after the visual comparison, diff the tree against
+   the design's values — text style per text node (size, weight, line height, color),
+   element sizes, and sibling gaps computed from `bounds`
+   (`next.x − (prev.x + prev.w)`, same for y). List every mismatch with both values:
+   `Text "Pay": 14sp vs Figma 16sp`. The measured pass adds findings; it never replaces
+   viewing the image.
 7. **Decide** (tolerance table below).
 
 | Situation | Action |
@@ -91,6 +101,10 @@ ask what the screen should look like **before** judging; never invent the requir
 
 ## Handoff — when the screen matches
 
+- Grep the component's variant trees for clipped text —
+  `grep -l '"overflow": true' <module>/build/generated/arkive/showcase/uitree/<componentId>_*.json` —
+  and report hits as **robustness findings**, not design diffs (the base-only comparison
+  rule still holds).
 - If the project retains goldens (`snapshotRetention` BASE/ALL): the UI just changed
   intentionally, so the goldens are now stale — re-record (`generateShowcase<Variant>`)
   and commit the updated goldens, or CI's `verifyShowcase` will fail on this change.
@@ -105,4 +119,5 @@ ask what the screen should look like **before** judging; never invent the requir
 - "The Figma might be out of date." (Maybe — but that's the user's call, not yours.)
 - Judging a match from code inspection instead of loading both images.
 - Comparing a variant image against Figma.
+- Declaring a match because the tree's numbers line up, without viewing the image.
 - Any impulse to leave a `// TODO: doesn't quite match design` comment.
