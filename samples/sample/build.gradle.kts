@@ -20,7 +20,8 @@ arkive {
 
 android {
     namespace = "com.infinum.arkive.sample"
-    compileSdk = 35
+    // Compose 1.12 (BOM 2026.09+) requires compileSdk 37.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.infinum.arkive.sample"

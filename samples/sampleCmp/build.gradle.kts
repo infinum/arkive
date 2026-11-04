@@ -23,8 +23,8 @@ kotlin {
 
     androidLibrary {
         namespace = "com.infinum.arkive.samplecmp"
-        // CMP 1.11 androidx dependencies require compileSdk 36.
-        compileSdk = 36
+        // CMP 1.12's androidx Compose 1.12 dependencies require compileSdk 37.
+        compileSdk = 37
         minSdk = 24
 
         // Paparazzi runs in the host (unit) test compilation; it needs android resources

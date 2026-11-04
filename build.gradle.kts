@@ -69,8 +69,8 @@ val securityFloors = mapOf(
     "org.bouncycastle:bcprov-jdk18on" to "1.86",
     "org.bouncycastle:bcpkix-jdk18on" to "1.86",
     "org.bouncycastle:bcutil-jdk18on" to "1.86",
-    "org.apache.commons:commons-compress" to "1.27.1",
-    "org.apache.commons:commons-lang3" to "3.18.0",
+    "org.apache.commons:commons-compress" to "1.28.0",
+    "org.apache.commons:commons-lang3" to "3.21.0",
     "org.apache.httpcomponents:httpclient" to "4.5.14",
     "org.jdom:jdom2" to "2.0.6.1",
     "org.bitbucket.b_c:jose4j" to "0.9.7",
@@ -114,7 +114,8 @@ allprojects {
 // mocha declares ^7.0.0 for diff and ^6.0.2 for serialize-javascript, so those two are
 // deliberate out-of-range forces — safe precisely because the code never runs. The
 // versions are chosen by the Kotlin Gradle plugin, so without these resolutions the only
-// other way to move them is a Kotlin upgrade, which the klib floor rules out.
+// other way to move them is a Kotlin upgrade, which raises the klib floor. A Kotlin bump
+// changes mocha & co. and requires regenerating the lock (command below).
 //
 // After changing these, regenerate the lock: ./gradlew kotlinUpgradeYarnLock --rerun-tasks
 // (rootPackageJson doesn't track resolutions as an input, so a plain run stays UP-TO-DATE).

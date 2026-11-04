@@ -13,17 +13,21 @@ engines" below. Published to Maven Central under `com.infinum.arkive`.
 
 The repo is **two Gradle builds**, deliberately:
 
-- **Root build** — the published modules. Pinned to the **oldest supported toolchain of
-  the AGP 9 era**: Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1 (compileOnly — the consumer
-  AGP floor). The Kotlin version here IS the public `@ArkiveComposable`-in-commonMain
-  floor: klibs are not forward-compatible, so the annotations klibs are only readable
-  by consumers on Kotlin ≥ the version that built them (2.3.21). **Do not bump this
-  toolchain casually — raising it is a breaking change for KMP consumers.** (JVM
-  artifacts are protected separately by the 2.2 language floor; AGP 9 itself requires
-  KGP 2.2.10+, so no reachable consumer is below it.)
+- **Root build** — the published modules. Pinned toolchain of the AGP 9 era: Gradle
+  9.8.2, Kotlin 2.4.21, AGP 9.5.0 (compileOnly — the consumer AGP floor). The Kotlin
+  version here IS the public `@ArkiveComposable`-in-commonMain floor: klibs are not
+  forward-compatible, so the annotations klibs are only readable by consumers on
+  Kotlin ≥ the version that built them (2.4.21). **Do not bump this toolchain
+  casually — raising it is a breaking change for KMP consumers**, and a Kotlin bump
+  requires regenerating `kotlin-js-store/yarn.lock`
+  (`./gradlew kotlinUpgradeYarnLock --rerun-tasks`), or CI fails in
+  `:kotlinStoreYarnLock`. (JVM artifacts are protected separately by the 2.2 language
+  floor; AGP 9 itself requires KGP 2.2.10+, so no reachable consumer is below it.)
 - **`samples/`** — a standalone build with its own wrapper on the **newest toolchain**
-  (Gradle 9.6, AGP 9.2, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
-  samples simulate real consumers and prove the older-library/newer-consumer direction.
+  (Gradle 9.8, AGP 9.5, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
+  samples simulate real consumers and prove the older-library/newer-consumer direction
+  — whenever their versions are ahead of the root build's (when Renovate moves both to
+  the same versions, only same-version compatibility is exercised).
 
 The samples consume the **published** plugin from mavenLocal, so bootstrap first:
 
@@ -93,12 +97,12 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
 
 ## Compatibility constraints (do not remove)
 
-- The root build's toolchain (Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1) is the
+- The root build's toolchain (Gradle 9.8.2, Kotlin 2.4.21, AGP 9.5.0) is the
   compatibility mechanism — see "Two builds, two toolchains". The **Kotlin 2.2
   language/api floor** blocks in each module's build file keep the JVM metadata story
   explicit (`coreLibrariesVersion = 2.2.21` on the JVM-only modules; :annotations must
   NOT set it — the js/wasm/native stdlib ABI has to match the compiler). The klib floor
-  is the compiler version itself (2.3.21). Removing any of it silently breaks consumers.
+  is the compiler version itself (2.4.21). Removing any of it silently breaks consumers.
   AGP 8 consumers and the classic KMP layout (`kotlin.multiplatform` +
   `com.android.library`, which AGP 9 rejects outright) are served by Arkive 0.0.3.
 - Both engine plugins (Paparazzi AND Roborazzi) must stay `runtimeOnly` in `:plugin` and
