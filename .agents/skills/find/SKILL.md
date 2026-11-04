@@ -25,7 +25,7 @@ No visual check needed. If a change to it is wanted, hand off to `/arkive:design
 
 ## Tier 1 — metadata shortlist (text only, cheap)
 
-Search two places — each covers the other's blind spot:
+Search three places — each covers another's blind spot:
 
 1. **The catalogue**: every module's
    `build/generated/arkive/showcase/arkive-showcase.json` — component `name`, `group`,
@@ -34,6 +34,10 @@ Search two places — each covers the other's blind spot:
 2. **The source**: grep `@Composable` function names and Arkive/Preview annotations. The
    catalogue only knows **previewed** components — an un-previewed composable is
    invisible to it, and that's exactly the component that gets duplicated.
+3. **The UI trees**: every module's `build/generated/arkive/showcase/uitree/*.json` — grep
+   `"composable"` and `"callers"` names and visible `"text"`. Shared components used only
+   inside previewed screens show up here — as a node's `composable`, or in `callers` on the
+   shared component's own outermost node — and designs can be matched by their copy.
 
 Freshness: if the showcase output is missing or predates recent UI work, either
 regenerate (`generateShowcase<Variant>` — takes minutes, warn first) or continue
@@ -52,7 +56,8 @@ actual task. Delegate the comparison:
    pass **file paths only**.
 2. Spawn **one** subagent with: the target image path, each suspect's id + base snapshot
    path (from the module's showcase `images/` — base snapshots only, ignore
-   `_<category>_<value>` variant files), and this verbatim output contract:
+   `_<category>_<value>` variant files) + its UI tree path (`uitree/<componentId>.json`,
+   when present — the subagent may read it to compare structure), and this verbatim output contract:
 
    > View the target image and every suspect image. Compare anatomy and layout —
    > structure, element placement, shape — not theme colors; a re-themed version of the

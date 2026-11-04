@@ -8,5 +8,5 @@ import org.gradle.api.Project
  * (":common:ui" and ":epos:ui" are both named "ui"), which made modules overwrite each
  * other in the aggregated showcase. Single-segment projects keep their plain name.
  */
-val Project.showcaseModuleName: String
+internal val Project.showcaseModuleName: String
     get() = path.removePrefix(":").replace(':', '-').ifEmpty { name }

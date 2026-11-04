@@ -8,7 +8,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.infinum.arkive.annotations.ArkiveView
 import com.infinum.arkive.processor.models.ViewHolder
 
-class ArkiveViewCollector(
+internal class ArkiveViewCollector(
     private val resolver: Resolver,
     private val logger: KSPLogger,
 ) : Collector<ViewHolder> {

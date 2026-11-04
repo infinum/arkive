@@ -192,6 +192,7 @@ internal class RoborazziTestGenerator(
             .addCode(
                 snapshotTestBody(),
                 SNAPSHOT_FILE_PREFIX,
+                UI_TREE_VIEWS,
                 CAPTURE_ROBO_IMAGE,
                 ON_ROOT,
                 CAPTURE_ROBO_IMAGE,
@@ -224,7 +225,7 @@ internal class RoborazziTestGenerator(
                         val activity = org.robolectric.Robolectric
                             .buildActivity(android.app.Activity::class.java).setup().get()
                         val view = android.view.LayoutInflater.from(activity)
-                            .inflate(viewId, android.widget.FrameLayout(activity))
+                            .inflate(viewId, %T.host(activity, $SHOT_NAME))
                         activity.setContentView(view)
                         view.%M(filePath = filePath)
                     } else {
@@ -302,6 +303,7 @@ internal class RoborazziTestGenerator(
         private val PARAMETERIZED_RUNNER = ClassName("org.robolectric", "ParameterizedRobolectricTestRunner")
         private val CAPTURE_ROBO_IMAGE = MemberName("com.github.takahirom.roborazzi", "captureRoboImage")
         private val ON_ROOT = MemberName("androidx.compose.ui.test", "onRoot")
+        private val UI_TREE_VIEWS = ClassName("com.infinum.arkive.composeutils.uitree", "ArkiveUiTreeViews")
         private val ARRAY_OF_ANY = ClassName("kotlin", "Array").parameterizedBy(ANY)
     }
 }

@@ -57,6 +57,7 @@ android {
     // 2.2.10+, so 2.2 is the lowest Kotlin any consumer can be on; the explicit
     // jvmTarget keeps the bytecode at 17 regardless of the deploy JDK.
     kotlin {
+        explicitApi()
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
             languageVersion.set(KotlinVersion.KOTLIN_2_2)
@@ -69,4 +70,9 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+    // UI-tree capture only runs in Arkive's generated unit tests, where the Gradle plugin
+    // injects ui-tooling-data; consumers' apps never carry it (see consumer-rules.pro).
+    compileOnly(libs.compose.ui.tooling.data)
+
+    testImplementation(libs.junit)
 }

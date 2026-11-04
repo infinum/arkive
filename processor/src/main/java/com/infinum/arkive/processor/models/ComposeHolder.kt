@@ -3,7 +3,7 @@ package com.infinum.arkive.processor.models
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 
-data class ComposeHolder(
+internal data class ComposeHolder(
     override val name: String,
     override val functionName: String,
     override val packageName: String,

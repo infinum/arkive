@@ -51,8 +51,14 @@ theirs to move independently.
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas, and complexity rules
   like no labeled expressions)
-- Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
-  unit suite so far — it covers the showcase filename parsing)
+- Regenerate public-API dumps after an intentional API change: `./gradlew updateKotlinAbi`
+  (see "Public API tracking")
+- Single test: `./gradlew :composeUtils:testDebugUnitTest --tests '*UiTreeJsonTest'` (or
+  `:plugin:test --tests 'ShowcaseGeneratorImplTest'`). Unit suites: composeUtils' uitree
+  core (JSON, pruning, assembly, attribution, semantics mapping, interop, session),
+  processor (`ComposeRunnerSpecTest`, `ModulePackagesTest`), testprocessor (`ViewHostTest`),
+  metadata (`ShowcaseJsonCompatibilityTest`), plugin (`ShowcaseGeneratorImplTest`,
+  `UiTreeGrabberTest`)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
   and builds the site):
   `cd samples && ./gradlew generateWebShowcase` → output at
@@ -96,6 +102,46 @@ sets *publication* coordinates — without it the plugin jar ships "unspecified"
 coordinates and the KMP klib names in module metadata lose their version. Per-module
 artifact ids/names live in each module's `gradle.properties`
 (`POM_ARTIFACT_ID`/`POM_NAME`/`POM_DESCRIPTION`); shared POM fields in the root one.
+
+## Public API tracking
+
+Every published module compiles in **explicit API mode** (`explicitApi()` in its `kotlin {}`
+block): effectively-public declarations must say `public`, so nothing leaks by default.
+The intended surface is small — keep everything else `internal`:
+- plugin: `ArkivePlugin` + the DSL (`ArkiveExtension`, the selectors,
+  `RoborazziEngineOptions`, `SnapshotRetention`). Task types and KSP-arg constants are internal.
+- processor/testprocessor: only the `SymbolProcessorProvider`s (ServiceLoader needs them public).
+- metadata: all models + `toJson`/`fromJson` (processor and plugin use them across
+  artifacts); the backing `json` is `@PublishedApi internal`.
+- composeUtils: the `*Variant` wrappers and the UI-tree entry points (`ArkiveUiTreeCapture`,
+  `ArkiveUiTreeViews.host`) generated code calls; its `@Preview`s are private.
+- annotations: both annotations.
+
+ABI dumps come from **KGP's built-in ABI validation** (`abiValidation { enabled }`, opt-in
+`ExperimentalAbiValidation`), not the binary-compatibility-validator plugin — it adds nothing
+to this build's deliberately fragile classpath. Dumps live in `<module>/api/` (`annotations`
+also has a `.klib.api` for the non-JVM targets; Linux hosts infer the Apple targets from it).
+`check` runs `checkKotlinAbi`, so CI's module build enforces them; after an intentional
+change run `./gradlew updateKotlinAbi` and commit the diff. What a changed line means
+depends on the dump:
+- `plugin.api`, `annotations.api`/`.klib.api` — **consumer-facing** (build scripts,
+  convention plugins compiled against the plugin jar, annotated sources). A removed/changed
+  line is a breaking change (see Version bumping).
+- `metadata.api`, `processor.api`, `testprocessor.api` — **internal Arkive contract**: only
+  other Arkive artifacts link them, always resolved together at `ArkiveVersion.current`, and
+  no consumer compiles against them. A changed line only means those artifacts must ship
+  together, which they always do — e.g. a new optional field on a metadata data class
+  rewrites its `<init>`/`copy`/`componentN` lines without breaking anyone. (Plugin ↔
+  processor really talk through `components_meta_data.json`, which no dump covers.)
+
+`config/detekt-explicit-api.yml`, layered over `detekt.yml` by `detekt.gradle` (published
+modules only — the samples keep the rule), turns off `RedundantVisibilityModifierRule`,
+which fights explicit API mode without type resolution.
+
+**composeUtils has no dump**: under AGP 9's built-in Kotlin, KGP never registers its ABI
+setup action, so `abiValidation` doesn't exist there (verified on KGP 2.3.21). Explicit API
+mode still applies. Its wrappers are only called by code generated in the same build
+against the same Arkive version, so cross-version binary drift can't reach consumers.
 
 ## Compatibility constraints (do not remove)
 
@@ -275,7 +321,14 @@ Modules and how they compose at a consumer's build time:
 - **metadata** — kotlinx-serialization models shared by processor and plugin
   (`ArkiveShowcase` → modules → items → component + variants).
 - **composeUtils** — runtime wrappers the generated variant code composes previews in
-  (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`); on the consumer's classpath.
+  (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`), plus UI-tree capture
+  (`uitree/`): `ArkiveUiTreeCapture` wraps every shot in a pass-through `Layout` whose
+  `drawWithContent` hook walks layout nodes + unmerged semantics + recorded slot tables
+  on the drawn frame (the capture IS a draw, so no engine is involved), and
+  `ArkiveUiTreeViews.host` does the same for `@ArkiveView`. Pass-through unless the test JVM
+  has `arkive.uitree.dir`. Pure core (model, JSON, attribution, assembly, pruning, session)
+  is JVM-unit-tested; `ui-tooling-data` is compileOnly (consumer-rules `-dontwarn`) and
+  injected test-only by the plugin. On the consumer's classpath.
 - **plugin** — applies the selected engine's plugin (the consumer's if it has one,
   otherwise provisioned — see Compatibility constraints), injects the runtime/KSP
   dependencies at `ArkiveVersion.current`, forwards extension flags
@@ -368,6 +421,18 @@ overwriting it with an empty one (regenerate-from-nothing was a real bug: every 
 `GenerateWebShowcaseTask` (root) aggregates each module's output into
 `<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
 
+UI trees ride alongside, never through the golden dir: the plugin sets
+`arkive.uitree.dir = build/arkive/uitree/<variant>/` on the variant's test task (declared
+output; `arkive { uiTree }` → system property, never a KSP arg). The shooter's runner is
+wrapped once in `ComposeRunnerSpec`, with the module's own packages (from KSP) so calls
+from app code get `source`/`callers`. `GenerateShowcaseTask` pairs trees to items by
+lowercased shot id (Paparazzi lowercases PNG names), copies only paired ones to
+`<module>/uitree/`, and writes `uiTreePath`. Trees are informational: never verified,
+never retained/consumed. CI fails if any snapshot lacks a tree, a PNG's size disagrees with
+its tree's `size × density` (engine downscaling — Paparazzi caps the long side at 1000 px,
+which is why the web inspector derives px-per-dp from the image), or the known sample trees
+lose expected content (`.github/scripts/check_uitree.py`).
+
 Snapshot filename convention everything relies on:
 `com.infinum.arkive_ArkiveSnapshotTestGenerator[_<testMethod>]_<componentId>.png` for base,
 `…_<componentId>_<category>_<value>.png` for variants. Paparazzi inserts the test-method
@@ -378,13 +443,17 @@ and contains its `_<id>_` marker. `ShowcaseGeneratorImpl` therefore gives each f
 LONGEST id it matches as a base (nothing after the id) or a variant (exactly
 `_<category>_<value>`). Residual, unfixable by parsing: a function literally named like
 another component's variant (`Card_Density_Ldpi` beside `Card` with variants on) writes
-the very same filename.
+the very same filename. UI trees: `<shotId>.json` (`<componentId>[_<category>_<value>]`, no
+test-class prefix), paired with each resolved snapshot by its lowercased shot id.
 
 **Web template** (`plugin/src/main/resources/web/`: `index.html`, `app.js`, `styles.css`,
 mirrored in `ShowcaseWebGenerator`) — a dependency-free vanilla-JS SPA with hash routing,
 designed for GitHub Pages (relative paths only). It fetches `arkive-showcase.json` and
 resolves images as `<module>/images/<basename(snapshotPath)>`. No build step, no CDN, no
 bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added).
+The detail view's Inspect toggle (`I`) lazily fetches
+`<module>/uitree/<basename(uiTreePath)>` and overlays node boxes inside the transformed
+stage.
 
 ## Golden verification (verifyShowcase)
 

@@ -35,6 +35,7 @@ compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-ui-tooling-data = { module = "androidx.compose.ui:ui-tooling-data" }
 gradle-android = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 junit = { module = "junit:junit", version.ref = "junit" }
 
