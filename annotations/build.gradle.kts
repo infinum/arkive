@@ -18,6 +18,11 @@ apply {
 // variant); the rest exist so a commonMain dependency resolves on every consumer target.
 // All targets are annotation-only klibs (no cinterop), so they cross-compile on any host.
 kotlin {
+    explicitApi()
+    // KGP 2.4+: calling abiValidation enables it (the `enabled` property was removed).
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {}
+
     // The jvm jar must stay JDK 17 bytecode (consumer Gradle daemons and 17-pinned test
     // JVMs load it); without the pin it silently follows whatever JDK runs the deploy.
     jvm {
@@ -34,17 +39,17 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs { nodejs() }
 
+    // No macosX64/tvosX64/watchosX64: Kotlin 2.4 deprecates them at error level, so no
+    // consumer on the klib floor (2.4.21+) can declare them anyway. iosX64 is still
+    // supported. https://kotl.in/native-targets-tiers
     iosArm64()
     iosX64()
     iosSimulatorArm64()
     macosArm64()
-    macosX64()
     tvosArm64()
-    tvosX64()
     tvosSimulatorArm64()
     watchosArm32()
     watchosArm64()
-    watchosX64()
     watchosSimulatorArm64()
     linuxX64()
     linuxArm64()

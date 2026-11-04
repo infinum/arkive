@@ -51,6 +51,8 @@ Gradle).
   `./gradlew :plugin:build :annotations:build :processor:build :testprocessor:build :metadata:build :composeUtils:build`
 - Lint only: `./gradlew detekt` (config in `config/detekt.yml`, shared Infinum config; zero
   issues allowed — includes formatting rules like trailing commas and no-labeled-expressions)
+- Regenerate public-API dumps after an intentional API change: `./gradlew updateKotlinAbi`
+  (see "Public API tracking")
 - Single test: `./gradlew :plugin:test --tests 'ShowcaseGeneratorImplTest'` (the only
   unit suite so far — it covers the showcase filename parsing)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
@@ -95,6 +97,46 @@ explicit `group`/`version` assignment, because the publish plugin only sets
 coordinates. Per-module artifact ids/names live in each module's `gradle.properties`
 (`POM_ARTIFACT_ID`/`POM_NAME`/`POM_DESCRIPTION`); shared POM fields in the root one.
 
+## Public API tracking
+
+Every published module compiles in **explicit API mode** (`explicitApi()` in its `kotlin {}`
+block): effectively-public declarations must say `public`, so nothing leaks by default.
+The intended surface is small — keep everything else `internal`:
+- plugin: `ArkivePlugin` + the DSL (`ArkiveExtension`, the selectors,
+  `RoborazziEngineOptions`, `SnapshotRetention`). Task types and KSP-arg constants are internal.
+- processor/testprocessor: only the `SymbolProcessorProvider`s (ServiceLoader needs them public).
+- metadata: all models + `toJson`/`fromJson` (processor and plugin use them across
+  artifacts); the backing `json` is `@PublishedApi internal`.
+- composeUtils: the `*Variant` wrappers generated code calls; its `@Preview`s are private.
+- annotations: both annotations.
+
+ABI dumps come from **KGP's built-in ABI validation** (`abiValidation {}` — since KGP 2.4
+the call itself enables it and `enabled.set(true)` no longer compiles; opt-in
+`ExperimentalAbiValidation`), not the binary-compatibility-validator plugin — it adds nothing
+to this build's deliberately fragile classpath. Dumps live in `<module>/api/` (`annotations`
+also has a `.klib.api` for the non-JVM targets; Linux hosts infer the Apple targets from it).
+`check` runs `checkKotlinAbi`, so CI's module build enforces them; after an intentional
+change run `./gradlew updateKotlinAbi` and commit the diff. What a changed line means
+depends on the dump:
+- `plugin.api`, `annotations.api`/`.klib.api` — **consumer-facing** (build scripts,
+  convention plugins compiled against the plugin jar, annotated sources). A removed/changed
+  line is a breaking change (see Version bumping).
+- `metadata.api`, `processor.api`, `testprocessor.api` — **internal Arkive contract**: only
+  other Arkive artifacts link them, always resolved together at `ArkiveVersion.current`, and
+  no consumer compiles against them. A changed line only means those artifacts must ship
+  together, which they always do — e.g. a new optional field on a metadata data class
+  rewrites its `<init>`/`copy`/`componentN` lines without breaking anyone. (Plugin ↔
+  processor really talk through `components_meta_data.json`, which no dump covers.)
+
+`config/detekt-explicit-api.yml`, layered over `detekt.yml` by `detekt.gradle` (published
+modules only — the samples keep the rule), turns off `RedundantVisibilityModifierRule`,
+which fights explicit API mode without type resolution.
+
+**composeUtils has no dump**: under AGP 9's built-in Kotlin, KGP never registers its ABI
+setup action, so `abiValidation` doesn't exist there (verified on KGP 2.3.21). Explicit API
+mode still applies. Its wrappers are only called by code generated in the same build
+against the same Arkive version, so cross-version binary drift can't reach consumers.
+
 ## Compatibility constraints (do not remove)
 
 - The root build's toolchain (Gradle 9.8.2, Kotlin 2.4.21, AGP 9.5.0) is the
@@ -118,8 +160,10 @@ coordinates. Per-module artifact ids/names live in each module's `gradle.propert
   daemon) — never raise this floor, and never leave jvmTarget implicit: Kotlin silently
   follows whatever JDK runs the deploy.
 - `:annotations` publishes a **full KMP target matrix** (jvm serves plain-Android
-  consumers; the rest exist so a `commonMain` dependency resolves everywhere). Apple
-  targets are built on a macOS host — deploys run from macOS; the Linux CI bootstrap
+  consumers; the rest exist so a `commonMain` dependency resolves everywhere), minus
+  the x64 Apple targets Kotlin 2.4 deprecates at error level (macosX64, tvosX64,
+  watchosX64 — iosX64 stays). Dropping a target changes the `Targets:` header of
+  `annotations.klib.api`. Apple targets are built on a macOS host — deploys run from macOS; the Linux CI bootstrap
   skips them, and the samples only need the jvm artifact.
   Dokka javadoc cannot render KMP modules, so `maven-publish.gradle` attaches empty
   javadoc jars to KMP publications (kotlinx convention) — don't re-apply `dokka.gradle`

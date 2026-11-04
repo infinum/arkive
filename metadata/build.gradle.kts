@@ -24,6 +24,10 @@ dependencies {
 // 2.2.10+, so 2.2 is the lowest Kotlin any consumer can be on; coreLibrariesVersion
 // keeps the kotlin-stdlib dependency at 2.2.x in the POM.
 kotlin {
+    explicitApi()
+    // KGP 2.4+: calling abiValidation enables it (the `enabled` property was removed).
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {}
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)

@@ -31,6 +31,24 @@ To make changes to the project, please follow these steps:
 
 Once we check everything, we will merge the changes into the main branch and include it in the next release.
 
+## Public API changes
+
+Every published module is compiled in Kotlin's explicit API mode, so anything consumers can
+reach has to be marked `public` deliberately — default to `internal`. The public surface of
+each module is recorded in its `api/` directory, and the build fails when the code no longer
+matches it. If you changed the public API on purpose, regenerate the dumps and commit them
+with your change:
+
+```
+./gradlew updateKotlinAbi
+```
+
+Reviewers read the `.api` diff to spot breaking changes. Only `plugin` and `annotations` are
+compiled against by consumers: in their dumps, a removed or changed line breaks consumers and
+needs a major version bump; added lines are a minor bump. The `metadata`, `processor` and
+`testprocessor` dumps are only used by other Arkive artifacts, which always ship at the same
+version, so changes there don't break consumers.
+
 ## Guidelines for pull requests
 
 When submitting a pull request, please ensure that:
