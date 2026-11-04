@@ -1,5 +1,6 @@
 package com.infinum.arkive.plugin.consumers
 
+import com.android.build.api.variant.AndroidComponentsExtension
 import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.Project
 
@@ -47,7 +48,6 @@ internal interface ConsumerAdapter {
         private const val ANDROID_LIBRARY_PLUGIN_ID = "com.android.library"
         private const val ANDROID_KMP_LIBRARY_PLUGIN_ID = "com.android.kotlin.multiplatform.library"
         private const val KOTLIN_MULTIPLATFORM_PLUGIN_ID = "org.jetbrains.kotlin.multiplatform"
-        private const val KOTLIN_ANDROID_PLUGIN_ID = "org.jetbrains.kotlin.android"
 
         /**
          * Picks the adapter matching the consumer's plugin combination, deferring until
@@ -55,12 +55,16 @@ internal interface ConsumerAdapter {
          * arbitrary). [onSelected] runs at most once.
          *
          * `com.android.application`/`com.android.library` alone don't identify the
-         * flavor — the same android plugin appears in plain Android modules (with
-         * `kotlin-android` or AGP's built-in Kotlin) and in legacy KMP modules (with
+         * flavor — the same android plugin appears in plain Android modules (AGP 9's
+         * built-in Kotlin, `kotlin-android`, or java-only) and in legacy KMP modules (with
          * `kotlin.multiplatform` + `androidTarget()`), and those need different wiring.
-         * So the android plugin arms both Kotlin hooks and the first Kotlin plugin to
-         * appear decides; a module with neither (built-in Kotlin, java-only) falls back
-         * to the plain android adapter after evaluation.
+         * So the android plugin decides in AGP's `finalizeDsl`, once the whole plugins
+         * block is applied: `kotlin.multiplatform` → legacy KMP, anything else → plain.
+         * One decision point keeps every consumer on the path the samples exercise.
+         * Never `afterEvaluate`: AGP locks `onVariants` in its own afterEvaluate,
+         * registered before any `withPlugin(android)` hook runs. Whatever runs from here
+         * (including an engine plugin applied via the `arkive.engine` property) can no
+         * longer register a `finalizeDsl` of its own.
          */
         fun select(project: Project, onSelected: (ConsumerAdapter) -> Unit) {
             val chooser = AdapterChooser(onSelected)
@@ -81,14 +85,13 @@ internal interface ConsumerAdapter {
             chooser: AdapterChooser,
             kind: AndroidConsumerAdapter.Kind,
         ) {
-            project.pluginManager.withPlugin(KOTLIN_ANDROID_PLUGIN_ID) {
-                chooser.choose(AndroidConsumerAdapter(project, kind))
-            }
-            project.pluginManager.withPlugin(KOTLIN_MULTIPLATFORM_PLUGIN_ID) {
-                chooser.choose(LegacyKmpConsumerAdapter(project, kind))
-            }
-            project.afterEvaluate {
-                chooser.choose(AndroidConsumerAdapter(project, kind))
+            project.extensions.getByType(AndroidComponentsExtension::class.java).finalizeDsl {
+                val adapter = if (project.pluginManager.hasPlugin(KOTLIN_MULTIPLATFORM_PLUGIN_ID)) {
+                    LegacyKmpConsumerAdapter(project, kind)
+                } else {
+                    AndroidConsumerAdapter(project, kind)
+                }
+                chooser.choose(adapter)
             }
         }
     }

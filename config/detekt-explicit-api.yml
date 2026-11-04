@@ -1,0 +1,7 @@
+# Layered over detekt.yml for the published modules only (see detekt.gradle); the samples
+# don't use explicit API mode and keep the rule.
+style:
+  # Explicit API mode REQUIRES `public`, and the rule only recognises explicit API mode
+  # under type resolution, which `detekt` lacks.
+  RedundantVisibilityModifierRule:
+    active: false

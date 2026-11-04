@@ -86,3 +86,6 @@ samples/sample/src/test/snapshots/
 samples/sampleCmp/src/androidHostTest/snapshots/
 
 .idea/markdown.xml
+
+# Kotlin Gradle plugin metadata cache
+.kotlin/

@@ -71,12 +71,52 @@ dependencies {
     compileOnly(libs.gradle.android)
 
     testImplementation(libs.junit)
+
+    // Security floors for Paparazzi's transitives. These MUST be dependency constraints
+    // rather than a resolutionStrategy: constraints are published into this module's
+    // Gradle Module Metadata, so they follow the plugin into a CONSUMER's daemon —
+    // which is where the exposure actually is. paparazzi-gradle-plugin is runtimeOnly,
+    // so it sits in the published POM at scope=runtime and drags
+    // com.android.tools:sdk-common:31.13.2 into every consumer that applies Arkive,
+    // whichever engine they select.
+    //
+    // There is no upgrade that fixes this: 2.0.0-alpha05 is Paparazzi's newest release,
+    // and it pins sdk-common 31.13.2 itself, so bumping AGP here changes nothing.
+    // Pinning the transitives is the only available remedy.
+    //
+    // Keep in sync with the securityFloors map in the root build.gradle.kts, which
+    // covers the same coordinates on this build's own (unpublished) classpaths.
+    constraints {
+        runtimeOnly("org.bouncycastle:bcprov-jdk18on:1.86") {
+            because("CVE-2026-8763, CVE-2026-13506 (<1.85), CVE-2026-0636 (<1.84), CVE-2025-14813 (<=1.80.1)")
+        }
+        runtimeOnly("org.bouncycastle:bcpkix-jdk18on:1.86") {
+            because("CVE-2026-5588 (<1.84)")
+        }
+        runtimeOnly("org.bouncycastle:bcutil-jdk18on:1.86") {
+            because("Bouncy Castle modules must resolve as a set")
+        }
+        runtimeOnly("org.apache.commons:commons-compress:1.27.1") {
+            because("CVE-2024-25710, CVE-2024-26308 (<1.26.0)")
+        }
+        runtimeOnly("org.apache.httpcomponents:httpclient:4.5.14") {
+            because("CVE-2020-13956 (<4.5.13)")
+        }
+        runtimeOnly("com.google.guava:guava:33.7.2-jre") {
+            because("CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization DoS (<=33.7.1)")
+        }
+    }
 }
 
 // Publish with a Kotlin 2.2 floor: AGP 9 (our consumer floor) itself requires KGP
 // 2.2.10+, so 2.2 is the lowest Kotlin any consumer can be on; coreLibrariesVersion
 // keeps the kotlin-stdlib dependency at 2.2.x in the POM.
 kotlin {
+    explicitApi()
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled.set(true)
+    }
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)

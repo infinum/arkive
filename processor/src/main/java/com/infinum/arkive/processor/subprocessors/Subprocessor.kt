@@ -5,7 +5,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.infinum.arkive.processor.models.ArkiveOptions
 
-interface Subprocessor {
+internal interface Subprocessor {
     fun process(
         resolver: Resolver,
         codeGenerator: CodeGenerator,

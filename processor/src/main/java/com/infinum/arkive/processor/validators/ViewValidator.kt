@@ -5,7 +5,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Modifier
 import com.infinum.arkive.processor.models.ViewHolder
 
-class ViewValidator(
+internal class ViewValidator(
     private val logger: KSPLogger,
 ) : Validator<ViewHolder> {
     private val KSFunctionDeclaration.isPublic: Boolean

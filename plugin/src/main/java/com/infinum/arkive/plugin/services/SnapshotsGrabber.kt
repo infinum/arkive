@@ -6,12 +6,12 @@ import java.nio.file.StandardCopyOption
 import org.gradle.api.logging.Logger
 
 /** A snapshot copied into the showcase output, with its origin in the golden directory. */
-data class GrabbedSnapshot(
+internal data class GrabbedSnapshot(
     val sourceFile: File,
     val relativePath: String,
 )
 
-interface SnapshotsGrabber {
+internal interface SnapshotsGrabber {
     fun grabSnapshots(outputDir: File): List<GrabbedSnapshot>
 }
 
@@ -24,7 +24,7 @@ private const val ARKIVE_SNAPSHOT_PREFIX = "com.infinum.arkive_"
  * directory lives differs per project flavor, so the path (relative to the module dir)
  * comes from the ConsumerAdapter through the task.
  */
-class SnapshotsGrabberImpl(
+internal class SnapshotsGrabberImpl(
     private val snapshotsDir: File,
     private val logger: Logger,
 ) : SnapshotsGrabber {
