@@ -8,7 +8,7 @@ import java.io.File
  * showcase and copies the paired ones next to the images. Trees are informational: they
  * never live in the golden directory and retention never applies to them.
  */
-class UiTreeGrabber(private val uiTreeDir: File) {
+internal class UiTreeGrabber(private val uiTreeDir: File) {
 
     /** Lowercased shot id → tree file (Paparazzi lowercases snapshot names; trees don't). */
     fun available(): Map<String, File> =

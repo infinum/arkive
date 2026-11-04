@@ -18,6 +18,12 @@ apply {
 // variant); the rest exist so a commonMain dependency resolves on every consumer target.
 // All targets are annotation-only klibs (no cinterop), so they cross-compile on any host.
 kotlin {
+    explicitApi()
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled.set(true)
+    }
+
     // The jvm jar must stay JDK 17 bytecode (consumer Gradle daemons and 17-pinned test
     // JVMs load it); without the pin it silently follows whatever JDK runs the deploy.
     jvm {

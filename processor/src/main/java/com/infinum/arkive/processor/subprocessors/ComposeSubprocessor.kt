@@ -9,7 +9,7 @@ import com.infinum.arkive.processor.shared.ModulePackages
 import com.infinum.arkive.processor.specs.ComposeRunnerSpec
 import com.infinum.arkive.processor.specs.ComposeVariantSpec
 
-class ComposeSubprocessor(
+internal class ComposeSubprocessor(
     private val componentRepository: ComponentRepository,
     private val enablePreviewParameters: Boolean,
     private val enableVariants: Boolean,

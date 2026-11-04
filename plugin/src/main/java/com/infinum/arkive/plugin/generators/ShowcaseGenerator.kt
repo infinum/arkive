@@ -4,7 +4,7 @@ import com.infinum.arkive.metadata.model.ComponentVariant
 import com.infinum.arkive.metadata.model.ComponentsMetaData
 import com.infinum.arkive.metadata.model.ShowcaseItem
 
-interface ShowcaseGenerator {
+internal interface ShowcaseGenerator {
     /**
      * [uiTrees] maps a lowercased shot id (`<id>` or `<id>_<category>_<value>`) to the tree's
      * module-relative path. Lowercased because Paparazzi lowercases snapshot filenames while
@@ -17,7 +17,7 @@ interface ShowcaseGenerator {
     ): List<ShowcaseItem>
 }
 
-class ShowcaseGeneratorImpl(
+internal class ShowcaseGeneratorImpl(
     private val onMissingSnapshot: (String) -> Unit = {},
     private val onMalformedVariant: (String) -> Unit = {},
 ) : ShowcaseGenerator {

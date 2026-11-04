@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
  * @param content the snapshot's content, laid out exactly as it would be unwrapped.
  */
 @Composable
-fun ArkiveUiTreeCapture(
+public fun ArkiveUiTreeCapture(
     shotId: String,
     appPackages: Set<String>,
     content: @Composable () -> Unit,

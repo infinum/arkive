@@ -9,10 +9,10 @@ import android.widget.FrameLayout
  * always used — so recorded pixels never change; with it, the container walks the View
  * hierarchy after drawing.
  */
-object ArkiveUiTreeViews {
+public object ArkiveUiTreeViews {
 
     @JvmStatic
-    fun host(context: Context, shotId: String): FrameLayout {
+    public fun host(context: Context, shotId: String): FrameLayout {
         val directory = UiTreeFiles.directory()
         return if (directory == null) FrameLayout(context) else UiTreeViewHost(context, shotId, directory)
     }
