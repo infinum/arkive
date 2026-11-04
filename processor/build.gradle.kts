@@ -27,10 +27,9 @@ dependencies {
 // keeps the kotlin-stdlib dependency at 2.2.x in the POM.
 kotlin {
     explicitApi()
+    // KGP 2.4+: calling abiValidation enables it (the `enabled` property was removed).
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled.set(true)
-    }
+    abiValidation {}
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)

@@ -13,17 +13,21 @@ engines" below. Published to Maven Central under `com.infinum.arkive`.
 
 The repo is **two Gradle builds**, deliberately:
 
-- **Root build** — the published modules. Pinned to the **oldest supported toolchain of
-  the AGP 9 era**: Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1 (compileOnly — the consumer
-  AGP floor). The Kotlin version here IS the public `@ArkiveComposable`-in-commonMain
-  floor: klibs are not forward-compatible, so the annotations klibs are only readable
-  by consumers on Kotlin ≥ the version that built them (2.3.21). **Do not bump this
-  toolchain casually — raising it is a breaking change for KMP consumers.** (JVM
-  artifacts are protected separately by the 2.2 language floor; AGP 9 itself requires
-  KGP 2.2.10+, so no reachable consumer is below it.)
+- **Root build** — the published modules. Pinned toolchain of the AGP 9 era: Gradle
+  9.8.2, Kotlin 2.4.21, AGP 9.5.0 (compileOnly — the consumer AGP floor). The Kotlin
+  version here IS the public `@ArkiveComposable`-in-commonMain floor: klibs are not
+  forward-compatible, so the annotations klibs are only readable by consumers on
+  Kotlin ≥ the version that built them (2.4.21). **Do not bump this toolchain
+  casually — raising it is a breaking change for KMP consumers**, and a Kotlin bump
+  requires regenerating `kotlin-js-store/yarn.lock`
+  (`./gradlew kotlinUpgradeYarnLock --rerun-tasks`), or CI fails in
+  `:kotlinStoreYarnLock`. (JVM artifacts are protected separately by the 2.2 language
+  floor; AGP 9 itself requires KGP 2.2.10+, so no reachable consumer is below it.)
 - **`samples/`** — a standalone build with its own wrapper on the **newest toolchain**
-  (Gradle 9.6, AGP 9.2, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
-  samples simulate real consumers and prove the older-library/newer-consumer direction.
+  (Gradle 9.8, AGP 9.5, current Kotlin/CMP/KSP, own `gradle/libs.versions.toml`). The
+  samples simulate real consumers and prove the older-library/newer-consumer direction
+  — whenever their versions are ahead of the root build's (when Renovate moves both to
+  the same versions, only same-version compatibility is exercised).
 
 The samples consume the **published** plugin from mavenLocal, so bootstrap first:
 
@@ -106,7 +110,8 @@ The intended surface is small — keep everything else `internal`:
 - composeUtils: the `*Variant` wrappers generated code calls; its `@Preview`s are private.
 - annotations: both annotations.
 
-ABI dumps come from **KGP's built-in ABI validation** (`abiValidation { enabled }`, opt-in
+ABI dumps come from **KGP's built-in ABI validation** (`abiValidation {}` — since KGP 2.4
+the call itself enables it and `enabled.set(true)` no longer compiles; opt-in
 `ExperimentalAbiValidation`), not the binary-compatibility-validator plugin — it adds nothing
 to this build's deliberately fragile classpath. Dumps live in `<module>/api/` (`annotations`
 also has a `.klib.api` for the non-JVM targets; Linux hosts infer the Apple targets from it).
@@ -134,12 +139,12 @@ against the same Arkive version, so cross-version binary drift can't reach consu
 
 ## Compatibility constraints (do not remove)
 
-- The root build's toolchain (Gradle 9.6.1, Kotlin 2.3.21, AGP 9.3.1) is the
+- The root build's toolchain (Gradle 9.8.2, Kotlin 2.4.21, AGP 9.5.0) is the
   compatibility mechanism — see "Two builds, two toolchains". The **Kotlin 2.2
   language/api floor** blocks in each module's build file keep the JVM metadata story
   explicit (`coreLibrariesVersion = 2.2.21` on the JVM-only modules; :annotations must
   NOT set it — the js/wasm/native stdlib ABI has to match the compiler). The klib floor
-  is the compiler version itself (2.3.21). Removing any of it silently breaks consumers.
+  is the compiler version itself (2.4.21). Removing any of it silently breaks consumers.
   AGP 8 consumers and the classic KMP layout (`kotlin.multiplatform` +
   `com.android.library`, which AGP 9 rejects outright) are served by Arkive 0.0.3.
 - Both engine plugins (Paparazzi AND Roborazzi) must stay `runtimeOnly` in `:plugin` and
@@ -155,8 +160,10 @@ against the same Arkive version, so cross-version binary drift can't reach consu
   daemon) — never raise this floor, and never leave jvmTarget implicit: Kotlin silently
   follows whatever JDK runs the deploy.
 - `:annotations` publishes a **full KMP target matrix** (jvm serves plain-Android
-  consumers; the rest exist so a `commonMain` dependency resolves everywhere). Apple
-  targets are built on a macOS host — deploys run from macOS; the Linux CI bootstrap
+  consumers; the rest exist so a `commonMain` dependency resolves everywhere), minus
+  the x64 Apple targets Kotlin 2.4 deprecates at error level (macosX64, tvosX64,
+  watchosX64 — iosX64 stays). Dropping a target changes the `Targets:` header of
+  `annotations.klib.api`. Apple targets are built on a macOS host — deploys run from macOS; the Linux CI bootstrap
   skips them, and the samples only need the jvm artifact.
   Dokka javadoc cannot render KMP modules, so `maven-publish.gradle` attaches empty
   javadoc jars to KMP publications (kotlinx convention) — don't re-apply `dokka.gradle`

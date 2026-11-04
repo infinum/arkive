@@ -15,11 +15,11 @@ https://github.com/user-attachments/assets/8134c6d3-88d0-4c5e-b7b4-badd36761f26
 
 ## Requirements
 
-- **AGP 9** — the plugin is compiled against AGP 9.3.1 and targets the AGP 9.x line
+- **AGP 9** — the plugin is compiled against AGP 9.5.0 and targets the AGP 9.x line
   (which itself requires Gradle 9.1+ and Kotlin 2.2.10+). Projects still on AGP 8
   should use Arkive 0.0.3.
 - **Kotlin 2.2.10 or newer** for plain Android/JVM consumers (AGP 9's own Kotlin
-  floor). `@ArkiveComposable` in `commonMain` of a KMP module needs **Kotlin 2.3.21+**
+  floor). `@ArkiveComposable` in `commonMain` of a KMP module needs **Kotlin 2.4.21+**
   — on older Kotlin the annotations wire into `androidMain` instead, and plain
   `@Preview` in `commonMain` still works.
 - **Gradle JDK 17 or newer** with the Roborazzi engine; the Paparazzi engine needs a
@@ -159,7 +159,7 @@ Two constraints:
   works, or drop an `internal object ArkivePlaceholder` into
   `src/androidHostTest/kotlin` (new plugin) / `src/androidUnitTest/kotlin` (classic
   layout) — see `sampleCmp`.
-- `@ArkiveComposable` in `commonMain` works on any **Kotlin 2.3.21+** project — klibs
+- `@ArkiveComposable` in `commonMain` works on any **Kotlin 2.4.21+** project — klibs
   are not forward-compatible, so the floor is the Kotlin the annotations were built
   with. On an older Kotlin the plugin wires the annotations into `androidMain` instead
   and logs it; plain `@Preview`s in `commonMain` are still collected, since they need
