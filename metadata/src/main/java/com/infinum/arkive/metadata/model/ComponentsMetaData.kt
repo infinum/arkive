@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Component(
+public data class Component(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
     @SerialName("functionName") val functionName: String,
@@ -17,6 +17,6 @@ data class Component(
 )
 
 @Serializable
-data class ComponentsMetaData(
+public data class ComponentsMetaData(
     @SerialName("components") val components: List<Component>,
 )
