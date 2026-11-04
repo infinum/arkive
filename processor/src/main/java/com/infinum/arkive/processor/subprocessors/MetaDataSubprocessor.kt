@@ -7,7 +7,7 @@ import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.repository.ComponentRepository
 import com.infinum.arkive.processor.specs.MetaDataSpec
 
-class MetaDataSubprocessor(
+internal class MetaDataSubprocessor(
     private val componentRepository: ComponentRepository,
 ) : Subprocessor {
     override fun process(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, options: ArkiveOptions) {

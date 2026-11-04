@@ -1,0 +1,18 @@
+public abstract interface annotation class com/infinum/arkive/annotations/ArkiveComposable : java/lang/annotation/Annotation {
+	public abstract fun designNodeId ()Ljava/lang/String;
+	public abstract fun extraMetadata ()[Ljava/lang/String;
+	public abstract fun group ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun skip ()Z
+	public abstract fun tags ()[Ljava/lang/String;
+}
+
+public abstract interface annotation class com/infinum/arkive/annotations/ArkiveView : java/lang/annotation/Annotation {
+	public abstract fun designNodeId ()Ljava/lang/String;
+	public abstract fun extraMetadata ()[Ljava/lang/String;
+	public abstract fun group ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun skip ()Z
+	public abstract fun tags ()[Ljava/lang/String;
+}
+

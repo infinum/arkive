@@ -3,7 +3,7 @@ package com.infinum.arkive.plugin.generators
 import java.io.File
 import java.io.InputStream
 
-interface ShowcaseWebGenerator {
+internal interface ShowcaseWebGenerator {
     fun generateWeb(outputDir: File)
 }
 
@@ -13,7 +13,7 @@ private const val STYLES_FILE = "styles.css"
 
 private const val RESOURCES_DIR = "web"
 
-class ShowcaseWebGeneratorImpl : ShowcaseWebGenerator {
+internal class ShowcaseWebGeneratorImpl : ShowcaseWebGenerator {
     // Best way to get class loader in a plugin
     private val classLoader = Thread.currentThread().contextClassLoader
 
