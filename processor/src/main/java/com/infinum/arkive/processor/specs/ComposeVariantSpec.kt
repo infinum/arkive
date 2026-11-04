@@ -17,7 +17,7 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.writeTo
 
-class ComposeVariantSpec(
+internal class ComposeVariantSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ComposeHolder>,
     private val enablePreviewParameters: Boolean,

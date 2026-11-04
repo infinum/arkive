@@ -4,7 +4,7 @@ package com.infinum.arkive.plugin.extensions
  * Which recorded snapshots stay in Paparazzi's `src/test/snapshots` golden directory
  * after the showcase consumes them. The showcase itself always receives everything.
  */
-enum class SnapshotRetention {
+public enum class SnapshotRetention {
     /** Consume all snapshots; the golden directory is left empty (default). */
     NONE,
 

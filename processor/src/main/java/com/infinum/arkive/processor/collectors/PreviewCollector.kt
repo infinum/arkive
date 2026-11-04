@@ -7,7 +7,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.infinum.arkive.processor.collectors.ArkiveComposableCollector.Companion.TAG_COMPOSABLE
 import com.infinum.arkive.processor.models.ComposeHolder
 
-class PreviewCollector(
+internal class PreviewCollector(
     private val resolver: Resolver,
     private val logger: KSPLogger,
 ) : Collector<ComposeHolder> {
