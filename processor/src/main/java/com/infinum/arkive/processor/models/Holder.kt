@@ -3,7 +3,7 @@ package com.infinum.arkive.processor.models
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 
-interface Holder {
+internal interface Holder {
     val name: String
     val functionName: String
     val packageName: String

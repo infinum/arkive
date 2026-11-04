@@ -1,5 +1,5 @@
 package com.infinum.arkive.processor.models
 
-data class ArkiveOptions(
+internal data class ArkiveOptions(
     val skipPreviews: Boolean,
 )
