@@ -15,7 +15,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.writeTo
 
-class ViewSpec(
+internal class ViewSpec(
     private val codeGenerator: CodeGenerator,
     private val holders: Set<ViewHolder>,
     private val logger: KSPLogger,

@@ -102,6 +102,9 @@ dependencies {
         runtimeOnly("org.apache.httpcomponents:httpclient:4.5.14") {
             because("CVE-2020-13956 (<4.5.13)")
         }
+        runtimeOnly("com.google.guava:guava:33.7.2-jre") {
+            because("CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization DoS (<=33.7.1)")
+        }
     }
 }
 
@@ -109,6 +112,11 @@ dependencies {
 // 2.2.10+, so 2.2 is the lowest Kotlin any consumer can be on; coreLibrariesVersion
 // keeps the kotlin-stdlib dependency at 2.2.x in the POM.
 kotlin {
+    explicitApi()
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled.set(true)
+    }
     compilerOptions {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)

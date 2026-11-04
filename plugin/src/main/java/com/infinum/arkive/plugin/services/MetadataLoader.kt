@@ -4,11 +4,11 @@ import com.infinum.arkive.metadata.fromJson
 import com.infinum.arkive.metadata.model.ComponentsMetaData
 import java.io.File
 
-interface MetadataLoader {
+internal interface MetadataLoader {
     fun loadMetaData(): ComponentsMetaData
 }
 
-interface ProcessorMetadataLoader : MetadataLoader {
+internal interface ProcessorMetadataLoader : MetadataLoader {
     fun getMetaDataFile(): File
     override fun loadMetaData(): ComponentsMetaData =
         fromJson(getMetaDataFile().readText())
@@ -23,7 +23,7 @@ private val ARKIVE_METADATA_FILE =
  * output differs per project flavor, so the resources dir (relative to the build dir)
  * comes from the ConsumerAdapter through the task.
  */
-class KSPMetaDataLoader(
+internal class KSPMetaDataLoader(
     private val buildDir: File,
     private val kspResourcesPath: String,
 ) : ProcessorMetadataLoader {
