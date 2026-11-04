@@ -1,7 +1,7 @@
 apply plugin: "io.gitlab.arturbosch.detekt"
 
 detekt {
-    config.setFrom(files("${rootProject.rootDir}/config/detekt.yml"))
+    config.setFrom(files("${rootProject.rootDir}/config/detekt.yml", "${rootProject.rootDir}/config/detekt-explicit-api.yml"))
     source.setFrom(files("src/main/java", "src/main/kotlin", "src/commonMain/kotlin"))
 }
 

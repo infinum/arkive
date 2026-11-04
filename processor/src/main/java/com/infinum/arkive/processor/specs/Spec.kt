@@ -2,10 +2,10 @@ package com.infinum.arkive.processor.specs
 
 import com.squareup.kotlinpoet.FileSpec
 
-interface Spec {
+internal interface Spec {
     fun write()
 }
 
-interface KotlinSpec : Spec {
+internal interface KotlinSpec : Spec {
     fun getFileSpec(): FileSpec.Builder
 }
