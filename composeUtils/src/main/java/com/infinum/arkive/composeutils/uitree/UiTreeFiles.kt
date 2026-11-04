@@ -7,4 +7,7 @@ internal object UiTreeFiles {
     const val DIRECTORY_PROPERTY = "arkive.uitree.dir"
 
     fun directory(): File? = System.getProperty(DIRECTORY_PROPERTY)?.takeIf { it.isNotBlank() }?.let(::File)
+
+    /** `<shotId>.json` — the plugin's UiTreeGrabber pairs trees to snapshots by this name. */
+    fun file(directory: File, shotId: String): File = File(directory, "$shotId.json")
 }

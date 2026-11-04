@@ -319,13 +319,18 @@ snapshot, and agents read the files directly (the `find` and `design-loop` skill
 - **Location**: each showcase item (and variant) in `arkive-showcase.json` carries a
   `uiTreePath`, relative to its module's showcase directory; it is absent when no tree
   was captured.
-- `schemaVersion` is `1`; `id` is the shot id; `density` is px per dp; `size` is the snapshot's
+- `schemaVersion` is `1`; `id` is the shot id; `density` is the device's px per dp; `size` is the snapshot's
   `[width, height]` in dp.
 - `bounds` is `[x, y, width, height]` in **dp** from the snapshot's top-left — the node's
-  *outer* box, including its own padding. Pixels: `px = dp × density`. Text sizes are sp.
+  *outer* box, including its own padding. PNG pixels: `px = dp × (pngWidth / size[0])`, which
+  equals `dp × density` unless the engine downscaled the image (Paparazzi caps the long side
+  at 1000 px). Text sizes are sp.
 - `composable` is the innermost call from your module's code that emitted the node, `source`
   that call's `File.kt:line`, and `callers` your outer calls between the node and its nearest
-  emitted ancestor (they sit on a component's outermost node).
+  emitted ancestor (they sit on a component's outermost node). Only the recording module's
+  own packages count: in a `:feature` + `:designsystem` setup, a design-system component
+  called from a feature preview gets its call-site `source`, but its internals count as
+  library code — no `source`, and often pruned.
 - Hosted Views (`AndroidView`, `@ArkiveView`) carry `view` (class name) and `id` (resource
   entry name).
 - Semantics, only when set: `role`, `text`, `editableText`, `contentDescription`, `testTag`,

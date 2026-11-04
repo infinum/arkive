@@ -363,16 +363,25 @@
     return hit;
   }
 
+  // PNG px per dp. Engines may downscale (Paparazzi caps the long side at 1000 px), so
+  // measure it from the image rather than trusting density alone.
+  function pxPerDp(data) {
+    const shot = $('#shot');
+    const w = data.tree.size[0];
+    return shot && shot.naturalWidth && w > 0 ? shot.naturalWidth / w : data.tree.density;
+  }
+
   function hitTest(clientX, clientY) {
     const data = currentTree();
     const shot = $('#shot');
     if (!data || !shot || !shot.naturalWidth) return -1;
     const rect = shot.getBoundingClientRect();
     const toPx = shot.naturalWidth / rect.width;
+    const d = pxPerDp(data);
     return nodeAt(
       data.nodes,
-      (clientX - rect.left) * toPx / data.tree.density,
-      (clientY - rect.top) * toPx / data.tree.density,
+      (clientX - rect.left) * toPx / d,
+      (clientY - rect.top) * toPx / d,
     );
   }
 
@@ -380,7 +389,7 @@
     if (!el) return;
     if (index < 0) { el.style.display = 'none'; return; }
     const b = data.nodes[index].node.bounds;
-    const d = data.tree.density;
+    const d = pxPerDp(data);
     el.style.display = 'block';
     el.style.left = (b[0] * d) + 'px';
     el.style.top = (b[1] * d) + 'px';
@@ -404,8 +413,9 @@
     label.textContent = (component ? component + ' › ' : '') + elementName(node) + ' · ' +
       fmt(b[2]) + ' × ' + fmt(b[3]) + ' dp';
     label.style.display = 'block';
-    label.style.left = (b[0] * data.tree.density) + 'px';
-    label.style.top = (b[1] * data.tree.density) + 'px';
+    const d = pxPerDp(data);
+    label.style.left = (b[0] * d) + 'px';
+    label.style.top = (b[1] * d) + 'px';
   }
 
   function textStyleHtml(ts) {

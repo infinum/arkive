@@ -332,7 +332,9 @@ wrapped once in `ComposeRunnerSpec`, with the module's own packages (from KSP) s
 from app code get `source`/`callers`. `GenerateShowcaseTask` pairs trees to items by
 lowercased shot id (Paparazzi lowercases PNG names), copies only paired ones to
 `<module>/uitree/`, and writes `uiTreePath`. Trees are informational: never verified,
-never retained/consumed. CI fails if any snapshot lacks a tree or the known sample trees
+never retained/consumed. CI fails if any snapshot lacks a tree, a PNG's size disagrees with
+its tree's `size × density` (engine downscaling — Paparazzi caps the long side at 1000 px,
+which is why the web inspector derives px-per-dp from the image), or the known sample trees
 lose expected content (`.github/scripts/check_uitree.py`).
 
 Snapshot filename convention everything relies on:

@@ -38,6 +38,10 @@ internal class ComposeUiTreeWalker(
 ) {
     private var reportedOtherWindows = false
 
+    /** Whether the last walk found Views hosted by AndroidView, which change outside snapshots. */
+    var hostsViews = false
+        private set
+
     fun walk(): UiTree {
         val rootForTest = view as? ViewRootForTest
             ?: error("LocalView is ${view.javaClass.name}, not a ViewRootForTest")
@@ -82,6 +86,7 @@ internal class ComposeUiTreeWalker(
         collectHostedViews(composeView, 0f, 0f) { hostedView, x, y ->
             hosted += ViewTreeBuilder.node(hostedView, x - origin.x, y - origin.y, density)
         }
+        hostsViews = hosted.isNotEmpty()
         return hosted.fold(root, UiTreeInterop::attach)
     }
 

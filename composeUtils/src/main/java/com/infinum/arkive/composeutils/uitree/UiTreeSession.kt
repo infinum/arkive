@@ -16,7 +16,7 @@ internal class UiTreeSession(
     private val log: (String) -> Unit = ::println,
 ) {
     private val dirty = AtomicBoolean(true)
-    private val file = File(directory, "$shotId.json")
+    private val file = UiTreeFiles.file(directory, shotId)
     private var lastWritten: String? = null
     private var reportedFailure = false
     private var walkAttempted = false

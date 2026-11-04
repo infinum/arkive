@@ -45,7 +45,9 @@ internal fun UiTreeRecorder(
 ) {
     // These runtime APIs are internal and may change under a future Compose: compute the
     // setup once, outside composition of the content (try/catch cannot wrap composable
-    // calls), and on failure render the preview untouched rather than fail the shot.
+    // calls), and on failure render the preview untouched rather than fail the shot. No
+    // session runs then, so delete the previous run's tree here: it must never be paired
+    // with this snapshot.
     val composer = currentComposer
     val tables = remember { mutableSetOf<CompositionData>() }
     val inspectionTables = remember {
@@ -53,17 +55,18 @@ internal fun UiTreeRecorder(
             composer.collectParameterInformation()
             tables.add(composer.compositionData)
             LocalInspectionTables provides tables
-        }.onFailure { e -> println("Arkive: ui tree skipped for $shotId: ${e.message ?: e}") }.getOrNull()
+        }.onFailure { e ->
+            UiTreeFiles.file(directory, shotId).delete()
+            println("Arkive: ui tree skipped for $shotId: ${e.message ?: e}")
+        }.getOrNull()
     }
     if (inspectionTables == null) {
         content()
         return
     }
     val view = LocalView.current
-    val session = remember(shotId, directory) {
-        val walker = ComposeUiTreeWalker(shotId, view, tables, AppPackages(appPackages))
-        UiTreeSession(shotId, directory, walker::walk)
-    }
+    val walker = remember(shotId, directory) { ComposeUiTreeWalker(shotId, view, tables, AppPackages(appPackages)) }
+    val session = remember(shotId, directory) { UiTreeSession(shotId, directory, walker::walk) }
     DisposableEffect(session) {
         session.start()
         // Any applied state change may move layout, so the next draw re-walks. Draws without
@@ -81,6 +84,9 @@ internal fun UiTreeRecorder(
                 .semantics { this[CaptureRootKey] = Unit }
                 .drawWithContent {
                     drawContent()
+                    // Hosted Views change through the View system, which no apply observer
+                    // sees: once the tree holds any, every draw re-walks, as UiTreeViewHost does.
+                    if (walker.hostsViews) session.markDirty()
                     session.onDrawn()
                 },
             measurePolicy = PassThroughMeasurePolicy,

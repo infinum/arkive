@@ -4,6 +4,7 @@ lose content the inspector and skills rely on. Run after generateWebShowcase."""
 import json
 import os
 import re
+import struct
 import sys
 
 root = sys.argv[1] if len(sys.argv) > 1 else "samples/build/generated/arkive/showcase"
@@ -27,8 +28,24 @@ for module in showcase["modules"]:
                     problems.append(f"{module['name']}: unexpected schema in {tree_file}")
             except (OSError, ValueError, KeyError) as error:
                 problems.append(f"{module['name']}: unreadable {tree_file}: {error}")
+                continue
+            # size x density is the PNG's size only when the engine did not downscale it
+            # (Paparazzi above 1000 px, Roborazzi resizeScale), which bounds-to-pixel maths
+            # assumes. A PNG's width and height sit at IHDR bytes 16-24.
+            png_file = os.path.join(root, module["name"], "images", os.path.basename(shot["snapshotPath"]))
+            try:
+                with open(png_file, "rb") as handle:
+                    width, height = struct.unpack(">II", handle.read(24)[16:24])
+                expected = [side * tree["density"] for side in tree["size"]]
+                if abs(width - expected[0]) > 1 or abs(height - expected[1]) > 1:
+                    problems.append(
+                        f"{module['name']}: {png_file} is {width}x{height} px, tree says "
+                        f"{expected[0]:.0f}x{expected[1]:.0f} (size x density)"
+                    )
+            except (OSError, KeyError, TypeError, struct.error) as error:
+                problems.append(f"{module['name']}: unreadable {png_file}: {error}")
 
-print(f"ui trees: {shots - len(problems)}/{shots} snapshots paired")
+print(f"ui trees: {shots - len(problems)}/{shots} snapshots paired with a size-matching tree")
 if shots == 0:
     problems.append("no snapshots in the showcase")
 

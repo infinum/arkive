@@ -160,7 +160,9 @@ nothing in the captured main window (dialog-only previews — dialogs and popups
 ```
 
 - `bounds` = `[x, y, w, h]` in **dp** from the snapshot's top-left, the node's outer box
-  including its own padding (what the snapshot shows for that node); `px = dp × density`.
+  including its own padding (what the snapshot shows for that node); PNG
+  `px = dp × (pngWidth / size[0])` — equal to `dp × density` unless the engine downscaled
+  the image (Paparazzi caps the long side at 1000 px), so derive it from the PNG.
   Text sizes are sp. With `Modifier.padding(…)` placed before `.background(…)`, the outer
   box includes that outer padding, so sibling gaps computed from bounds can be smaller
   than the visible gaps — when they disagree, trust the visible pixels.
@@ -168,8 +170,10 @@ nothing in the captured main window (dialog-only previews — dialogs and popups
   the node; `source` = that call's `File.kt:line`; `callers` = the outer calls from the
   module's own code between a node and its nearest emitted ancestor, outermost first, so
   they sit on the outermost node a component emits — a screen's shared components appear
-  here. Library-only nodes keep a name but carry no `source`. Views carry `view` (class)
-  and `id`.
+  here. Library-only nodes keep a name but carry no `source`. "Own code" is the recording
+  module only: other modules' code (e.g. a `:designsystem` component's internals seen from
+  a `:feature` preview) counts as library code — no `source`, often pruned; only the
+  call site from the recording module keeps one. Views carry `view` (class) and `id`.
 - Semantics, present only when set: `role`, `text`, `editableText`, `contentDescription`,
   `testTag`, `actions` (`click`, `longClick`, `scroll`, …), `state` (`enabled`,
   `selected`, `toggle`, `focused`).
