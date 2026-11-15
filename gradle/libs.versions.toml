@@ -5,7 +5,7 @@ kotlin = "2.3.21"
 kotlinxSerializationJson = "1.8.1"
 ksp = "2.3.11"
 koltinpoet = "2.0.0"
-compose-bom = "2025.06.01"
+compose-bom = "2026.09.00"
 # Engine versions Arkive provisions when a consumer has no engine plugin of its own —
 # stamped into the plugin's arkive.properties, never a dependency of :plugin.
 paparazzi = "2.0.0-alpha05"
