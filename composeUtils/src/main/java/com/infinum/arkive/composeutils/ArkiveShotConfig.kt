@@ -13,18 +13,16 @@ import kotlin.math.roundToInt
  * generated test applies it its own way. Called by Arkive's generated code; not meant for
  * direct use.
  *
- * @param density screen density as a scale factor (1.0 = mdpi), or null for the device's own.
- * @param fontScale system font scale, or null for the device's own.
+ * @property density screen density as a scale factor (1.0 = mdpi), or null for the device's own.
+ * @property fontScale system font scale, or null for the device's own.
  */
-public class ArkiveShotConfig(
+public data class ArkiveShotConfig(
     public val density: Float? = null,
     public val fontScale: Float? = null,
 ) {
     /** [density] in dpi, the unit Android resource qualifiers use; null when [density] is. */
     public val densityDpi: Int?
         get() = density?.let { (it * DPI_PER_DENSITY).roundToInt() }
-
-    override fun toString(): String = "ArkiveShotConfig(density=$density, fontScale=$fontScale)"
 
     public companion object {
         private const val DPI_PER_DENSITY = 160f

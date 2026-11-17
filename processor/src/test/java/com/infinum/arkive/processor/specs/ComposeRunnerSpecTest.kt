@@ -28,7 +28,11 @@ class ComposeRunnerSpecTest {
     @Test
     fun theShotConfigReachesTheEngine() {
         assertTrue(source, source.contains("import com.infinum.arkive.composeutils.ArkiveShotConfig"))
-        assertTrue(source, source.contains("runComposableTests(runner: (String, ArkiveShotConfig, @Composable () -> Unit) -> Unit)"))
+        // KotlinPoet writes a multi-parameter lambda type one parameter per line, with a trailing comma.
+        assertTrue(
+            source,
+            source.contains("runComposableTests(runner: ( String, ArkiveShotConfig, @Composable () -> Unit, ) -> Unit)"),
+        )
     }
 
     @Test
