@@ -363,8 +363,9 @@
     return hit;
   }
 
-  // PNG px per dp. Engines may downscale (Paparazzi caps the long side at 1000 px), so
-  // measure it from the image rather than trusting density alone.
+  // PNG px per dp. Engines may downscale (Roborazzi's resizeScale; Paparazzi's 1000 px
+  // cap, which Arkive turns off), so measure it from the image rather than trusting
+  // density alone.
   function pxPerDp(data) {
     const shot = $('#shot');
     const w = data.tree.size[0];

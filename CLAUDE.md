@@ -55,8 +55,9 @@ theirs to move independently.
   (see "Public API tracking")
 - Single test: `./gradlew :composeUtils:testDebugUnitTest --tests '*UiTreeJsonTest'` (or
   `:plugin:test --tests 'ShowcaseGeneratorImplTest'`). Unit suites: composeUtils' uitree
-  core (JSON, pruning, assembly, attribution, semantics mapping, interop, session),
-  processor (`ComposeRunnerSpecTest`, `ModulePackagesTest`), testprocessor (`ViewHostTest`),
+  core (JSON, pruning, assembly, attribution, semantics mapping, interop, session) and
+  `ArkiveShotConfigTest`, processor (`ComposeRunnerSpecTest`, `ComposeVariantSpecTest`,
+  `ModulePackagesTest`), testprocessor (`ViewHostTest`, `ShotConfigTest`),
   metadata (`ShowcaseJsonCompatibilityTest`), plugin (`ShowcaseGeneratorImplTest`,
   `UiTreeGrabberTest`)
 - Full sample pipeline (records every preview — hundreds of snapshots with variants on —
@@ -113,8 +114,10 @@ The intended surface is small — keep everything else `internal`:
 - processor/testprocessor: only the `SymbolProcessorProvider`s (ServiceLoader needs them public).
 - metadata: all models + `toJson`/`fromJson` (processor and plugin use them across
   artifacts); the backing `json` is `@PublishedApi internal`.
-- composeUtils: the `*Variant` wrappers and the UI-tree entry points (`ArkiveUiTreeCapture`,
-  `ArkiveUiTreeViews.host`) generated code calls; its `@Preview`s are private.
+- composeUtils: `ArkiveShotConfig`, `LayoutDirectionVariant` and the UI-tree entry points
+  (`ArkiveUiTreeCapture`, `ArkiveUiTreeViews.host`) generated code calls; its `@Preview`s
+  are private. `DensityVariant`/`FontVariant` are still public, but no generated code calls
+  them any more (see "Density and font-scale variants").
 - annotations: both annotations.
 
 ABI dumps come from **KGP's built-in ABI validation** (`abiValidation { enabled }`, opt-in
@@ -252,11 +255,11 @@ Selection, by priority:
   module via `arkive { engine(Roborazzi) { device.set(…) } }` → `arkive.device` KSP arg
   (device change ⇒ codegen change ⇒ re-record, intended). Engine-only options always
   live inside the engine(...) call, never as flat top-level extension properties (user
-  requirement — no options that silently apply to only one engine). Captures shrink to content but can never exceed
-  the window (verified: capture clamps at window bounds — layoutlib-style unbounded
-  SHRINK is impossible under a real window system), so density/font variants render
-  *within* the device; a DensityVariant dp-budget compensation in composeUtils is a known
-  open item. It records via `captureRoboImage(filePath)` straight into the adapter's
+  requirement — no options that silently apply to only one engine). Captures shrink to
+  content but can never exceed the window (verified: capture clamps at window bounds —
+  layoutlib-style unbounded SHRINK is impossible under a real window system), one reason
+  density/font variants change the device itself (see "Density and font-scale variants"
+  below). It records via `captureRoboImage(filePath)` straight into the adapter's
   golden dir with the same `com.infinum.arkive_`-prefixed names, so
   grabber/retention/verify are engine-agnostic.
   Its `@Before` runs `Robolectric.setupContentProvider(AndroidContextProvider)` (only the
@@ -274,6 +277,39 @@ Selection, by priority:
   has its own generator class (`generators/PaparazziTestGenerator`,
   `generators/RoborazziTestGenerator` behind `EngineTestGenerator`) that owns its complete
   test shape — no cross-engine branching inside a generator.
+- **Density and font-scale variants are device settings, not Compose overrides** (#2260).
+  Every generated shot passes an `ArkiveShotConfig` (composeUtils: a density, a font scale,
+  or `Default` for neither) through the runner, `(String, ArkiveShotConfig, @Composable ()
+  -> Unit) -> Unit` — an internal processor ↔ testprocessor contract; each engine's test
+  applies it to its own device. The old `DensityVariant` only overrode `LocalDensity`, so
+  the pixel window stayed the device's and the content's dp budget shrank or grew instead
+  (xxxhdpi on a 411dp/420dpi device left ~270 dp of width, ldpi ~1439 dp); resources,
+  `LocalConfiguration` and hosted Views never saw it, and `FontVariant`'s linear
+  `Density(density, fontScale)` dropped Android 14+ nonlinear font scaling. Now a density
+  variant keeps the device's dp size and only its pixel count changes; a font variant
+  keeps the image size while text grows and wraps.
+  - Roborazzi: the config is a test parameter, applied in the RuleChain's outer rule
+    before the compose rule launches the activity — `RuntimeEnvironment.setQualifiers(
+    "+<dpi>dpi")` (the `+` overlays the `@Config` device) and `setFontScale()`. It relies
+    on Robolectric resetting the configuration per test, i.e. on one test per snapshot.
+  - Paparazzi: the test names its base device, `DeviceConfig.NEXUS_5` (Paparazzi's own
+    default, 360x640 dp at xxhdpi), and `deviceFor(config)` derives each variant device
+    from it, scaling `screenWidth`/`screenHeight`/`xdpi`/`ydpi` with the density — a
+    `DeviceConfig`'s screen size is in PIXELS, so changing only `density` would recreate
+    the dp-budget bug. `unsafeUpdateConfig` rebuilds the render session (costly), so the
+    test calls it only when a shot needs a different device than the current one.
+  - Paparazzi runs with `useDeviceResolution = true` (present in 2.0.0-alpha05; not
+    checked in older alphas): by default it shrinks any image whose long side exceeds
+    1000 px, which saved xhdpi/xxhdpi/xxxhdpi full screens all as 562x1000 and broke the
+    PNG size = tree size × density invariant. Turning it off changed every Paparazzi
+    golden above 1000 px, base shots included.
+  - Verified on the samples (Nov 2026): the primary button's density variants are
+    pixel-identical across engines (124x39 at ldpi … 663x208 at xxxhdpi), font-variant text
+    widths agree within 1 dp, and check_uitree.py passes 454/454 under both engines.
+  - Layout-direction and preview-parameter variants stay Compose overrides
+    (`LayoutDirectionVariant`) with `ArkiveShotConfig.Default`.
+  - Still different between engines: the base device (Roborazzi Pixel-6-class 411x914 dp,
+    Paparazzi Nexus 5 360x640 dp, not configurable), so base shots differ in dp size.
 - The compose capture is clock-controlled (`createAndroidComposeRule(RoborazziActivity)`,
   wrapped in a RuleChain whose outer rule runs Roborazzi's
   `registerRoborazziActivityToRobolectricIfNeeded()` — Robolectric refuses undeclared
@@ -304,7 +340,8 @@ Modules and how they compose at a consumer's build time:
   `com.infinum.arkive`: `ComposeVariants.kt` (two wrappers per component — base `<id>` and
   `<id>_variants` — **named by the
   unique component id** `<pkg>-<function>` dash-joined and lowercased — bare names collide
-  across packages, and `_`-joined ids collided too since `_` is legal in identifiers),
+  across packages, and `_`-joined ids collided too since `_` is legal in identifiers; each
+  shot is one `runner(<shotId>, ArkiveShotConfig) { … }` call),
   `ArkiveComposeShoot` (calls every base/`_variants` wrapper under per-component
   try/catch), `ArkiveViewShoot` (calls each `@ArkiveView` function directly, NO try/catch —
   under Paparazzi one crashing view ends the views test), and `components_meta_data.json`
@@ -313,15 +350,18 @@ Modules and how they compose at a consumer's build time:
   keyed on the `arkive.engine` KSP arg via per-engine generator classes (see "Snapshot
   engines"): the Roborazzi test (parameterized per snapshot, `@GraphicsMode(NATIVE)`,
   `@Config(sdk=[35])`, explicit-filePath captures, CMP ContentProvider setup in
-  `@Before`) or the Paparazzi test (three all-components methods — base, variants,
-  views — SHRINK rendering,
-  `android:Theme.Translucent.NoTitleBar` for transparent backgrounds, a RuleChain that
-  absorbs Paparazzi's teardown re-throws). It cannot see the annotations (SOURCE
+  `@Before`, each shot's `ArkiveShotConfig` applied in the outer rule) or the Paparazzi
+  test (three all-components methods — base, variants, views — SHRINK rendering,
+  `android:Theme.Translucent.NoTitleBar` for transparent backgrounds,
+  `useDeviceResolution = true`, a Nexus 5 base device switched per shot via
+  `unsafeUpdateConfig`, a RuleChain that absorbs Paparazzi's teardown re-throws). It
+  cannot see the annotations (SOURCE
   retention, different compilation) — hence the shooter indirection.
 - **metadata** — kotlinx-serialization models shared by processor and plugin
   (`ArkiveShowcase` → modules → items → component + variants).
-- **composeUtils** — runtime wrappers the generated variant code composes previews in
-  (`FontVariant`, `DensityVariant`, `LayoutDirectionVariant`), plus UI-tree capture
+- **composeUtils** — what the generated variant code needs at runtime: `ArkiveShotConfig`
+  (the per-shot device settings each engine applies) and `LayoutDirectionVariant` (still a
+  Compose override; `FontVariant`/`DensityVariant` are unused leftovers), plus UI-tree capture
   (`uitree/`): `ArkiveUiTreeCapture` wraps every shot in a pass-through `Layout` whose
   `drawWithContent` hook walks layout nodes + unmerged semantics + recorded slot tables
   on the drawn frame (the capture IS a draw, so no engine is involved), and
@@ -429,8 +469,9 @@ from app code get `source`/`callers`. `GenerateShowcaseTask` pairs trees to item
 lowercased shot id (Paparazzi lowercases PNG names), copies only paired ones to
 `<module>/uitree/`, and writes `uiTreePath`. Trees are informational: never verified,
 never retained/consumed. CI fails if any snapshot lacks a tree, a PNG's size disagrees with
-its tree's `size × density` (engine downscaling — Paparazzi caps the long side at 1000 px,
-which is why the web inspector derives px-per-dp from the image), or the known sample trees
+its tree's `size × density` (engine downscaling — Paparazzi caps the long side at 1000 px
+unless `useDeviceResolution` is on, which Arkive now sets; the web inspector still derives
+px-per-dp from the image, so a downscaled PNG lines up anyway), or the known sample trees
 lose expected content (`.github/scripts/check_uitree.py`).
 
 Snapshot filename convention everything relies on:

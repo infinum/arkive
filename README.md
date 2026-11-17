@@ -325,8 +325,8 @@ snapshot, and agents read the files directly (the `find` and `design-loop` skill
   `[width, height]` in dp.
 - `bounds` is `[x, y, width, height]` in **dp** from the snapshot's top-left — the node's
   *outer* box, including its own padding. PNG pixels: `px = dp × (pngWidth / size[0])`, which
-  equals `dp × density` unless the engine downscaled the image (Paparazzi caps the long side
-  at 1000 px). Text sizes are sp.
+  equals `dp × density` unless the engine downscaled the image (e.g. a Roborazzi
+  `resizeScale` below 1; Arkive turns off Paparazzi's 1000 px cap). Text sizes are sp.
 - `composable` is the innermost call from your module's code that emitted the node, `source`
   that call's `File.kt:line`, and `callers` your outer calls between the node and its nearest
   emitted ancestor (they sit on a component's outermost node). Only the recording module's
