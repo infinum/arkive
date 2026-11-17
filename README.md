@@ -188,13 +188,15 @@ Everything lives in the `arkive { }` block, per module:
 arkive {
     multiModuleVariant.set("uatDebug")   // which variant the root task builds for this module —
                                          // REQUIRED if the module has product flavors (defaults to "debug")
-    enableVariants.set(true)             // also record font-scale / density / RTL variants (slower)
+    enableVariants.set(true)             // also record font-scale / density / RTL / light-dark variants (slower)
+    previewTheme.set("com.example.ui.theme.AppTheme") // theme every snapshot renders inside (see Themes)
     enablePreviewParameters.set(true)    // expand @PreviewParameter values (default true)
     designFileKey.set("AbC123")          // your Figma file key — enables per-component Figma links
     snapshotRetention.set(SnapshotRetention.NONE) // see Snapshot testing below
     engine(Roborazzi) {                  // REQUIRED — every module picks its engine (see Engines)
         device.set("w1280dp-h800dp-mdpi") // the device snapshots render on, as Robolectric
                                           // qualifiers (default: a Pixel-6-class phone)
+        testApplication.set("com.example.ArkiveTestApplication") // see "App modules" below
     }
     // or: engine(Paparazzi)             // requires a JDK 21+ Gradle daemon
 }
@@ -259,6 +261,74 @@ The engines' golden files are not interchangeable — switching engines means re
 (the catalogue regenerates itself; retained goldens re-record on the next
 `generateShowcase` run). Everything else — tasks, retention, `verifyShowcase`, the
 catalogue — behaves identically on both.
+
+### Themes and dark mode
+
+With `enableVariants`, every component also records a light and a dark snapshot
+(`uiMode` variants). Dark mode flips the system night mode for the preview, so
+`isSystemInDarkTheme()` and `-night` resources follow it — previews that already wrap
+themselves in an `AppTheme(darkTheme = isSystemInDarkTheme())` go dark with no changes.
+The catalogue's Light/Dark toggle switches every thumbnail at once.
+
+`previewTheme` wraps every snapshot in your theme, for previews that don't apply one
+themselves. It takes a top-level `@Composable` with a trailing content lambda, from this
+module or a dependency. A Boolean parameter with "dark" in its name (`darkTheme`,
+`isDarkMode`, …) is passed explicitly by the light/dark variants; every other parameter
+needs a default or an argument in the reference.
+
+```kotlin
+@Composable
+fun AppTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit)
+```
+
+**Skins.** For apps with several colorways, `previewThemes` takes named themes in order.
+The first is the default every snapshot renders in; each one records a light and a dark
+snapshot (`skin_<name>-light|dark`), and the catalogue gets a skin picker. When the theme
+takes the skin as a parameter, pin it in the reference — named arguments, passed verbatim,
+so values must be fully qualified:
+
+```kotlin
+arkive {
+    previewThemes.put("forest", "com.example.AppTheme(brand = com.example.Brand.Forest)")
+    previewThemes.put("sunset", "com.example.AppTheme(brand = com.example.Brand.Sunset)")
+}
+```
+
+Previews that apply the theme themselves (`AppTheme { … }`) call it again with its
+defaults, so default such a parameter to the enclosing theme's value — the way `darkTheme`
+defaults to `isSystemInDarkTheme()`:
+
+```kotlin
+val LocalBrand = staticCompositionLocalOf { Brand.Forest }
+
+@Composable
+fun AppTheme(brand: Brand = LocalBrand.current, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalBrand provides brand) { /* MaterialTheme(…) */ }
+}
+```
+
+When the skin is global state (preferences, a singleton), point each entry at a small
+wrapper that sets it before composing and then applies the theme — previews that apply the
+theme themselves then follow it too. Keep wrappers out of release builds: `src/debug` on
+Android modules, `androidMain` (or a dedicated source set) on Kotlin Multiplatform ones,
+which have no build types. The skin must be readable synchronously during composition;
+skins chosen at build time (product flavors) or applied outside Compose (XML themes,
+`@ArkiveView`) aren't covered.
+
+### App modules
+
+Robolectric starts the module's real `Application` for Arkive's test. When that can't run
+in a unit test (DI graphs, Firebase, SDK init), every snapshot fails — give Arkive a plain
+one that initializes only what previews need:
+
+```kotlin
+// src/test/.../ArkiveTestApplication.kt
+class ArkiveTestApplication : Application()
+```
+
+```kotlin
+arkive { engine(Roborazzi) { testApplication.set("com.example.ArkiveTestApplication") } }
+```
 
 ### What ends up in the catalogue
 

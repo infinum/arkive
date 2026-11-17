@@ -250,7 +250,9 @@ Selection, by priority:
   the device into `@Config(qualifiers = …)`: Pixel-6-class (`w411dp-h914dp-420dpi`) by
   default (Robolectric's own 320x470dp default clips real screens), overridable per
   module via `arkive { engine(Roborazzi) { device.set(…) } }` → `arkive.device` KSP arg
-  (device change ⇒ codegen change ⇒ re-record, intended). Engine-only options always
+  (device change ⇒ codegen change ⇒ re-record, intended). `engine(Roborazzi) { testApplication.set(…) }`
+  → `arkive.testApplication` KSP arg → `@Config(application = …)`, for app modules whose
+  real Application can't start under Robolectric (mHPB `:app`: Dagger → Firebase). Engine-only options always
   live inside the engine(...) call, never as flat top-level extension properties (user
   requirement — no options that silently apply to only one engine). Captures shrink to content but can never exceed
   the window (verified: capture clamps at window bounds — layoutlib-style unbounded
@@ -301,10 +303,12 @@ Modules and how they compose at a consumer's build time:
   problems — private/protected function, private provider — are errors on
   `@ArkiveComposable` and silent skips on plain `@Preview`; invalid parameters and every
   `@ArkiveView` problem drop silently) → specs generate into
-  `com.infinum.arkive`: `ComposeVariants.kt` (two wrappers per component — base `<id>` and
+  `com.infinum.arkive`: `ComposeVariants<N>.kt` (two wrappers per component — base `<id>` and
   `<id>_variants` — **named by the
   unique component id** `<pkg>-<function>` dash-joined and lowercased — bare names collide
-  across packages, and `_`-joined ids collided too since `_` is legal in identifiers),
+  across packages, and `_`-joined ids collided too since `_` is legal in identifiers;
+  chunked 10 components per file — one file overflowed the JVM 64KB method limit in the
+  Compose compiler's ComposableSingletons `<clinit>` on mHPB `:app`),
   `ArkiveComposeShoot` (calls every base/`_variants` wrapper under per-component
   try/catch), `ArkiveViewShoot` (calls each `@ArkiveView` function directly, NO try/catch —
   under Paparazzi one crashing view ends the views test), and `components_meta_data.json`

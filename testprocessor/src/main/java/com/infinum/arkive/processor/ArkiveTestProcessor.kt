@@ -48,6 +48,7 @@ internal class ArkiveTestProcessor(
         const val ENGINE_OPTION = "arkive.engine"
         const val ENGINE_PAPARAZZI = "paparazzi"
         const val DEVICE_OPTION = "arkive.device"
+        const val TEST_APPLICATION_OPTION = "arkive.testApplication"
     }
 }
 
@@ -61,6 +62,7 @@ public class ArkiveTestProcessorProvider : SymbolProcessorProvider {
             ArkiveTestProcessor.ENGINE_PAPARAZZI -> PaparazziTestGenerator()
             else -> RoborazziTestGenerator(
                 deviceQualifiers = environment.options[ArkiveTestProcessor.DEVICE_OPTION].orEmpty(),
+                testApplication = environment.options[ArkiveTestProcessor.TEST_APPLICATION_OPTION].orEmpty(),
             )
         },
     )

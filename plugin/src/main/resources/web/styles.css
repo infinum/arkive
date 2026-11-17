@@ -1,5 +1,6 @@
 /* Arkive showcase — Infinum design system tokens (system-font fallbacks, no bundled fonts). */
 :root {
+  --dark-tile: #1C1C1E;
   --inf-red: #D82828;
   --inf-red-700: #A11414;
   --inf-red-soft: #FDECEC;
@@ -294,6 +295,10 @@ kbd {
 .compare-item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .compare-shot { background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.10), 0 8px 24px rgba(0, 0, 0, 0.06); max-width: 340px; }
 .compare-shot img { display: block; max-width: 340px; height: auto; }
+
+/* Dark-mode snapshots (uiMode_dark) render on a dark tile: transparent captures carry light content. */
+.card-shot.is-dark, .row .shot.is-dark, .sheet.is-dark, .phone-screen.is-dark, .compare-shot.is-dark { background: var(--dark-tile); }
+.phone-screen.is-dark .phone-status { color: #fff; }
 .compare-caption { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .compare-caption .label { font: 600 11.5px/1 var(--font-mono); color: var(--inf-ink-900); }
 .compare-caption .sub { font: 400 10px/1 var(--font-mono); color: var(--inf-ink-400); }

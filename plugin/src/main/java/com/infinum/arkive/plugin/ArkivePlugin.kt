@@ -146,11 +146,16 @@ public class ArkivePlugin : Plugin<Project> {
                 val kspArgs = listOf(
                     ENABLE_PREVIEW_PARAMETERS to enablePreviewParameters.toString(),
                     ENABLE_VARIANTS to enableVariants.toString(),
+                    ArkiveExtension.PREVIEW_THEME to extension.previewTheme.get(),
+                    // name=fqn;name=fqn — declaration order is the skin order.
+                    ArkiveExtension.PREVIEW_THEMES to extension.previewThemes.get().entries
+                        .joinToString(";") { (name, theme) -> "$name=$theme" },
                     // The test processor generates the test class matching the engine.
                     SnapshotEngineAdapter.ENGINE_KSP_ARG to engineName,
                     // Baked into the generated test's @Config so Robolectric keeps one
                     // cached environment per module; changing device re-records.
                     ArkiveExtension.DEVICE to extension.roborazziOptions.device.get(),
+                    ArkiveExtension.TEST_APPLICATION to extension.roborazziOptions.testApplication.get(),
                 )
                 try {
                     val argMethod = kspExt.javaClass.getMethod("arg", String::class.java, String::class.java)
@@ -188,8 +193,8 @@ public class ArkivePlugin : Plugin<Project> {
                 // Path-derived name: bare project names collide in nested layouts
                 // (":epos:ui" vs ":cfs:ui") and it doubles as the aggregate's module dir.
                 task.moduleName = project.showcaseModuleName
-                val extension = project.extensions.findByType(ArkiveExtension::class.java)
-                task.designFileKey = extension?.designFileKey?.get().orEmpty()
+                task.designFileKey = arkiveExtension.designFileKey.get()
+                task.skins = arkiveExtension.previewThemes.get().keys.toList()
                 task.snapshotRetention = snapshotRetentionOf(project).name
                 task.uiTreePath = UiTreeWiring.relativeDirectory(variant)
                 task.uiTreeEnabled = arkiveExtension.uiTree.get()

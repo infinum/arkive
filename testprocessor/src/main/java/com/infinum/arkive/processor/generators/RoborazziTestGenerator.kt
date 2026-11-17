@@ -31,6 +31,8 @@ import com.squareup.kotlinpoet.TypeSpec
  */
 internal class RoborazziTestGenerator(
     deviceQualifiers: String,
+    // The Application Robolectric starts instead of the manifest's; blank keeps the default.
+    private val testApplication: String,
 ) : EngineTestGenerator {
 
     // The device everything renders on. Robolectric's own default (a 320x470dp
@@ -57,6 +59,11 @@ internal class RoborazziTestGenerator(
                 // bytecode, and staying at 35 keeps the whole stack runnable on JDK 17.
                 AnnotationSpec.builder(ClassName(ROBOLECTRIC_ANNOTATION_PACKAGE, "Config"))
                     .addMember("sdk = [35], qualifiers = %S", device)
+                    .apply {
+                        if (testApplication.isNotBlank()) {
+                            addMember("application = %T::class", ClassName.bestGuess(testApplication))
+                        }
+                    }
                     .build(),
             )
             .primaryConstructor(

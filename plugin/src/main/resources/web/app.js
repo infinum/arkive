@@ -10,6 +10,9 @@
     { key: 'tablet', label: 'Tablet', w: 520, h: 690 },
   ];
   const DENSITY_ORDER = ['ldpi', 'mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'];
+  const UI_MODE_ORDER = ['light', 'dark'];
+  const UI_MODE_CATEGORY = 'uiMode';
+  const SKIN_CATEGORY = 'skin';
   const PALETTE_LIMIT = 40;
   const ZOOM_MIN = 0.15;
   const ZOOM_MAX = 6;
@@ -35,6 +38,8 @@
     route: { kind: 'all' },
     q: '',
     view: 'grid',
+    uiMode: 'light',
+    skin: null,
     stateKey: 'Base|Default',
     compareCat: null,
     zoom: 1,
@@ -114,7 +119,7 @@
     return 30 - (span - q.length);
   }
 
-  function sortVariants(category, list) {
+  function sortVariants(category, list, skinOrder) {
     const c = category.toLowerCase();
     const out = list.slice();
     if (c === 'density' && out.every((v) => !isNaN(parseFloat(v.variant)))) {
@@ -126,6 +131,18 @@
     }
     if (c === 'font') {
       return out.sort((a, b) => parseFloat(a.variant) - parseFloat(b.variant));
+    }
+    if (c === UI_MODE_CATEGORY.toLowerCase()) {
+      return out.sort((a, b) =>
+        UI_MODE_ORDER.indexOf(a.variant.toLowerCase()) - UI_MODE_ORDER.indexOf(b.variant.toLowerCase()));
+    }
+    if (c === SKIN_CATEGORY) {
+      return out.sort((a, b) => {
+        const [skinA, modeA] = splitSkinVariant(a.variant);
+        const [skinB, modeB] = splitSkinVariant(b.variant);
+        return skinOrder.indexOf(skinA) - skinOrder.indexOf(skinB) ||
+          UI_MODE_ORDER.indexOf(modeA) - UI_MODE_ORDER.indexOf(modeB);
+      });
     }
     return out.sort((a, b) => a.variant.localeCompare(b.variant, undefined, { numeric: true }));
   }
@@ -143,6 +160,58 @@
     return allItems().find((x) => x.component.id === id) || null;
   }
 
+  // Skin variants are "<skin>-<light|dark>"; skin names are letters and digits only.
+  function splitSkinVariant(variant) {
+    const at = variant.lastIndexOf('-');
+    return [variant.slice(0, at), variant.slice(at + 1)];
+  }
+
+  function isDarkState(category, variant) {
+    return (category === UI_MODE_CATEGORY && variant === 'dark') ||
+      (category === SKIN_CATEGORY && splitSkinVariant(variant)[1] === 'dark');
+  }
+
+  function darkVariantOf(item) {
+    return item.variants.find((v) => isDarkState(v.category, v.variant)) || null;
+  }
+
+  // Skin names in declaration order; the first is the module's default skin.
+  function skinsOf(moduleName) {
+    const mod = DATA.modules.find((m) => m.name === moduleName);
+    return (mod && mod.skins) || [];
+  }
+
+  // The variant the listings show for the picked skin and light/dark mode, or null for the
+  // base snapshot. With several skins every skin (the default included) is recorded as
+  // skin_<name>-<mode>; without, light/dark is the uiMode pair. A skin the module doesn't
+  // have falls back to its default.
+  function listingVariantOf(item) {
+    const skins = skinsOf(item.module);
+    if (skins.length > 1) {
+      const skin = skins.includes(state.skin) ? state.skin : skins[0];
+      const skinned = item.variants.find((v) => v.category === SKIN_CATEGORY && v.variant === skin + '-' + state.uiMode);
+      if (skinned) return skinned;
+    }
+    return state.uiMode === 'dark'
+      ? item.variants.find((v) => v.category === UI_MODE_CATEGORY && v.variant === 'dark') || null
+      : null;
+  }
+
+  function listingShotOf(item) {
+    const variant = listingVariantOf(item);
+    return variant ? variant.snapshotPath : item.snapshotPath;
+  }
+
+  function listingIsDark(item) {
+    const variant = listingVariantOf(item);
+    return !!variant && isDarkState(variant.category, variant.variant);
+  }
+
+  // Dark snapshots are often transparent with light content, so they sit on a dark tile.
+  function darkTileClass(isDark) {
+    return isDark ? ' is-dark' : '';
+  }
+
   function stateGroupsOf(item) {
     const cats = {};
     item.variants.forEach((v) => {
@@ -152,7 +221,7 @@
       category: 'Base',
       items: [{ variant: 'Default', snapshotPath: item.snapshotPath, uiTreePath: item.uiTreePath || null }],
     }];
-    Object.keys(cats).sort().forEach((c) => groups.push({ category: c, items: sortVariants(c, cats[c]) }));
+    Object.keys(cats).sort().forEach((c) => groups.push({ category: c, items: sortVariants(c, cats[c], skinsOf(item.module)) }));
     return groups;
   }
 
@@ -577,7 +646,9 @@
     const route = parseHash();
     const prev = state.route;
     if (route.kind === 'detail' && !(prev.kind === 'detail' && prev.id === route.id)) {
-      state.stateKey = 'Base|Default';
+      const item = findItem(route.id);
+      const variant = item ? listingVariantOf(item) : null;
+      state.stateKey = variant ? variant.category + '|' + variant.variant : 'Base|Default';
       state.compareCat = null;
       state.zoom = 1;
       state.panX = 0;
@@ -693,6 +764,8 @@
     }
 
     const isGrid = state.view === 'grid';
+    const skinNames = [...new Set(items.flatMap((it) => skinsOf(it.module)))];
+    const activeSkin = state.skin || skinNames[0];
     let html =
       '<div class="overview">' +
       '<div class="ov-head">' +
@@ -707,6 +780,20 @@
       '<h1 class="ov-title">' + esc(name) + '</h1>' +
       '<p class="ov-meta">' + esc(meta) + '</p>' +
       '</div>' +
+      (skinNames.length > 1
+        ? '<div class="viewtoggle">' +
+          skinNames.map((skin) =>
+            '<button type="button" class="' + (activeSkin === skin ? 'is-active' : '') + '" data-skin="' + esc(skin) + '">' +
+            esc(skin) + '</button>').join('') +
+          '</div>'
+        : '') +
+      (items.some(darkVariantOf)
+        ? '<div class="viewtoggle">' +
+          UI_MODE_ORDER.map((m) =>
+            '<button type="button" class="' + (state.uiMode === m ? 'is-active' : '') + '" data-uimode="' + m + '">' +
+            m.charAt(0).toUpperCase() + m.slice(1) + '</button>').join('') +
+          '</div>'
+        : '') +
       '<div class="viewtoggle">' +
       '<button type="button" class="' + (isGrid ? 'is-active' : '') + '" data-view="grid">' + ICONS.gridSm + 'Grid</button>' +
       '<button type="button" class="' + (isGrid ? '' : 'is-active') + '" data-view="list">' + ICONS.list + 'List</button>' +
@@ -718,7 +805,7 @@
       items.forEach((it) => {
         const c = it.component;
         html += '<button type="button" class="card" data-pick="' + esc(c.id) + '">' +
-          '<div class="card-shot"><img src="' + esc(snapUrl(it.module, it.snapshotPath)) + '" alt="' + esc(c.name) + '" loading="lazy"></div>' +
+          '<div class="card-shot' + darkTileClass(listingIsDark(it)) + '"><img src="' + esc(snapUrl(it.module, listingShotOf(it))) + '" alt="' + esc(c.name) + '" loading="lazy"></div>' +
           '<div class="card-body">' +
           '<span class="card-name">' + esc(c.name) + '</span>' +
           '<span class="card-file">' + esc(c.fileName) + '</span>' +
@@ -738,7 +825,7 @@
         const c = it.component;
         const groupLabel = isAll ? it.module + ' · ' + groupOf(c) : groupOf(c);
         html += '<button type="button" class="row" data-pick="' + esc(c.id) + '">' +
-          '<span class="shot"><img src="' + esc(snapUrl(it.module, it.snapshotPath)) + '" alt="" loading="lazy"></span>' +
+          '<span class="shot' + darkTileClass(listingIsDark(it)) + '"><img src="' + esc(snapUrl(it.module, listingShotOf(it))) + '" alt="" loading="lazy"></span>' +
           '<span class="name">' + esc(c.name) + '</span>' +
           '<span class="group">' + esc(groupLabel) + '</span>' +
           '<span class="pkg">' + esc(c.packageName) + '</span>' +
@@ -786,20 +873,21 @@
     const inspectBlocked = !!compareGroup || state.bezel;
     const inspecting = state.inspect && hasTree && !inspectBlocked;
     if (!inspecting) inspectUrl = null;
+    const activeTile = darkTileClass(isDarkState(active.category, active.variant));
 
     let canvasInner;
     if (compareGroup) {
       canvasInner = '<div class="canvas-compare">' +
         compareGroup.items.map((s) =>
           '<div class="compare-item">' +
-          '<div class="compare-shot"><img src="' + esc(snapUrl(item.module, s.snapshotPath)) + '" alt="' + esc(s.variant) + '"></div>' +
+          '<div class="compare-shot' + darkTileClass(isDarkState(compareGroup.category, s.variant)) + '"><img src="' + esc(snapUrl(item.module, s.snapshotPath)) + '" alt="' + esc(s.variant) + '"></div>' +
           '<div class="compare-caption"><span class="label">' + esc(s.variant) + '</span><span class="sub">' + esc(compareGroup.category) + '</span></div>' +
           '</div>').join('') +
         '</div>';
     } else if (state.bezel) {
       canvasInner = '<div class="canvas-solo"><div class="stage" id="stage">' +
         '<div class="phone">' +
-        '<div class="phone-screen" style="width:' + frameDef.w + 'px;height:' + frameDef.h + 'px">' +
+        '<div class="phone-screen' + activeTile + '" style="width:' + frameDef.w + 'px;height:' + frameDef.h + 'px">' +
         '<div class="phone-status"><span>9:41</span><span>▮▮▮</span></div>' +
         '<div class="phone-body"><img src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '"></div>' +
         '</div>' +
@@ -807,7 +895,7 @@
         '</div></div>';
     } else {
       canvasInner = '<div class="canvas-solo"><div class="stage" id="stage">' +
-        '<div class="sheet"><img id="shot" src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '">' +
+        '<div class="sheet' + activeTile + '"><img id="shot" src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '">' +
         (inspecting
           ? '<div class="uitree-layer" id="uitree-layer">' +
             '<div class="uitree-box is-hover" id="uitree-hover"></div>' +
@@ -848,7 +936,7 @@
           '</div>';
       }).join('') +
       (flat.length === 1
-        ? '<div class="hintbox">Only the base snapshot was generated. Turn on <code>enableVariants</code> in the <code>arkive { }</code> block to add font-scale, density and layout-direction states.</div>'
+        ? '<div class="hintbox">Only the base snapshot was generated. Turn on <code>enableVariants</code> in the <code>arkive { }</code> block to add font-scale, density, layout-direction and light/dark states.</div>'
         : '') +
       '</div>';
 
@@ -1191,7 +1279,7 @@
   /* -------------------------------------------------------------- wiring */
 
   document.addEventListener('click', (e) => {
-    const target = e.target.closest('[data-action], [data-nav], [data-pick], [data-view], [data-state], [data-compare], [data-frame], [data-uinode], [data-jump]');
+    const target = e.target.closest('[data-action], [data-nav], [data-pick], [data-view], [data-uimode], [data-skin], [data-state], [data-compare], [data-frame], [data-uinode], [data-jump]');
     if (!target) return;
 
     if (target.dataset.jump) {
@@ -1218,6 +1306,12 @@
     }
     if (target.dataset.view) {
       state.view = target.dataset.view;
+      renderOverview();
+      return;
+    }
+    if (target.dataset.uimode || target.dataset.skin) {
+      if (target.dataset.uimode) state.uiMode = target.dataset.uimode;
+      if (target.dataset.skin) state.skin = target.dataset.skin;
       renderOverview();
       return;
     }
