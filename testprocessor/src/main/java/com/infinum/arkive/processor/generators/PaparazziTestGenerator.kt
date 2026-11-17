@@ -84,10 +84,15 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
             .initializer(
                 // Translucent theme keeps the window background transparent, so snapshots
                 // carry an alpha channel instead of the default dark Material backdrop.
+                // useDeviceResolution saves every image at the size it rendered at. By default
+                // Paparazzi shrinks any image whose long side exceeds 1000 px, which saved a
+                // full screen at xhdpi, xxhdpi and xxxhdpi alike as 562x1000 and broke the
+                // PNG size = UI-tree size x density invariant. Roborazzi never downscales.
                 "Paparazzi(" +
                     "deviceConfig = $BASE_DEVICE_PROPERTY, " +
                     "renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK, " +
-                    "theme = \"android:Theme.Translucent.NoTitleBar\"" +
+                    "theme = \"android:Theme.Translucent.NoTitleBar\", " +
+                    "useDeviceResolution = true" +
                     ")",
             )
             .build()

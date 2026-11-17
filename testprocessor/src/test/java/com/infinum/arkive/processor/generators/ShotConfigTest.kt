@@ -53,4 +53,11 @@ class ShotConfigTest {
         assertTrue(paparazzi, paparazzi.contains("density = com.android.resources.Density.create(dpi)"))
         assertTrue(paparazzi, paparazzi.contains("fontScale = config.fontScale ?: baseDevice.fontScale"))
     }
+
+    @Test
+    fun paparazziSavesImagesAtTheirRenderedSize() {
+        // Without it, Paparazzi shrinks every image to a 1000 px long side, so large
+        // density variants would all be saved at the same size.
+        assertTrue(paparazzi, paparazzi.contains("useDeviceResolution = true"))
+    }
 }
