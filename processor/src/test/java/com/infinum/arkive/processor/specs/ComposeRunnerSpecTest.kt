@@ -19,7 +19,16 @@ class ComposeRunnerSpecTest {
     @Test
     fun everyShotGoesThroughUiTreeCapture() {
         assertTrue(source, source.contains("import com.infinum.arkive.composeutils.uitree.ArkiveUiTreeCapture"))
-        assertTrue(source, source.contains("runner(name) { ArkiveUiTreeCapture(name, appPackages, content) }"))
+        assertTrue(
+            source,
+            source.contains("{ name, config, content -> runner(name, config) { ArkiveUiTreeCapture(name, appPackages, content) } }"),
+        )
+    }
+
+    @Test
+    fun theShotConfigReachesTheEngine() {
+        assertTrue(source, source.contains("import com.infinum.arkive.composeutils.ArkiveShotConfig"))
+        assertTrue(source, source.contains("runComposableTests(runner: (String, ArkiveShotConfig, @Composable () -> Unit) -> Unit)"))
     }
 
     @Test

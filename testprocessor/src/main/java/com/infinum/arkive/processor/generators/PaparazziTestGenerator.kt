@@ -9,6 +9,7 @@ import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
@@ -143,12 +144,22 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
                     }
                 }
                 val shooter = ArkiveComposeShoot()
-                shooter.$shooterFunction { name, function ->
+                shooter.$shooterFunction { name, config, function ->
                     paparazzi.snapshot(name = name) {
-                        function()
+                        // Paparazzi still renders density/font-scale variants as Compose
+                        // overrides; moving them to its DeviceConfig is the next step.
+                        val density = config.density
+                        val fontScale = config.fontScale
+                        when {
+                            density != null -> %M(density) { function() }
+                            fontScale != null -> %M(fontScale) { function() }
+                            else -> function()
+                        }
                     }
                 }
                 """.trimIndent(),
+                DENSITY_VARIANT,
+                FONT_VARIANT,
             )
             .build()
     }
@@ -187,5 +198,7 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
         private const val RETENTION_PROPERTY = "snapshotRetention"
 
         private val UI_TREE_VIEWS = ClassName("com.infinum.arkive.composeutils.uitree", "ArkiveUiTreeViews")
+        private val DENSITY_VARIANT = MemberName("com.infinum.arkive.composeutils", "DensityVariant")
+        private val FONT_VARIANT = MemberName("com.infinum.arkive.composeutils", "FontVariant")
     }
 }

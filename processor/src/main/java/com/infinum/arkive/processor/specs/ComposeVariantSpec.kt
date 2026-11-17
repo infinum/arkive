@@ -25,19 +25,20 @@ internal class ComposeVariantSpec(
 ) : KotlinSpec {
 
     override fun write() {
+        fileSpec().writeTo(
+            codeGenerator = codeGenerator,
+            aggregating = true,
+            originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
+        )
+    }
+
+    internal fun fileSpec(): FileSpec {
         val fileSpec = getFileSpec()
         holders.forEach { holder ->
             fileSpec.addFunction(generatePreviewFunction(holder))
             fileSpec.addFunction(generatePreviewVariantsFunction(holder))
         }
-
-        fileSpec
-            .build()
-            .writeTo(
-                codeGenerator = codeGenerator,
-                aggregating = true,
-                originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
-            )
+        return fileSpec.build()
     }
 
     override fun getFileSpec(): FileSpec.Builder {
@@ -54,14 +55,14 @@ internal class ComposeVariantSpec(
 
     private fun generatePreviewFunction(holder: ComposeHolder): FunSpec {
         return FunSpec.builder(holder.functionId)
-            .addParameter(createRunnerParameter())
+            .addParameter(ParameterSpec.builder(RUNNER_FUNCTION, runnerType()).build())
             .addCode(generateBaseVariant(holder.functionId, getComponentMember(holder), holder))
             .build()
     }
 
     private fun generatePreviewVariantsFunction(holder: ComposeHolder): FunSpec {
         val builder = FunSpec.builder("${holder.functionId}$VARIANTS_SUFFIX")
-            .addParameter(createRunnerParameter())
+            .addParameter(ParameterSpec.builder(RUNNER_FUNCTION, runnerType()).build())
 
         val functionComponent = getComponentMember(holder)
         val id = holder.functionId
@@ -89,20 +90,6 @@ internal class ComposeVariantSpec(
         return builder.build()
     }
 
-    private fun createRunnerParameter(): ParameterSpec {
-        return ParameterSpec.builder(
-            RUNNER_FUNCTION,
-            LambdaTypeName.get(
-                parameters = arrayOf(
-                    ClassName("kotlin", "String"),
-                    LambdaTypeName.get(returnType = UNIT)
-                        .copy(annotations = listOf(getComposableAnnotation())),
-                ),
-                returnType = UNIT,
-            ),
-        ).build()
-    }
-
     private fun getComponentMember(holder: ComposeHolder): MemberName {
         return MemberName(
             packageName = holder.packageName,
@@ -110,12 +97,9 @@ internal class ComposeVariantSpec(
         )
     }
 
-    private fun getComposableAnnotation(): AnnotationSpec {
-        return AnnotationSpec.builder(ClassName.bestGuess(ANNOTATION_COMPOSABLE))
-            .build()
-    }
-
-    private fun generateBaseVariant(id: String, componentMember: MemberName, holder: ComposeHolder): CodeBlock {
+    // The component call every shot renders: a preview with a @PreviewParameter gets its
+    // provider's first value.
+    private fun componentCall(holder: ComposeHolder, componentMember: MemberName): CodeBlock {
         val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
         return if (providerInfo != null) {
             val (packageName, simpleName) = providerInfo
@@ -123,20 +107,16 @@ internal class ComposeVariantSpec(
                 packageName = packageName,
                 simpleName = simpleName,
             )
-
-            CodeBlock.builder().apply {
-                addStatement(
-                    "runner(%S) { %M(%M().values.first()) }",
-                    id,
-                    componentMember,
-                    providerFunctionMember,
-                )
-            }.build()
+            CodeBlock.of("%M(%M().values.first())", componentMember, providerFunctionMember)
         } else {
-            CodeBlock.builder().apply {
-                addStatement("runner(%S) { %M() }", id, componentMember)
-            }.build()
+            CodeBlock.of("%M()", componentMember)
         }
+    }
+
+    private fun generateBaseVariant(id: String, componentMember: MemberName, holder: ComposeHolder): CodeBlock {
+        return CodeBlock.builder()
+            .addStatement("runner(%S, %T.Default) { %L }", id, SHOT_CONFIG, componentCall(holder, componentMember))
+            .build()
     }
 
     private fun generatePreviewVariants(holder: ComposeHolder, id: String, componentMember: MemberName): CodeBlock? {
@@ -156,9 +136,10 @@ internal class ComposeVariantSpec(
             val parameterCategory = "param-${parameterName.replace('_', '-')}"
             val provider = CodeBlock.builder().apply {
                 addStatement(
-                    "%M().values.forEachIndexed { index, it -> runner(%L) { %M(it) } }",
+                    "%M().values.forEachIndexed { index, it -> runner(%L, %T.Default) { %M(it) } }",
                     providerFunctionMember,
                     "\"${id}_${parameterCategory}_\${index}\"",
+                    SHOT_CONFIG,
                     componentMember,
                 )
             }.build()
@@ -204,45 +185,16 @@ internal class ComposeVariantSpec(
         return Pair(packageName, simpleName)
     }
 
+    // Font scale and density are device settings: the shot asks its engine for them through
+    // ArkiveShotConfig instead of overriding LocalDensity (see ArkiveShotConfig for why).
+
     private fun generateFontVariants(id: String, componentMember: MemberName, holder: ComposeHolder): List<CodeBlock> {
         val fontScales = listOf(FONT_SCALE_NORMAL, FONT_SCALE_LARGE, FONT_SCALE_LARGEST)
-        val fontVariantMember = MemberName(
-            packageName = COMPOSE_UTILS_PACKAGE,
-            simpleName = "FontVariant",
-        )
-
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-
-            fontScales.map { scale ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M(%M().values.first()) } }",
-                        "${id}_font_$scale",
-                        fontVariantMember,
-                        scale,
-                        componentMember,
-                        providerFunctionMember,
-                    )
-                }.build()
-            }
-        } else {
-            fontScales.map { scale ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M() } }",
-                        "${id}_font_$scale",
-                        fontVariantMember,
-                        scale,
-                        componentMember,
-                    )
-                }.build()
-            }
+        val call = componentCall(holder, componentMember)
+        return fontScales.map { scale ->
+            CodeBlock.builder()
+                .addStatement("runner(%S, %T(fontScale = %Lf)) { %L }", "${id}_font_$scale", SHOT_CONFIG, scale, call)
+                .build()
         }
     }
 
@@ -255,41 +207,11 @@ internal class ComposeVariantSpec(
             "xxhdpi" to DENSITY_XXHDPI,
             "xxxhdpi" to DENSITY_XXXHDPI,
         )
-        val fontDensityMember = MemberName(
-            packageName = COMPOSE_UTILS_PACKAGE,
-            simpleName = "DensityVariant",
-        )
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-            densities.map { (density, value) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M(%M().values.first()) } }",
-                        "${id}_density_$density",
-                        fontDensityMember,
-                        value,
-                        componentMember,
-                        providerFunctionMember,
-                    )
-                }.build()
-            }
-        } else {
-            densities.map { (density, value) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M() } }",
-                        "${id}_density_$density",
-                        fontDensityMember,
-                        value,
-                        componentMember,
-                    )
-                }.build()
-            }
+        val call = componentCall(holder, componentMember)
+        return densities.map { (density, value) ->
+            CodeBlock.builder()
+                .addStatement("runner(%S, %T(density = %Lf)) { %L }", "${id}_density_$density", SHOT_CONFIG, value, call)
+                .build()
         }
     }
 
@@ -303,37 +225,18 @@ internal class ComposeVariantSpec(
             packageName = COMPOSE_UTILS_PACKAGE,
             simpleName = "LayoutDirectionVariant",
         )
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-            layoutDirections.map { (directionName, isLtr) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(isLtr = %L) { %M(%M().values.first()) } }",
-                        "${id}_layoutDirection_$directionName",
-                        layoutDirectionMember,
-                        isLtr,
-                        componentMember,
-                        providerFunctionMember,
-                    )
-                }.build()
-            }
-        } else {
-            layoutDirections.map { (directionName, isLtr) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(isLtr = %L) { %M() } }",
-                        "${id}_layoutDirection_$directionName",
-                        layoutDirectionMember,
-                        isLtr,
-                        componentMember,
-                    )
-                }.build()
-            }
+        val call = componentCall(holder, componentMember)
+        return layoutDirections.map { (directionName, isLtr) ->
+            CodeBlock.builder()
+                .addStatement(
+                    "runner(%S, %T.Default) { %M(isLtr = %L) { %L } }",
+                    "${id}_layoutDirection_$directionName",
+                    SHOT_CONFIG,
+                    layoutDirectionMember,
+                    isLtr,
+                    call,
+                )
+                .build()
         }
     }
 
@@ -343,6 +246,8 @@ internal class ComposeVariantSpec(
         private const val RUNNER_FUNCTION = "runner"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
         private const val COMPOSE_UTILS_PACKAGE = "com.infinum.arkive.composeutils"
+
+        private val SHOT_CONFIG = ClassName(COMPOSE_UTILS_PACKAGE, "ArkiveShotConfig")
 
         // Compose Multiplatform ships its own PreviewParameter under the jetbrains
         // namespace; a common preview may use either FQN.
@@ -361,5 +266,20 @@ internal class ComposeVariantSpec(
         private const val DENSITY_XHDPI = 2.0f
         private const val DENSITY_XXHDPI = 3.0f
         private const val DENSITY_XXXHDPI = 4.0f
+
+        /**
+         * The shot callback every generated wrapper and the shooter take:
+         * `(shotName, ArkiveShotConfig, @Composable content) -> Unit`. The engine's generated
+         * test is the one implementing it, so the config reaches the engine.
+         */
+        fun runnerType(): LambdaTypeName = LambdaTypeName.get(
+            parameters = arrayOf(
+                ClassName("kotlin", "String"),
+                SHOT_CONFIG,
+                LambdaTypeName.get(returnType = UNIT)
+                    .copy(annotations = listOf(AnnotationSpec.builder(ClassName.bestGuess(ANNOTATION_COMPOSABLE)).build())),
+            ),
+            returnType = UNIT,
+        )
     }
 }

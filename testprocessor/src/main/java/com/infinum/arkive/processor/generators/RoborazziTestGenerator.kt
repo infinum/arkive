@@ -63,11 +63,13 @@ internal class RoborazziTestGenerator(
                 FunSpec.constructorBuilder()
                     .addParameter(SHOT_NAME, STRING)
                     .addParameter(SHOT_KIND, STRING)
+                    .addParameter(SHOT_CONFIG, SHOT_CONFIG_CLASS)
                     .addParameter(SHOT_CONTENT, ANY)
                     .build(),
             )
             .addProperty(constructorProperty(SHOT_NAME, STRING))
             .addProperty(constructorProperty(SHOT_KIND, STRING))
+            .addProperty(constructorProperty(SHOT_CONFIG, SHOT_CONFIG_CLASS))
             .addProperty(constructorProperty(SHOT_CONTENT, ANY))
             .addProperty(
                 PropertySpec.builder("isVerifyRun", BOOLEAN)
@@ -125,6 +127,11 @@ internal class RoborazziTestGenerator(
     // test-classpath AAR manifests never merge in unit tests — Roborazzi ships a helper
     // that registers its activity with Robolectric. It must run BEFORE the compose
     // rule's own setup launches the activity, hence the outer rule (a @Before is too late).
+    // The shot's density/font-scale variant is applied there too, for the same reason: the
+    // activity picks the device configuration up at launch. "+" overlays the @Config
+    // device, so a density variant keeps its dp size and gets a bigger or smaller pixel
+    // window — the real device bucket, resources and nonlinear font scaling included.
+    // Robolectric resets the configuration from @Config before every test.
     private fun ruleChainProperty(): PropertySpec {
         return PropertySpec.builder(
             "arkiveRule",
@@ -143,6 +150,8 @@ internal class RoborazziTestGenerator(
                             object : org.junit.runners.model.Statement() {
                                 override fun evaluate() {
                                     com.github.takahirom.roborazzi.registerRoborazziActivityToRobolectricIfNeeded()
+                                    $SHOT_CONFIG.densityDpi?.let { org.robolectric.RuntimeEnvironment.setQualifiers("+" + it + "dpi") }
+                                    $SHOT_CONFIG.fontScale?.let { org.robolectric.RuntimeEnvironment.setFontScale(it) }
                                     base.evaluate()
                                 }
                             }
@@ -270,21 +279,23 @@ internal class RoborazziTestGenerator(
                     .addCode(
                         """
                         val entries = mutableListOf<Array<Any>>()
-                        ArkiveComposeShoot().runComposableTests { name, function ->
-                            entries.add(arrayOf(name, "base", function))
+                        ArkiveComposeShoot().runComposableTests { name, config, function ->
+                            entries.add(arrayOf(name, "base", config, function))
                         }
-                        ArkiveComposeShoot().runComposableVariantTests { name, function ->
-                            entries.add(arrayOf(name, "variant", function))
+                        ArkiveComposeShoot().runComposableVariantTests { name, config, function ->
+                            entries.add(arrayOf(name, "variant", config, function))
                         }
                         ArkiveViewShoot().runViewTests { name, function ->
-                            entries.add(arrayOf(name, "view", function))
+                            entries.add(arrayOf(name, "view", %T.Default, function))
                         }
                         if (entries.isEmpty()) {
                             // The parameterized runner rejects an empty parameter list.
-                            entries.add(arrayOf("none", "none", {}))
+                            entries.add(arrayOf("none", "none", %T.Default, {}))
                         }
                         return entries
                         """.trimIndent(),
+                        SHOT_CONFIG_CLASS,
+                        SHOT_CONFIG_CLASS,
                     )
                     .build(),
             )
@@ -298,12 +309,14 @@ internal class RoborazziTestGenerator(
         private const val ROBOLECTRIC_ANNOTATION_PACKAGE = "org.robolectric.annotation"
         private const val SHOT_NAME = "shotName"
         private const val SHOT_KIND = "shotKind"
+        private const val SHOT_CONFIG = "shotConfig"
         private const val SHOT_CONTENT = "shotContent"
 
         private val PARAMETERIZED_RUNNER = ClassName("org.robolectric", "ParameterizedRobolectricTestRunner")
         private val CAPTURE_ROBO_IMAGE = MemberName("com.github.takahirom.roborazzi", "captureRoboImage")
         private val ON_ROOT = MemberName("androidx.compose.ui.test", "onRoot")
         private val UI_TREE_VIEWS = ClassName("com.infinum.arkive.composeutils.uitree", "ArkiveUiTreeViews")
+        private val SHOT_CONFIG_CLASS = ClassName("com.infinum.arkive.composeutils", "ArkiveShotConfig")
         private val ARRAY_OF_ANY = ClassName("kotlin", "Array").parameterizedBy(ANY)
     }
 }
