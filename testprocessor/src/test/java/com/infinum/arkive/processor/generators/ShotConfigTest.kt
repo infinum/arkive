@@ -1,5 +1,6 @@
 package com.infinum.arkive.processor.generators
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -27,11 +28,29 @@ class ShotConfigTest {
         assertTrue(roborazzi, roborazzi.contains("ArkiveShotConfig.Default, function))"))
     }
 
-    @Test
-    fun paparazziKeepsComposeOverridesForNow() {
-        val code = PaparazziTestGenerator().generate().toString().normalized()
+    private val paparazzi = PaparazziTestGenerator().generate().toString().normalized()
 
-        assertTrue(code, code.contains("DensityVariant(density) { function() }"))
-        assertTrue(code, code.contains("FontVariant(fontScale) { function() }"))
+    @Test
+    fun paparazziSwitchesTheDeviceOnlyWhenTheShotNeedsAnother() {
+        assertTrue(
+            paparazzi,
+            paparazzi.contains(
+                "val device = deviceFor(config) if (device != currentDevice) { " +
+                    "paparazzi.unsafeUpdateConfig(deviceConfig = device) currentDevice = device } " +
+                    "paparazzi.snapshot(name = name) { function() }",
+            ),
+        )
+        assertFalse(paparazzi, paparazzi.contains("DensityVariant"))
+        assertFalse(paparazzi, paparazzi.contains("FontVariant"))
+    }
+
+    @Test
+    fun paparazziScalesVariantDevicesFromTheSessionsBaseDevice() {
+        assertTrue(paparazzi, paparazzi.contains("Paparazzi(deviceConfig = baseDevice,"))
+        // Pixels grow with the density, so the screen keeps its dp size.
+        assertTrue(paparazzi, paparazzi.contains("screenWidth = (baseDevice.screenWidth * scale)"))
+        assertTrue(paparazzi, paparazzi.contains("screenHeight = (baseDevice.screenHeight * scale)"))
+        assertTrue(paparazzi, paparazzi.contains("density = com.android.resources.Density.create(dpi)"))
+        assertTrue(paparazzi, paparazzi.contains("fontScale = config.fontScale ?: baseDevice.fontScale"))
     }
 }

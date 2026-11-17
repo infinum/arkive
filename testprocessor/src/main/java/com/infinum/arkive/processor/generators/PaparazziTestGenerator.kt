@@ -10,6 +10,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
@@ -18,6 +19,11 @@ import com.squareup.kotlinpoet.TypeSpec
  * generated shooter in one run. layoutlib renders each snapshot standalone (no window
  * survives between captures), so the single-method shape is memory-safe here — unlike
  * under Robolectric, which is why [RoborazziTestGenerator] has a different shape.
+ *
+ * Density and font-scale variants are device settings, not Compose overrides: before a
+ * shot whose `ArkiveShotConfig` asks for another device, the test switches Paparazzi's
+ * render session to it (`unsafeUpdateConfig`), so resources, the configuration and
+ * hosted Views see the change too — the same model the Roborazzi test uses.
  */
 internal class PaparazziTestGenerator : EngineTestGenerator {
 
@@ -26,8 +32,11 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
             .addModifiers(KModifier.PUBLIC)
             .addProperty(isVerifyRunProperty())
             .addProperty(retentionProperty())
+            .addProperty(baseDeviceProperty())
+            .addProperty(currentDeviceProperty())
             .addProperty(paparazziProperty())
             .addProperty(ruleChainProperty())
+            .addFunction(deviceForFunction())
             .addFunction(
                 composableTestFunction(
                     "testAllComposableFunctions",
@@ -76,9 +85,59 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
                 // Translucent theme keeps the window background transparent, so snapshots
                 // carry an alpha channel instead of the default dark Material backdrop.
                 "Paparazzi(" +
+                    "deviceConfig = $BASE_DEVICE_PROPERTY, " +
                     "renderingMode = com.android.ide.common.rendering.api.SessionParams.RenderingMode.SHRINK, " +
                     "theme = \"android:Theme.Translucent.NoTitleBar\"" +
                     ")",
+            )
+            .build()
+    }
+
+    // Explicit although it is Paparazzi's own default: deviceFor() scales every variant
+    // device from it, so the session's starting device and that base must never drift.
+    private fun baseDeviceProperty(): PropertySpec {
+        return PropertySpec.builder(BASE_DEVICE_PROPERTY, DEVICE_CONFIG)
+            .addModifiers(KModifier.PRIVATE)
+            .initializer("%T.NEXUS_5", DEVICE_CONFIG)
+            .build()
+    }
+
+    // The device the render session uses right now. JUnit builds a fresh instance per test
+    // method, and the rule a fresh session on the base device, so it starts there.
+    private fun currentDeviceProperty(): PropertySpec {
+        return PropertySpec.builder(CURRENT_DEVICE_PROPERTY, DEVICE_CONFIG)
+            .addModifiers(KModifier.PRIVATE)
+            .mutable()
+            .initializer(BASE_DEVICE_PROPERTY)
+            .build()
+    }
+
+    // A real xxxhdpi phone has more pixels, not less room: the pixel size (and physical dpi)
+    // scales with the density, so every density variant keeps the base device's dp size.
+    private fun deviceForFunction(): FunSpec {
+        return FunSpec.builder(DEVICE_FOR_FUNCTION)
+            .addModifiers(KModifier.PRIVATE)
+            .addParameter(ParameterSpec.builder("config", SHOT_CONFIG).build())
+            .returns(DEVICE_CONFIG)
+            .addCode(
+                """
+                val baseDpi = $BASE_DEVICE_PROPERTY.density.dpiValue
+                val dpi = config.densityDpi ?: baseDpi
+                val scale = dpi.toDouble() / baseDpi
+                return $BASE_DEVICE_PROPERTY.copy(
+                    screenWidth = ($BASE_DEVICE_PROPERTY.screenWidth * scale).%M(),
+                    screenHeight = ($BASE_DEVICE_PROPERTY.screenHeight * scale).%M(),
+                    xdpi = ($BASE_DEVICE_PROPERTY.xdpi * scale).%M(),
+                    ydpi = ($BASE_DEVICE_PROPERTY.ydpi * scale).%M(),
+                    density = %T.create(dpi),
+                    fontScale = config.fontScale ?: $BASE_DEVICE_PROPERTY.fontScale,
+                )
+                """.trimIndent(),
+                ROUND_TO_INT,
+                ROUND_TO_INT,
+                ROUND_TO_INT,
+                ROUND_TO_INT,
+                DENSITY,
             )
             .build()
     }
@@ -145,21 +204,16 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
                 }
                 val shooter = ArkiveComposeShoot()
                 shooter.$shooterFunction { name, config, function ->
-                    paparazzi.snapshot(name = name) {
-                        // Paparazzi still renders density/font-scale variants as Compose
-                        // overrides; moving them to its DeviceConfig is the next step.
-                        val density = config.density
-                        val fontScale = config.fontScale
-                        when {
-                            density != null -> %M(density) { function() }
-                            fontScale != null -> %M(fontScale) { function() }
-                            else -> function()
-                        }
+                    // Rebuilding the render session is costly, so switch only when the
+                    // shot needs a different device than the current one.
+                    val device = $DEVICE_FOR_FUNCTION(config)
+                    if (device != $CURRENT_DEVICE_PROPERTY) {
+                        paparazzi.unsafeUpdateConfig(deviceConfig = device)
+                        $CURRENT_DEVICE_PROPERTY = device
                     }
+                    paparazzi.snapshot(name = name) { function() }
                 }
                 """.trimIndent(),
-                DENSITY_VARIANT,
-                FONT_VARIANT,
             )
             .build()
     }
@@ -196,9 +250,14 @@ internal class PaparazziTestGenerator : EngineTestGenerator {
     companion object {
         private const val IS_VERIFY_RUN_PROPERTY = "isVerifyRun"
         private const val RETENTION_PROPERTY = "snapshotRetention"
+        private const val BASE_DEVICE_PROPERTY = "baseDevice"
+        private const val CURRENT_DEVICE_PROPERTY = "currentDevice"
+        private const val DEVICE_FOR_FUNCTION = "deviceFor"
 
         private val UI_TREE_VIEWS = ClassName("com.infinum.arkive.composeutils.uitree", "ArkiveUiTreeViews")
-        private val DENSITY_VARIANT = MemberName("com.infinum.arkive.composeutils", "DensityVariant")
-        private val FONT_VARIANT = MemberName("com.infinum.arkive.composeutils", "FontVariant")
+        private val DEVICE_CONFIG = ClassName("app.cash.paparazzi", "DeviceConfig")
+        private val DENSITY = ClassName("com.android.resources", "Density")
+        private val SHOT_CONFIG = ClassName("com.infinum.arkive.composeutils", "ArkiveShotConfig")
+        private val ROUND_TO_INT = MemberName("kotlin.math", "roundToInt")
     }
 }
