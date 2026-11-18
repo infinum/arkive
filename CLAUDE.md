@@ -309,12 +309,14 @@ Selection, by priority:
   - Verified on the samples (Nov 2026): the primary button's density variants are
     pixel-identical across engines (124x39 at ldpi … 663x208 at xxxhdpi), font-variant text
     widths agree within 1 dp, and check_uitree.py passes 454/454 under both engines.
-  - Before/after (`main` vs the #2260 branch, recorded with the build cache off, Nov 2026):
-    on Roborazzi only 36 of 222 density shots changed — full screens and wide rows/cards at
-    xxhdpi/xxxhdpi (content that outgrew the shrunk dp budget) and View-hosting previews
-    at every density; small components were already identical. Font variants changed only
-    for View text (`LegacyBadge`'s `TextView`); Compose text is byte-identical. On
-    Paparazzi, every image above 1000 px also changed (`useDeviceResolution`).
+  - Before/after (`main` vs the #2260 branch, both with the responsive sample screens,
+    build cache off, Nov 2026): on Roborazzi 48 of 222 density shots changed — every
+    density of the four screens (before, they were laid out 1437 dp wide at ldpi down to
+    270 dp at xxxhdpi; now 410x913 dp at every density), wide rows/cards at
+    xxhdpi/xxxhdpi, and View-hosting previews; small components were already identical.
+    Font variants changed only for View text (`LegacyBadge`'s `TextView`); Compose text is
+    byte-identical. On Paparazzi, every image above 1000 px also changed
+    (`useDeviceResolution`).
   - Layout-direction and preview-parameter variants stay Compose overrides
     (`LayoutDirectionVariant`) with `ArkiveShotConfig.Default`.
   - Still different between engines: the base device (Roborazzi Pixel-6-class 411x914 dp,

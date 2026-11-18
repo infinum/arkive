@@ -2,19 +2,22 @@
 
 package com.infinum.arkive.sample.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,12 +39,20 @@ import com.infinum.arkive.sample.theme.Slate
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .width(390.dp)
-            .background(Mist),
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = Mist,
+        // Previews and snapshots have no system bars to inset from.
+        contentWindowInsets = WindowInsets(0),
+        bottomBar = { PeakBottomBar(selectedIndex = 0, modifier = Modifier.fillMaxWidth()) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -89,16 +100,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     title = "Morning trail run",
                     subtitle = "6.4 km · 320 m elev.",
                     time = "07:12",
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 ActivityRow(
                     icon = Icons.Filled.LocationOn,
                     title = "Sljeme summit hike",
                     subtitle = "11.8 km · 780 m elev.",
                     time = "Sun",
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
-        PeakBottomBar(selectedIndex = 0)
     }
 }
 
