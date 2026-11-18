@@ -285,10 +285,12 @@ Selection, by priority:
   `FontVariant`) only overrode `LocalDensity`, so the pixel window stayed the device's and
   the content's dp budget shrank or grew instead (xxxhdpi on a 411dp/420dpi device left
   ~270 dp of width, ldpi ~1439 dp); resources, `LocalConfiguration` and hosted Views never
-  saw it, and `FontVariant`'s linear `Density(density, fontScale)` dropped Android 14+
-  nonlinear font scaling. Don't bring the Compose-override approach back. Now a density
-  variant keeps the device's dp size and only its pixel count changes; a font variant
-  keeps the image size while text grows and wraps.
+  saw it, nor `FontVariant`'s font scale. Compose text itself was fine: Compose's
+  `Density(density, fontScale)` already applies Android's nonlinear font scaling (its
+  default `FontScaling` goes through `FontScaleConverterFactory`), so Compose-only font
+  variants render byte-identically either way. Don't bring the Compose-override approach
+  back. Now a density variant keeps the device's dp size and only its pixel count
+  changes; a font variant keeps the image size while text grows and wraps.
   - Roborazzi: the config is a test parameter, applied in the RuleChain's outer rule
     before the compose rule launches the activity — `RuntimeEnvironment.setQualifiers(
     "+<dpi>dpi")` (the `+` overlays the `@Config` device) and `setFontScale()`. It relies
@@ -307,6 +309,12 @@ Selection, by priority:
   - Verified on the samples (Nov 2026): the primary button's density variants are
     pixel-identical across engines (124x39 at ldpi … 663x208 at xxxhdpi), font-variant text
     widths agree within 1 dp, and check_uitree.py passes 454/454 under both engines.
+  - Before/after (`main` vs the #2260 branch, recorded with the build cache off, Nov 2026):
+    on Roborazzi only 36 of 222 density shots changed — full screens and wide rows/cards at
+    xxhdpi/xxxhdpi (content that outgrew the shrunk dp budget) and View-hosting previews
+    at every density; small components were already identical. Font variants changed only
+    for View text (`LegacyBadge`'s `TextView`); Compose text is byte-identical. On
+    Paparazzi, every image above 1000 px also changed (`useDeviceResolution`).
   - Layout-direction and preview-parameter variants stay Compose overrides
     (`LayoutDirectionVariant`) with `ArkiveShotConfig.Default`.
   - Still different between engines: the base device (Roborazzi Pixel-6-class 411x914 dp,
