@@ -116,8 +116,8 @@ The intended surface is small — keep everything else `internal`:
   artifacts); the backing `json` is `@PublishedApi internal`.
 - composeUtils: `ArkiveShotConfig`, `LayoutDirectionVariant` and the UI-tree entry points
   (`ArkiveUiTreeCapture`, `ArkiveUiTreeViews.host`) generated code calls; its `@Preview`s
-  are private. `DensityVariant`/`FontVariant` are still public, but no generated code calls
-  them any more (see "Density and font-scale variants").
+  are private. (The old `DensityVariant`/`FontVariant` wrappers were removed with #2260 —
+  see "Density and font-scale variants".)
 - annotations: both annotations.
 
 ABI dumps come from **KGP's built-in ABI validation** (`abiValidation { enabled }`, opt-in
@@ -281,11 +281,12 @@ Selection, by priority:
   Every generated shot passes an `ArkiveShotConfig` (composeUtils: a density, a font scale,
   or `Default` for neither) through the runner, `(String, ArkiveShotConfig, @Composable ()
   -> Unit) -> Unit` — an internal processor ↔ testprocessor contract; each engine's test
-  applies it to its own device. The old `DensityVariant` only overrode `LocalDensity`, so
-  the pixel window stayed the device's and the content's dp budget shrank or grew instead
-  (xxxhdpi on a 411dp/420dpi device left ~270 dp of width, ldpi ~1439 dp); resources,
-  `LocalConfiguration` and hosted Views never saw it, and `FontVariant`'s linear
-  `Density(density, fontScale)` dropped Android 14+ nonlinear font scaling. Now a density
+  applies it to its own device. The old `DensityVariant` wrapper (removed, like
+  `FontVariant`) only overrode `LocalDensity`, so the pixel window stayed the device's and
+  the content's dp budget shrank or grew instead (xxxhdpi on a 411dp/420dpi device left
+  ~270 dp of width, ldpi ~1439 dp); resources, `LocalConfiguration` and hosted Views never
+  saw it, and `FontVariant`'s linear `Density(density, fontScale)` dropped Android 14+
+  nonlinear font scaling. Don't bring the Compose-override approach back. Now a density
   variant keeps the device's dp size and only its pixel count changes; a font variant
   keeps the image size while text grows and wraps.
   - Roborazzi: the config is a test parameter, applied in the RuleChain's outer rule
@@ -361,7 +362,7 @@ Modules and how they compose at a consumer's build time:
   (`ArkiveShowcase` → modules → items → component + variants).
 - **composeUtils** — what the generated variant code needs at runtime: `ArkiveShotConfig`
   (the per-shot device settings each engine applies) and `LayoutDirectionVariant` (still a
-  Compose override; `FontVariant`/`DensityVariant` are unused leftovers), plus UI-tree capture
+  Compose override), plus UI-tree capture
   (`uitree/`): `ArkiveUiTreeCapture` wraps every shot in a pass-through `Layout` whose
   `drawWithContent` hook walks layout nodes + unmerged semantics + recorded slot tables
   on the drawn frame (the capture IS a draw, so no engine is involved), and
