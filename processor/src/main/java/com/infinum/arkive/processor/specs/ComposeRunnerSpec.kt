@@ -4,7 +4,6 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.infinum.arkive.processor.models.ComposeHolder
 import com.infinum.arkive.processor.shared.Constants
-import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -18,7 +17,6 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.SET
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.writeTo
 
 internal class ComposeRunnerSpec(
@@ -97,9 +95,10 @@ internal class ComposeRunnerSpec(
             .addStatement("val $VERIFY_FAILURES_PROPERTY = mutableListOf<String>()")
             // Every shot goes through UI-tree capture — a pass-through unless the Gradle plugin
             // enabled it. Wrapping the runner here keeps the component wrappers and both
-            // engines' test generators untouched.
+            // engines' test generators untouched. The shot config passes straight through:
+            // the engine applies it around the whole capture.
             .addStatement(
-                "val %L: %T = { name, content -> %L(name) { %M(name, %L, content) } }",
+                "val %L: %T = { name, config, content -> %L(name, config) { %M(name, %L, content) } }",
                 CAPTURING_RUNNER,
                 runnerType(),
                 RUNNER_FUNCTION,
@@ -118,13 +117,7 @@ internal class ComposeRunnerSpec(
             .build()
     }
 
-    private fun runnerType(): LambdaTypeName = LambdaTypeName.get(
-        parameters = arrayOf(
-            ClassName(KOTLIN_PACKAGE, "String"),
-            LambdaTypeName.get(returnType = UNIT).copy(annotations = listOf(getComposableAnnotation())),
-        ),
-        returnType = UNIT,
-    )
+    private fun runnerType(): LambdaTypeName = ComposeVariantSpec.runnerType()
 
     private fun getAggregateThrow(): CodeBlock {
         // Verification reports every mismatched component at once instead of failing on
@@ -174,14 +167,8 @@ internal class ComposeRunnerSpec(
         add(")")
     }.build()
 
-    private fun getComposableAnnotation(): AnnotationSpec {
-        return AnnotationSpec.builder(ClassName.bestGuess(ANNOTATION_COMPOSABLE))
-            .build()
-    }
-
     companion object {
         private const val SIMPLE_NAME = "ArkiveComposeShoot"
-        private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
         private const val RUN_COMPOSABLE_TESTS_FUNCTION = "runComposableTests"
         private const val RUN_COMPOSABLE_VARIANT_TESTS_FUNCTION = "runComposableVariantTests"
         private const val RUNNER_FUNCTION = "runner"
