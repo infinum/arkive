@@ -137,10 +137,11 @@
         UI_MODE_ORDER.indexOf(a.variant.toLowerCase()) - UI_MODE_ORDER.indexOf(b.variant.toLowerCase()));
     }
     if (c === SKIN_CATEGORY) {
+      const order = skinOrder.map(lower);
       return out.sort((a, b) => {
-        const [skinA, modeA] = splitSkinVariant(a.variant);
-        const [skinB, modeB] = splitSkinVariant(b.variant);
-        return skinOrder.indexOf(skinA) - skinOrder.indexOf(skinB) ||
+        const [skinA, modeA] = splitSkinVariant(lower(a.variant));
+        const [skinB, modeB] = splitSkinVariant(lower(b.variant));
+        return order.indexOf(skinA) - order.indexOf(skinB) ||
           UI_MODE_ORDER.indexOf(modeA) - UI_MODE_ORDER.indexOf(modeB);
       });
     }
@@ -160,6 +161,17 @@
     return allItems().find((x) => x.component.id === id) || null;
   }
 
+  // Categories and variant values are parsed from snapshot filenames, and Paparazzi
+  // lowercases those: `uiMode` arrives as `uimode`, and skin names lose their capitals
+  // (the module's `skins` list keeps them). Compare them case-insensitively.
+  function lower(text) {
+    return (text || '').toLowerCase();
+  }
+
+  function sameKey(a, b) {
+    return lower(a) === lower(b);
+  }
+
   // Skin variants are "<skin>-<light|dark>"; skin names are letters and digits only.
   function splitSkinVariant(variant) {
     const at = variant.lastIndexOf('-');
@@ -167,8 +179,8 @@
   }
 
   function isDarkState(category, variant) {
-    return (category === UI_MODE_CATEGORY && variant === 'dark') ||
-      (category === SKIN_CATEGORY && splitSkinVariant(variant)[1] === 'dark');
+    return (sameKey(category, UI_MODE_CATEGORY) && sameKey(variant, 'dark')) ||
+      (sameKey(category, SKIN_CATEGORY) && sameKey(splitSkinVariant(variant)[1], 'dark'));
   }
 
   function darkVariantOf(item) {
@@ -189,11 +201,12 @@
     const skins = skinsOf(item.module);
     if (skins.length > 1) {
       const skin = skins.includes(state.skin) ? state.skin : skins[0];
-      const skinned = item.variants.find((v) => v.category === SKIN_CATEGORY && v.variant === skin + '-' + state.uiMode);
+      const skinned = item.variants.find((v) =>
+        sameKey(v.category, SKIN_CATEGORY) && sameKey(v.variant, skin + '-' + state.uiMode));
       if (skinned) return skinned;
     }
     return state.uiMode === 'dark'
-      ? item.variants.find((v) => v.category === UI_MODE_CATEGORY && v.variant === 'dark') || null
+      ? item.variants.find((v) => sameKey(v.category, UI_MODE_CATEGORY) && sameKey(v.variant, 'dark')) || null
       : null;
   }
 
