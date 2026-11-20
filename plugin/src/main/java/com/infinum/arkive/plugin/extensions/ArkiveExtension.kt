@@ -3,6 +3,7 @@ package com.infinum.arkive.plugin.extensions
 import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 
 public open class ArkiveExtension @Inject constructor(
@@ -19,6 +20,27 @@ public open class ArkiveExtension @Inject constructor(
 
     public val designFileKey: Property<String> = objects.property(String::class.java)
         .convention("")
+
+    /**
+     * Fully-qualified name of a top-level `@Composable` theme every snapshot renders inside,
+     * e.g. `"com.example.ui.theme.AppTheme"`; empty (default) renders previews as declared.
+     * The theme takes a trailing content lambda and may live in another module. A Boolean
+     * `darkTheme`/`isDarkTheme`/`useDarkTheme`/`isDark` parameter, if present, is driven
+     * by the light/dark `uiMode` variants.
+     */
+    public val previewTheme: Property<String> = objects.property(String::class.java)
+        .convention("")
+
+    /**
+     * Named skins, each a theme with the same contract as [previewTheme], in declaration
+     * order: `previewThemes.put("red", "com.example.RedTheme")`. The first is the default
+     * every snapshot renders in; with two or more, every skin adds `skin_<name>-light|dark` snapshots.
+     * Names are letters and digits only. Replaces [previewTheme] — set one or the other.
+     * A skin read from global state (preferences, a singleton) must be set by its wrapper
+     * during composition: every snapshot runs inside some skin, so none leaks into another.
+     */
+    public val previewThemes: MapProperty<String, String> = objects.mapProperty(String::class.java, String::class.java)
+        .convention(emptyMap())
 
     /**
      * Which snapshots remain in the golden directory after the showcase consumes them:
@@ -81,6 +103,9 @@ public open class ArkiveExtension @Inject constructor(
         internal const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
         internal const val ENABLE_VARIANTS = "enableVariants"
         internal const val DEVICE = "arkive.device"
+        internal const val TEST_APPLICATION = "arkive.testApplication"
+        internal const val PREVIEW_THEME = "arkive.previewTheme"
+        internal const val PREVIEW_THEMES = "arkive.previewThemes"
         internal const val ENGINE_ROBORAZZI = "roborazzi"
         internal const val ENGINE_PAPARAZZI = "paparazzi"
     }
@@ -104,5 +129,15 @@ public open class RoborazziEngineOptions @Inject constructor(
      * goldens recorded on another device won't match.
      */
     public val device: Property<String> = objects.property(String::class.java)
+        .convention("")
+
+    /**
+     * Fully-qualified name of the `Application` Robolectric starts for Arkive's snapshot
+     * test, instead of the one in the manifest. Set it when the app's Application can't
+     * start in a unit test (DI graphs, Firebase, SDK init) — typically a plain subclass in
+     * `src/test` that initializes only what previews need. Empty (default) keeps
+     * Robolectric's choice. Applies to Arkive's generated test only.
+     */
+    public val testApplication: Property<String> = objects.property(String::class.java)
         .convention("")
 }

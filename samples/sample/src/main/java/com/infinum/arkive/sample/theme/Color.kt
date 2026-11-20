@@ -18,3 +18,17 @@ val Mist = Color(0xFFF4F7F5)
 val Cloud = Color(0xFFFFFFFF)
 val Line = Color(0xFFE3EAE6)
 val Coral = Color(0xFFE05B4E)
+
+// Night palette
+val Night = Color(0xFF0F1613)
+val NightSurface = Color(0xFF18221E)
+val NightVariant = Color(0xFF233029)
+val NightLine = Color(0xFF34423B)
+val Fog = Color(0xFFE4ECE8)
+val FogDim = Color(0xFFA3B2AB)
+
+// Sunset brand accents
+val Ember = Color(0xFFC4502F)
+val EmberLight = Color(0xFFE58A6A)
+val Peach = Color(0xFFFDE3D6)
+val EmberDark = Color(0xFF5A2418)

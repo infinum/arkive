@@ -47,7 +47,11 @@ public class ArkiveProcessorProvider : SymbolProcessorProvider {
         environment: SymbolProcessorEnvironment,
     ): SymbolProcessor {
         val skipPreviews: Boolean = environment.options["skipPreviews"]?.toBooleanStrict() ?: false
-        val options = ArkiveOptions(skipPreviews)
+        val options = ArkiveOptions(
+            skipPreviews = skipPreviews,
+            previewTheme = environment.options[PREVIEW_THEME].orEmpty(),
+            previewThemes = environment.options[PREVIEW_THEMES].orEmpty(),
+        )
 
         val enablePreviewParameters = environment.options[ENABLE_PREVIEW_PARAMETERS]?.toBoolean() ?: true
         val enableVariants = environment.options[ENABLE_VARIANTS]?.toBoolean() ?: false
@@ -64,5 +68,7 @@ public class ArkiveProcessorProvider : SymbolProcessorProvider {
     private companion object {
         private const val ENABLE_PREVIEW_PARAMETERS = "enablePreviewParameters"
         private const val ENABLE_VARIANTS = "enableVariants"
+        private const val PREVIEW_THEME = "arkive.previewTheme"
+        private const val PREVIEW_THEMES = "arkive.previewThemes"
     }
 }

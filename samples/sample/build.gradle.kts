@@ -14,6 +14,8 @@ arkive {
     multiModuleVariant.set("uatDebug")
     enableVariants.set(true)
     designFileKey.set("fileKey")
+    previewThemes.put("forest", "com.infinum.arkive.sample.theme.PeakTheme(brand = com.infinum.arkive.sample.theme.PeakBrand.Forest)")
+    previewThemes.put("sunset", "com.infinum.arkive.sample.theme.PeakTheme(brand = com.infinum.arkive.sample.theme.PeakBrand.Sunset)")
     engine(Roborazzi)
 
 }

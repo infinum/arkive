@@ -28,27 +28,30 @@ import com.infinum.arkive.sample.components.DifficultyTag
 import com.infinum.arkive.sample.components.ElevationChart
 import com.infinum.arkive.sample.components.PrimaryButton
 import com.infinum.arkive.sample.components.RatingStars
-import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Mist
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Pine
-import com.infinum.arkive.sample.theme.PineDark
-import com.infinum.arkive.sample.theme.PineLight
-import com.infinum.arkive.sample.theme.Slate
+import com.infinum.arkive.sample.theme.primaryDeep
+import com.infinum.arkive.sample.theme.primarySoft
 
 @Composable
 fun TrailDetailScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .width(390.dp)
-            .background(Mist),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .background(Brush.linearGradient(listOf(PineDark, Pine, PineLight))),
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primaryDeep,
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primarySoft,
+                        ),
+                    ),
+                ),
         ) {
             Column(
                 modifier = Modifier
@@ -60,12 +63,12 @@ fun TrailDetailScreen(modifier: Modifier = Modifier) {
                 Text(
                     text = "Velebit Ridge Loop",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Cloud,
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
                 Text(
                     text = "Northern Velebit National Park",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Cloud.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                 )
             }
         }
@@ -79,7 +82,7 @@ fun TrailDetailScreen(modifier: Modifier = Modifier) {
                 TrailStat(value = "5 h 30 m", label = "Est. time")
             }
             Box(modifier = Modifier.height(20.dp))
-            Text(text = "Elevation profile", style = MaterialTheme.typography.titleLarge, color = Ink)
+            Text(text = "Elevation profile", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.height(12.dp))
             ElevationChart(
                 points = listOf(0.1f, 0.25f, 0.2f, 0.45f, 0.6f, 0.5f, 0.8f, 0.95f, 0.7f, 0.75f),
@@ -99,7 +102,7 @@ fun TrailDetailScreen(modifier: Modifier = Modifier) {
                 text = "A panoramic ridge walk over limestone karst with views across " +
                     "the Adriatic. Exposed in parts — bring sun protection and 2 L of water.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Slate,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Box(modifier = Modifier.height(24.dp))
             PrimaryButton(
@@ -115,8 +118,8 @@ fun TrailDetailScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun TrailStat(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, style = MaterialTheme.typography.titleLarge, color = Ink)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Slate)
+        Text(text = value, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

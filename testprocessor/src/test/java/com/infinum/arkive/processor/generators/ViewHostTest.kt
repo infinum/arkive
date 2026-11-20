@@ -17,8 +17,16 @@ class ViewHostTest {
 
     @Test
     fun roborazziInflatesViewsIntoTheUiTreeHost() {
-        val code = RoborazziTestGenerator(deviceQualifiers = "").generate().toString().normalized()
+        val code = RoborazziTestGenerator(deviceQualifiers = "", testApplication = "").generate().toString().normalized()
 
         assertTrue(code, code.contains("ArkiveUiTreeViews.host(activity, shotName)"))
+    }
+
+    @Test
+    fun roborazziRunsUnderTheConfiguredTestApplication() {
+        val code = RoborazziTestGenerator(deviceQualifiers = "", testApplication = "com.example.TestApp")
+            .generate().toString().normalized()
+
+        assertTrue(code, code.contains("application = com.example.TestApp::class"))
     }
 }

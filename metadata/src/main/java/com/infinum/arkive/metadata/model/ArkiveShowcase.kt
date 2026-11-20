@@ -26,6 +26,8 @@ public data class ArkiveModule(
     @SerialName("name") val name: String,
     @SerialName("items") val items: List<ShowcaseItem>,
     @SerialName("designFileKey") val designFileKey: String? = null,
+    // Skin names in declaration order, the first being the default; empty without skins.
+    @SerialName("skins") val skins: List<String> = emptyList(),
 )
 
 @Serializable

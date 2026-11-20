@@ -29,17 +29,14 @@ import com.infinum.arkive.sample.components.ProgressRing
 import com.infinum.arkive.sample.components.StatCard
 import com.infinum.arkive.sample.components.StreakBadge
 import com.infinum.arkive.sample.components.WeeklyBarChart
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Mist
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Slate
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .width(390.dp)
-            .background(Mist),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -47,8 +44,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Good morning,", style = MaterialTheme.typography.bodyLarge, color = Slate)
-                    Text(text = "Maya", style = MaterialTheme.typography.headlineMedium, color = Ink)
+                    Text(
+                        text = "Good morning,",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(text = "Maya", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Avatar(initials = "MH")
             }
@@ -74,14 +75,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 )
             }
             Box(modifier = Modifier.height(20.dp))
-            Text(text = "This week", style = MaterialTheme.typography.titleLarge, color = Ink)
+            Text(text = "This week", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.height(12.dp))
             WeeklyBarChart(
                 values = listOf(0.4f, 0.7f, 0.3f, 0.85f, 0.55f, 1f, 0.62f),
                 modifier = Modifier.fillMaxWidth(),
             )
             Box(modifier = Modifier.height(20.dp))
-            Text(text = "Recent activity", style = MaterialTheme.typography.titleLarge, color = Ink)
+            Text(text = "Recent activity", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 ActivityRow(
