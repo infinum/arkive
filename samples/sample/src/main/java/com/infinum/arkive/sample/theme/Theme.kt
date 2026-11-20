@@ -8,8 +8,21 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 
 enum class PeakBrand { Forest, Sunset }
+
+private const val DEEP_SHADE = 0.35f
+private const val SOFT_SHADE = 0.2f
+
+// Darker and lighter shades of the brand colour for gradients. Derived from primary so they
+// follow the brand (Forest/Sunset) and light/dark mode.
+val ColorScheme.primaryDeep: Color
+    get() = lerp(primary, Color.Black, DEEP_SHADE)
+
+val ColorScheme.primarySoft: Color
+    get() = lerp(primary, Color.White, SOFT_SHADE)
 
 // The brand the enclosing PeakTheme applied: a nested PeakTheme() keeps it instead of
 // resetting to Forest, the way darkTheme follows isSystemInDarkTheme().

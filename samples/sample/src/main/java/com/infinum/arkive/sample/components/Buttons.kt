@@ -24,11 +24,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
-import com.infinum.arkive.sample.theme.Cloud
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Pine
-import com.infinum.arkive.sample.theme.PineDark
-import com.infinum.arkive.sample.theme.PineLight
+import com.infinum.arkive.sample.theme.primarySoft
 
 @Composable
 fun PrimaryButton(
@@ -40,17 +37,17 @@ fun PrimaryButton(
         modifier = modifier
             .height(52.dp)
             .background(
-                brush = Brush.horizontalGradient(listOf(Pine, PineLight)),
+                brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primarySoft)),
                 shape = CircleShape,
             )
             .padding(horizontal = 28.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, tint = Cloud, modifier = Modifier.size(20.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
             Box(modifier = Modifier.width(8.dp))
         }
-        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = Cloud)
+        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary)
     }
 }
 
@@ -62,11 +59,11 @@ fun SecondaryButton(
     Box(
         modifier = modifier
             .height(52.dp)
-            .border(width = 2.dp, color = Pine, shape = CircleShape)
+            .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = CircleShape)
             .padding(horizontal = 28.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = PineDark)
+        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 
@@ -81,7 +78,7 @@ fun GhostButton(
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = "$text →", style = MaterialTheme.typography.bodyMedium, color = Pine)
+        Text(text = "$text →", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -96,7 +93,12 @@ fun CircleIconButton(
             .background(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = PineDark, modifier = Modifier.size(24.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(24.dp),
+        )
     }
 }
 

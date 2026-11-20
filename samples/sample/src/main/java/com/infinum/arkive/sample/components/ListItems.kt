@@ -27,13 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
-import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Moss
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Pine
-import com.infinum.arkive.sample.theme.PineDark
-import com.infinum.arkive.sample.theme.Slate
 
 @Composable
 fun LeaderboardRow(
@@ -48,7 +42,7 @@ fun LeaderboardRow(
         modifier = modifier
             .width(340.dp)
             .background(
-                color = if (highlighted) Moss else Cloud,
+                color = if (highlighted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(16.dp),
             )
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -57,7 +51,7 @@ fun LeaderboardRow(
         Text(
             text = "$rank",
             style = MaterialTheme.typography.bodyMedium,
-            color = if (rank <= 3) Pine else Slate,
+            color = if (rank <= 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(28.dp),
         )
         Avatar(initials = initials, size = 38.dp)
@@ -65,10 +59,10 @@ fun LeaderboardRow(
         Text(
             text = name,
             style = MaterialTheme.typography.bodyLarge,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        Text(text = points, style = MaterialTheme.typography.bodyMedium, color = PineDark)
+        Text(text = points, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 
@@ -83,29 +77,34 @@ fun ActivityRow(
     Row(
         modifier = modifier
             .width(340.dp)
-            .background(color = Cloud, shape = RoundedCornerShape(16.dp))
+            .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(color = Moss, shape = RoundedCornerShape(14.dp)),
+                .background(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = PineDark, modifier = Modifier.size(22.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(22.dp),
+            )
         }
         Box(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = Ink)
+            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.height(3.dp))
-            Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = Slate)
+            Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text(text = time, style = MaterialTheme.typography.labelSmall, color = Slate)
+        Text(text = time, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Icon(
             imageVector = Icons.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = Slate,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
     }
@@ -121,22 +120,27 @@ fun SettingsToggleRow(
     Row(
         modifier = modifier
             .width(340.dp)
-            .background(color = Cloud, shape = RoundedCornerShape(16.dp))
+            .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = PineDark, modifier = Modifier.size(22.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(22.dp),
+        )
         Box(modifier = Modifier.width(14.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
         Switch(
             checked = checked,
             onCheckedChange = null,
-            colors = SwitchDefaults.colors(checkedTrackColor = Pine),
+            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary),
         )
     }
 }

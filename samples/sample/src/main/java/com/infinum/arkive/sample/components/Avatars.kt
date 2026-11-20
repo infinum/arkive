@@ -19,13 +19,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.Amber
-import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Ink
 import com.infinum.arkive.sample.theme.PeakTheme
 import com.infinum.arkive.sample.theme.Pine
 import com.infinum.arkive.sample.theme.PineLight
 import com.infinum.arkive.sample.theme.Sky
-import com.infinum.arkive.sample.theme.Slate
 
 private val avatarColors = listOf(Pine, Sky, Amber, PineLight)
 
@@ -58,8 +55,8 @@ fun AvatarStack(
             Box(
                 modifier = Modifier
                     .offset(x = (-10 * index).dp)
-                    .background(color = Cloud, shape = CircleShape)
-                    .border(width = 2.dp, color = Cloud, shape = CircleShape),
+                    .background(color = MaterialTheme.colorScheme.surface, shape = CircleShape)
+                    .border(width = 2.dp, color = MaterialTheme.colorScheme.surface, shape = CircleShape),
             ) {
                 Avatar(initials = initials, size = 40.dp)
             }
@@ -69,17 +66,17 @@ fun AvatarStack(
                 modifier = Modifier
                     .offset(x = (-10 * members.size).dp)
                     .size(44.dp)
-                    .background(color = Cloud, shape = CircleShape)
-                    .border(width = 2.dp, color = Cloud, shape = CircleShape),
+                    .background(color = MaterialTheme.colorScheme.surface, shape = CircleShape)
+                    .border(width = 2.dp, color = MaterialTheme.colorScheme.surface, shape = CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(color = Slate.copy(alpha = 0.15f), shape = CircleShape),
+                        .background(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f), shape = CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(text = "+$extraCount", style = MaterialTheme.typography.labelSmall, color = Ink)
+                    Text(text = "+$extraCount", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }

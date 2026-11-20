@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -32,13 +33,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
-import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Moss
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Pine
-import com.infinum.arkive.sample.theme.PineLight
-import com.infinum.arkive.sample.theme.Slate
+import com.infinum.arkive.sample.theme.primarySoft
 
 @Composable
 fun ProgressRing(
@@ -47,13 +43,14 @@ fun ProgressRing(
     caption: String,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
     Box(modifier = modifier.size(160.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val stroke = 14.dp.toPx()
             val inset = stroke / 2
             val arcSize = Size(size.width - stroke, size.height - stroke)
             drawArc(
-                color = Moss,
+                color = colors.primaryContainer,
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,
@@ -62,7 +59,7 @@ fun ProgressRing(
                 style = Stroke(width = stroke, cap = StrokeCap.Round),
             )
             drawArc(
-                brush = Brush.sweepGradient(listOf(Pine, PineLight, Pine)),
+                brush = Brush.sweepGradient(listOf(colors.primary, colors.primarySoft, colors.primary)),
                 startAngle = -90f,
                 sweepAngle = 360f * progress,
                 useCenter = false,
@@ -72,8 +69,8 @@ fun ProgressRing(
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = value, style = MaterialTheme.typography.titleLarge, color = Ink)
-            Text(text = caption, style = MaterialTheme.typography.labelSmall, color = Slate)
+            Text(text = value, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -87,7 +84,7 @@ fun WeeklyBarChart(
     val labels = listOf("M", "T", "W", "T", "F", "S", "S")
     Row(
         modifier = modifier
-            .background(color = Cloud, shape = RoundedCornerShape(20.dp))
+            .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(20.dp))
             .padding(18.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.Bottom,
@@ -99,12 +96,16 @@ fun WeeklyBarChart(
                         .width(18.dp)
                         .height((90 * value).dp + 8.dp)
                         .background(
-                            color = if (index == highlightIndex) Pine else Moss,
+                            color = if (index == highlightIndex) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.primaryContainer
+                            },
                             shape = CircleShape,
                         ),
                 )
                 Box(modifier = Modifier.height(8.dp))
-                Text(text = labels[index], style = MaterialTheme.typography.labelSmall, color = Slate)
+                Text(text = labels[index], style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -115,16 +116,17 @@ fun ElevationChart(
     points: List<Float>,
     modifier: Modifier = Modifier,
 ) {
+    val lineColor = MaterialTheme.colorScheme.primary
     Canvas(
         modifier = modifier
             .width(320.dp)
             .height(120.dp),
     ) {
-        drawElevationProfile(points)
+        drawElevationProfile(points, lineColor)
     }
 }
 
-private fun DrawScope.drawElevationProfile(points: List<Float>) {
+private fun DrawScope.drawElevationProfile(points: List<Float>, color: Color) {
     if (points.size >= 2) {
         val stepX = size.width / (points.size - 1)
         val line = Path()
@@ -145,15 +147,15 @@ private fun DrawScope.drawElevationProfile(points: List<Float>) {
         area.close()
         drawPath(
             path = area,
-            brush = Brush.verticalGradient(listOf(PineLight.copy(alpha = 0.35f), PineLight.copy(alpha = 0.02f))),
+            brush = Brush.verticalGradient(listOf(color.copy(alpha = 0.35f), color.copy(alpha = 0.02f))),
         )
         drawPath(
             path = line,
-            color = Pine,
+            color = color,
             style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
         )
         drawCircle(
-            color = Pine,
+            color = color,
             radius = 5.dp.toPx(),
             center = Offset(size.width, size.height * (1f - points.last())),
         )
