@@ -180,6 +180,9 @@ public class ArkivePlugin : Plugin<Project> {
             ) { task ->
                 task.group = GenerateShowcaseTask.GROUP
                 task.description = GenerateShowcaseTask.DESCRIPTION
+                // Retention deletes the task's own inputs; a skipped run would skip that.
+                // See GenerateShowcaseTask's class comment.
+                task.outputs.upToDateWhen { false }
                 task.variant = variant
                 task.kspResourcesPath = adapter.kspResourcesPath(variant)
                 task.snapshotsPath = adapter.snapshotsPath()

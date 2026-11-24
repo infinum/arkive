@@ -429,7 +429,10 @@ task's outputs. That is Roborazzi, where Arkive captures into the golden dir by 
 path, whenever it records: its record or verifyAndRecord task is in the graph, or
 `roborazzi.test.record=true`. Paparazzi answers false: it declares its snapshot dir as an
 output of record runs, so a cached record run restores Arkive's PNGs too. Verify and plain
-test runs (the consumer's own test/check) stay cacheable. Verified on the
+test runs (the consumer's own test/check) stay cacheable. `GenerateShowcaseTask` itself
+never skips (`@DisableCachingByDefault` + `upToDateWhen { false }`): retention deletes its
+own inputs, and re-recorded PNGs are usually byte-identical, so an UP-TO-DATE or FROM-CACHE
+run used to skip retention and leave every NONE-consumed golden in `src/`. Verified on the
 samples with the cache on (2026-11-23): alternating JBR 21 / OpenJDK 23 plus a preview edit
 always re-records under Roborazzi, also with the configuration cache reused; under
 Paparazzi a FROM-CACHE record run restores the PNGs and the showcase is right.
