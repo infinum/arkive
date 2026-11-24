@@ -30,7 +30,8 @@ for module in showcase["modules"]:
                 problems.append(f"{module['name']}: unreadable {tree_file}: {error}")
                 continue
             # size x density is the PNG's size only when the engine did not downscale it
-            # (Paparazzi above 1000 px, Roborazzi resizeScale), which bounds-to-pixel maths
+            # (Roborazzi resizeScale; Paparazzi above 1000 px without useDeviceResolution,
+            # which Arkive sets), which bounds-to-pixel maths
             # assumes. A PNG's width and height sit at IHDR bytes 16-24.
             png_file = os.path.join(root, module["name"], "images", os.path.basename(shot["snapshotPath"]))
             try:

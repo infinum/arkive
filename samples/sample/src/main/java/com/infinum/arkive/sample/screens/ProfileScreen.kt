@@ -2,19 +2,22 @@
 
 package com.infinum.arkive.sample.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,13 +38,19 @@ import com.infinum.arkive.sample.theme.Slate
 
 @Composable
 fun ProfileScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .width(390.dp)
-            .background(Mist),
-    ) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = Mist,
+        // Previews and snapshots have no system bars to inset from.
+        contentWindowInsets = WindowInsets(0),
+        bottomBar = { PeakBottomBar(selectedIndex = 3, modifier = Modifier.fillMaxWidth()) },
+    ) { innerPadding ->
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -67,8 +76,8 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             Text(text = "Achievements", style = MaterialTheme.typography.titleLarge, color = Ink)
             Box(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AchievementCard(title = "First Summit", date = "Mar 12")
-                AchievementCard(title = "100 km Club", date = "Apr 3")
+                AchievementCard(title = "First Summit", date = "Mar 12", modifier = Modifier.weight(1f))
+                AchievementCard(title = "100 km Club", date = "Apr 3", modifier = Modifier.weight(1f))
             }
             Box(modifier = Modifier.height(20.dp))
             GoalCard(
@@ -81,11 +90,20 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             Text(text = "Preferences", style = MaterialTheme.typography.titleLarge, color = Ink)
             Box(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SettingsToggleRow(icon = Icons.Filled.Notifications, label = "Trail alerts", checked = true)
-                SettingsToggleRow(icon = Icons.Filled.LocationOn, label = "Share live location", checked = false)
+                SettingsToggleRow(
+                    icon = Icons.Filled.Notifications,
+                    label = "Trail alerts",
+                    checked = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SettingsToggleRow(
+                    icon = Icons.Filled.LocationOn,
+                    label = "Share live location",
+                    checked = false,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
-        PeakBottomBar(selectedIndex = 3)
     }
 }
 
