@@ -65,6 +65,10 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
     @get:Input
     var designFileKey = ""
 
+    /** Skin names in declaration order (the first is the default); empty without skins. */
+    @get:Input
+    var skins: List<String> = emptyList()
+
     @get:Input
     var snapshotRetention = SnapshotRetention.NONE.name
 
@@ -147,7 +151,7 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         applyRetention(grabbed, moduleItems)
         writer.write(
             outputDir = outputDirectory.get().asFile,
-            module = ArkiveModule(moduleName, moduleItems, designFileKey.takeIf { it.isNotEmpty() }),
+            module = ArkiveModule(moduleName, moduleItems, designFileKey.takeIf { it.isNotEmpty() }, skins),
         )
 
         logger.warn("Showcase written to ${previousOutput.absolutePath}")

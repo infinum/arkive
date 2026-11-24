@@ -24,17 +24,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
-import com.infinum.arkive.sample.theme.Amber
 import com.infinum.arkive.sample.theme.AmberDeep
-import com.infinum.arkive.sample.theme.Cloud
 import com.infinum.arkive.sample.theme.Coral
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Line
-import com.infinum.arkive.sample.theme.Moss
 import com.infinum.arkive.sample.theme.PeakTheme
 import com.infinum.arkive.sample.theme.Pine
-import com.infinum.arkive.sample.theme.PineDark
-import com.infinum.arkive.sample.theme.Slate
 
 enum class Difficulty(val label: String, val color: Color) {
     EASY("Easy", Pine),
@@ -48,12 +41,16 @@ fun PeakFilterChip(
     selected: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val background = if (selected) PineDark else Cloud
-    val textColor = if (selected) Cloud else Slate
+    val background = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surface
+    val textColor = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier
             .background(color = background, shape = CircleShape)
-            .border(width = 1.dp, color = if (selected) PineDark else Line, shape = CircleShape)
+            .border(
+                width = 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.outline,
+                shape = CircleShape,
+            )
             .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -89,10 +86,10 @@ fun StatusBadge(
 ) {
     Box(
         modifier = modifier
-            .background(color = Moss, shape = RoundedCornerShape(8.dp))
+            .background(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(8.dp))
             .padding(horizontal = 10.dp, vertical = 5.dp),
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelSmall, color = PineDark)
+        Text(text = text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 
@@ -103,7 +100,7 @@ fun StreakBadge(
 ) {
     Row(
         modifier = modifier
-            .background(color = Amber.copy(alpha = 0.18f), shape = CircleShape)
+            .background(color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f), shape = CircleShape)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -114,7 +111,7 @@ fun StreakBadge(
             modifier = Modifier.size(14.dp),
         )
         Box(modifier = Modifier.size(5.dp))
-        Text(text = "$days day streak", style = MaterialTheme.typography.labelSmall, color = Ink)
+        Text(text = "$days day streak", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 

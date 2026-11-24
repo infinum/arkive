@@ -5,6 +5,7 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.infinum.arkive.processor.models.ComposeHolder
+import com.infinum.arkive.processor.models.PreviewTheme
 import com.infinum.arkive.processor.shared.Constants
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
@@ -22,29 +23,32 @@ internal class ComposeVariantSpec(
     private val holders: Set<ComposeHolder>,
     private val enablePreviewParameters: Boolean,
     private val enableVariants: Boolean,
-) : KotlinSpec {
+    // Skin order: the first is the default every snapshot renders in; empty without a theme.
+    private val previewThemes: List<PreviewTheme>,
+) : Spec {
 
+    // Chunked into several files: the Compose compiler hoists every capture-free composable
+    // lambda of a file into that file's ComposableSingletons, whose static initializer hits
+    // the JVM's 64KB method limit on large modules (MethodTooLargeException). Sorted so the
+    // chunking is stable across builds.
     override fun write() {
-        val fileSpec = getFileSpec()
-        holders.forEach { holder ->
-            fileSpec.addFunction(generatePreviewFunction(holder))
-            fileSpec.addFunction(generatePreviewVariantsFunction(holder))
-        }
+        holders.sortedBy { it.functionId }
+            .chunked(COMPONENTS_PER_FILE)
+            .forEachIndexed { index, chunk ->
+                val fileSpec = FileSpec.builder(Constants.PACKAGE_NAME, "$SIMPLE_NAME$index")
+                chunk.forEach { holder ->
+                    fileSpec.addFunction(generatePreviewFunction(holder))
+                    fileSpec.addFunction(generatePreviewVariantsFunction(holder))
+                }
 
-        fileSpec
-            .build()
-            .writeTo(
-                codeGenerator = codeGenerator,
-                aggregating = true,
-                originatingKSFiles = holders.mapNotNull { it.function.containingFile }.distinct(),
-            )
-    }
-
-    override fun getFileSpec(): FileSpec.Builder {
-        return FileSpec.builder(
-            Constants.PACKAGE_NAME,
-            SIMPLE_NAME,
-        )
+                fileSpec
+                    .build()
+                    .writeTo(
+                        codeGenerator = codeGenerator,
+                        aggregating = true,
+                        originatingKSFiles = chunk.mapNotNull { it.function.containingFile }.distinct(),
+                    )
+            }
     }
 
     // Wrappers are named by the unique component id, not the bare function name — previews
@@ -84,6 +88,10 @@ internal class ComposeVariantSpec(
             generateLayoutDirectionVariants(id, functionComponent, holder).forEach {
                 builder.addCode(it)
             }
+
+            generateUiModeVariants(id, functionComponent, holder).forEach {
+                builder.addCode(it)
+            }
         }
 
         return builder.build()
@@ -116,58 +124,65 @@ internal class ComposeVariantSpec(
     }
 
     private fun generateBaseVariant(id: String, componentMember: MemberName, holder: ComposeHolder): CodeBlock {
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-
-            CodeBlock.builder().apply {
-                addStatement(
-                    "runner(%S) { %M(%M().values.first()) }",
-                    id,
-                    componentMember,
-                    providerFunctionMember,
-                )
-            }.build()
-        } else {
-            CodeBlock.builder().apply {
-                addStatement("runner(%S) { %M() }", id, componentMember)
-            }.build()
-        }
+        return CodeBlock.builder()
+            .addStatement("runner(%S) { %L }", id, componentContent(holder, componentMember))
+            .build()
     }
 
     private fun generatePreviewVariants(holder: ComposeHolder, id: String, componentMember: MemberName): CodeBlock? {
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
+        val providerMember = extractPreviewParameterClass(holder)?.toMemberName() ?: return null
 
-        if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
+        // The parameter name becomes the variant category. Prefixed with "param-" so a
+        // parameter named `font`/`density`/`layoutDirection` can't collide with the
+        // built-in categories, and '_' is sanitized to '-' so the category never
+        // introduces extra '_' separators into the snapshot filename.
+        val parameterName = holder.parameters.firstOrNull()?.name?.asString().orEmpty()
+        val parameterCategory = "param-${parameterName.replace('_', '-')}"
+        return CodeBlock.builder()
+            .addStatement(
+                "%M().values.forEachIndexed { index, it -> runner(%L) { %L } }",
+                providerMember,
+                "\"${id}_${parameterCategory}_\${index}\"",
+                componentContent(holder, componentMember, argument = CodeBlock.of("it")),
             )
-            // The parameter name becomes the variant category. Prefixed with "param-" so a
-            // parameter named `font`/`density`/`layoutDirection` can't collide with the
-            // built-in categories, and '_' is sanitized to '-' so the category never
-            // introduces extra '_' separators into the snapshot filename.
-            val parameterName = holder.parameters.firstOrNull()?.name?.asString().orEmpty()
-            val parameterCategory = "param-${parameterName.replace('_', '-')}"
-            val provider = CodeBlock.builder().apply {
-                addStatement(
-                    "%M().values.forEachIndexed { index, it -> runner(%L) { %M(it) } }",
-                    providerFunctionMember,
-                    "\"${id}_${parameterCategory}_\${index}\"",
-                    componentMember,
-                )
-            }.build()
-
-            return provider
-        } else {
-            return null
-        }
+            .build()
     }
+
+    // The preview call every snapshot renders: the component (fed its first preview-parameter
+    // value, if any) inside [theme] — the default skin unless a skin variant picks another.
+    // [darkTheme] is passed to a theme that declares a dark-mode parameter; null leaves the
+    // theme's default.
+    private fun componentContent(
+        holder: ComposeHolder,
+        componentMember: MemberName,
+        argument: CodeBlock? = firstPreviewParameterValue(holder),
+        darkTheme: Boolean? = null,
+        theme: PreviewTheme? = previewThemes.firstOrNull(),
+    ): CodeBlock {
+        val call = if (argument == null) {
+            CodeBlock.of("%M()", componentMember)
+        } else {
+            CodeBlock.of("%M(%L)", componentMember, argument)
+        }
+        if (theme == null) {
+            return call
+        }
+        val darkThemeValue = darkTheme ?: false.takeIf { theme.darkThemeRequired }
+        val darkThemeArgument = theme.darkThemeParameter
+            ?.let { parameter -> darkThemeValue?.let { "$parameter = $it" } }
+        val arguments = theme.arguments + listOfNotNull(darkThemeArgument)
+        val argumentList = if (arguments.isEmpty()) "" else arguments.joinToString(prefix = "(", postfix = ")")
+
+        return CodeBlock.of("%M%L { %L }", theme.member, argumentList, call)
+    }
+
+    private fun firstPreviewParameterValue(holder: ComposeHolder): CodeBlock? {
+        val providerMember = extractPreviewParameterClass(holder)?.toMemberName() ?: return null
+        return CodeBlock.of("%M().values.first()", providerMember)
+    }
+
+    private fun Pair<String, String>.toMemberName(): MemberName =
+        MemberName(packageName = first, simpleName = second)
 
     private fun extractPreviewParameterClass(holder: ComposeHolder): Pair<String, String>? {
         for (parameter in holder.parameters) {
@@ -210,39 +225,18 @@ internal class ComposeVariantSpec(
             packageName = COMPOSE_UTILS_PACKAGE,
             simpleName = "FontVariant",
         )
+        val content = componentContent(holder, componentMember)
 
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-
-            fontScales.map { scale ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M(%M().values.first()) } }",
-                        "${id}_font_$scale",
-                        fontVariantMember,
-                        scale,
-                        componentMember,
-                        providerFunctionMember,
-                    )
-                }.build()
-            }
-        } else {
-            fontScales.map { scale ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M() } }",
-                        "${id}_font_$scale",
-                        fontVariantMember,
-                        scale,
-                        componentMember,
-                    )
-                }.build()
-            }
+        return fontScales.map { scale ->
+            CodeBlock.builder()
+                .addStatement(
+                    "runner(%S) { %M(scale = %Lf) { %L } }",
+                    "${id}_font_$scale",
+                    fontVariantMember,
+                    scale,
+                    content,
+                )
+                .build()
         }
     }
 
@@ -255,41 +249,22 @@ internal class ComposeVariantSpec(
             "xxhdpi" to DENSITY_XXHDPI,
             "xxxhdpi" to DENSITY_XXXHDPI,
         )
-        val fontDensityMember = MemberName(
+        val densityVariantMember = MemberName(
             packageName = COMPOSE_UTILS_PACKAGE,
             simpleName = "DensityVariant",
         )
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-            densities.map { (density, value) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M(%M().values.first()) } }",
-                        "${id}_density_$density",
-                        fontDensityMember,
-                        value,
-                        componentMember,
-                        providerFunctionMember,
-                    )
-                }.build()
-            }
-        } else {
-            densities.map { (density, value) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(scale = %Lf) { %M() } }",
-                        "${id}_density_$density",
-                        fontDensityMember,
-                        value,
-                        componentMember,
-                    )
-                }.build()
-            }
+        val content = componentContent(holder, componentMember)
+
+        return densities.map { (density, value) ->
+            CodeBlock.builder()
+                .addStatement(
+                    "runner(%S) { %M(scale = %Lf) { %L } }",
+                    "${id}_density_$density",
+                    densityVariantMember,
+                    value,
+                    content,
+                )
+                .build()
         }
     }
 
@@ -303,42 +278,56 @@ internal class ComposeVariantSpec(
             packageName = COMPOSE_UTILS_PACKAGE,
             simpleName = "LayoutDirectionVariant",
         )
-        val providerInfo: Pair<String, String>? = extractPreviewParameterClass(holder)
-        return if (providerInfo != null) {
-            val (packageName, simpleName) = providerInfo
-            val providerFunctionMember = MemberName(
-                packageName = packageName,
-                simpleName = simpleName,
-            )
-            layoutDirections.map { (directionName, isLtr) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(isLtr = %L) { %M(%M().values.first()) } }",
-                        "${id}_layoutDirection_$directionName",
-                        layoutDirectionMember,
-                        isLtr,
-                        componentMember,
-                        providerFunctionMember,
-                    )
-                }.build()
-            }
+        val content = componentContent(holder, componentMember)
+
+        return layoutDirections.map { (directionName, isLtr) ->
+            CodeBlock.builder()
+                .addStatement(
+                    "runner(%S) { %M(isLtr = %L) { %L } }",
+                    "${id}_layoutDirection_$directionName",
+                    layoutDirectionMember,
+                    isLtr,
+                    content,
+                )
+                .build()
+        }
+    }
+
+    // Light and dark for every skin: uiMode_<mode> for a module with at most one theme,
+    // skin_<name>-<mode> for every skin (the default included) once there are several, so
+    // all colorways sit in one category. UiModeVariant outermost, so a theme defaulting to
+    // isSystemInDarkTheme() — including one a preview applies itself — already sees the
+    // flipped configuration.
+    private fun generateUiModeVariants(id: String, componentMember: MemberName, holder: ComposeHolder): List<CodeBlock> {
+        val uiModes = mapOf(UI_MODE_LIGHT to false, UI_MODE_DARK to true)
+        val uiModeVariantMember = MemberName(
+            packageName = COMPOSE_UTILS_PACKAGE,
+            simpleName = "UiModeVariant",
+        )
+        val shots = if (previewThemes.size <= 1) {
+            listOf(previewThemes.firstOrNull() to "${id}_uiMode_")
         } else {
-            layoutDirections.map { (directionName, isLtr) ->
-                CodeBlock.builder().apply {
-                    addStatement(
-                        "runner(%S) { %M(isLtr = %L) { %M() } }",
-                        "${id}_layoutDirection_$directionName",
-                        layoutDirectionMember,
-                        isLtr,
-                        componentMember,
+            previewThemes.map { it to "${id}_skin_${it.name}-" }
+        }
+
+        return shots.flatMap { (theme, prefix) ->
+            uiModes.map { (uiModeName, isDark) ->
+                CodeBlock.builder()
+                    .addStatement(
+                        "runner(%S) { %M(isDark = %L) { %L } }",
+                        prefix + uiModeName,
+                        uiModeVariantMember,
+                        isDark,
+                        componentContent(holder, componentMember, darkTheme = isDark, theme = theme),
                     )
-                }.build()
+                    .build()
             }
         }
     }
 
     companion object {
         private const val SIMPLE_NAME = "ComposeVariants"
+        private const val COMPONENTS_PER_FILE = 10
         const val VARIANTS_SUFFIX = "_variants"
         private const val RUNNER_FUNCTION = "runner"
         private const val ANNOTATION_COMPOSABLE = "androidx.compose.runtime.Composable"
@@ -361,5 +350,8 @@ internal class ComposeVariantSpec(
         private const val DENSITY_XHDPI = 2.0f
         private const val DENSITY_XXHDPI = 3.0f
         private const val DENSITY_XXXHDPI = 4.0f
+
+        private const val UI_MODE_LIGHT = "light"
+        private const val UI_MODE_DARK = "dark"
     }
 }

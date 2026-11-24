@@ -27,23 +27,17 @@ import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.components.GhostButton
 import com.infinum.arkive.sample.components.PrimaryButton
-import com.infinum.arkive.sample.theme.Amber
 import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Line
-import com.infinum.arkive.sample.theme.Mist
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Pine
-import com.infinum.arkive.sample.theme.PineDark
-import com.infinum.arkive.sample.theme.PineLight
-import com.infinum.arkive.sample.theme.Slate
+import com.infinum.arkive.sample.theme.primaryDeep
+import com.infinum.arkive.sample.theme.primarySoft
 
 @Composable
 fun OnboardingScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .width(390.dp)
-            .background(Mist)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -52,7 +46,12 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .size(240.dp)
                 .background(
-                    brush = Brush.verticalGradient(listOf(PineLight.copy(alpha = 0.25f), Mist)),
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primarySoft.copy(alpha = 0.25f),
+                            MaterialTheme.colorScheme.background,
+                        ),
+                    ),
                     shape = CircleShape,
                 ),
             contentAlignment = Alignment.Center,
@@ -63,14 +62,14 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         Text(
             text = "Every summit\nstarts small",
             style = MaterialTheme.typography.headlineMedium,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
         )
         Box(modifier = Modifier.height(14.dp))
         Text(
             text = "Track hikes, climb leaderboards and turn weekend walks into mountain stories.",
             style = MaterialTheme.typography.bodyLarge,
-            color = Slate,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Box(modifier = Modifier.height(28.dp))
@@ -78,17 +77,17 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(width = 22.dp, height = 8.dp)
-                    .background(color = Pine, shape = CircleShape),
+                    .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape),
             )
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(color = Line, shape = CircleShape),
+                    .background(color = MaterialTheme.colorScheme.outline, shape = CircleShape),
             )
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(color = Line, shape = CircleShape),
+                    .background(color = MaterialTheme.colorScheme.outline, shape = CircleShape),
             )
         }
         Box(modifier = Modifier.height(28.dp))
@@ -101,6 +100,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun MountainIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
     Canvas(modifier = modifier) {
         val back = Path().apply {
             moveTo(0f, size.height * 0.85f)
@@ -114,8 +114,8 @@ private fun MountainIllustration(modifier: Modifier = Modifier) {
             lineTo(size.width, size.height * 0.85f)
             close()
         }
-        drawPath(path = back, brush = Brush.verticalGradient(listOf(PineLight, Pine)))
-        drawPath(path = front, brush = Brush.verticalGradient(listOf(Pine, PineDark)))
+        drawPath(path = back, brush = Brush.verticalGradient(listOf(colors.primarySoft, colors.primary)))
+        drawPath(path = front, brush = Brush.verticalGradient(listOf(colors.primary, colors.primaryDeep)))
         val snow = Path().apply {
             moveTo(size.width * 0.60f, size.height * 0.52f)
             lineTo(size.width * 0.68f, size.height * 0.42f)
@@ -126,7 +126,7 @@ private fun MountainIllustration(modifier: Modifier = Modifier) {
         }
         drawPath(path = snow, color = Cloud)
         drawCircle(
-            color = Amber,
+            color = colors.secondary,
             radius = size.width * 0.09f,
             center = androidx.compose.ui.geometry.Offset(size.width * 0.82f, size.height * 0.18f),
         )

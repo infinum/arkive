@@ -28,17 +28,14 @@ import com.infinum.arkive.sample.components.GoalCard
 import com.infinum.arkive.sample.components.PeakBottomBar
 import com.infinum.arkive.sample.components.SettingsToggleRow
 import com.infinum.arkive.sample.components.StatusBadge
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Mist
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Slate
 
 @Composable
 fun ProfileScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .width(390.dp)
-            .background(Mist),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -49,8 +46,12 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             ) {
                 Avatar(initials = "MH", size = 72.dp)
                 Box(modifier = Modifier.height(12.dp))
-                Text(text = "Maya Horvat", style = MaterialTheme.typography.headlineMedium, color = Ink)
-                Text(text = "Zagreb, Croatia", style = MaterialTheme.typography.bodyLarge, color = Slate)
+                Text(text = "Maya Horvat", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    text = "Zagreb, Croatia",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Box(modifier = Modifier.height(10.dp))
                 StatusBadge(text = "TRAIL PIONEER")
             }
@@ -64,7 +65,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 ProfileStat(value = "23", label = "Summits")
             }
             Box(modifier = Modifier.height(24.dp))
-            Text(text = "Achievements", style = MaterialTheme.typography.titleLarge, color = Ink)
+            Text(text = "Achievements", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AchievementCard(title = "First Summit", date = "Mar 12")
@@ -78,7 +79,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
             )
             Box(modifier = Modifier.height(20.dp))
-            Text(text = "Preferences", style = MaterialTheme.typography.titleLarge, color = Ink)
+            Text(text = "Preferences", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SettingsToggleRow(icon = Icons.Filled.Notifications, label = "Trail alerts", checked = true)
@@ -92,8 +93,8 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun ProfileStat(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, style = MaterialTheme.typography.titleLarge, color = Ink)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Slate)
+        Text(text = value, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

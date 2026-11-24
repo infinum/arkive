@@ -5,6 +5,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.infinum.arkive.processor.models.ArkiveOptions
 import com.infinum.arkive.processor.repository.ComponentRepository
+import com.infinum.arkive.processor.repository.PreviewThemeResolver
 import com.infinum.arkive.processor.shared.ModulePackages
 import com.infinum.arkive.processor.specs.ComposeRunnerSpec
 import com.infinum.arkive.processor.specs.ComposeVariantSpec
@@ -22,7 +23,8 @@ internal class ComposeSubprocessor(
     ) {
         val composeHolders = componentRepository.getComposeHolders(resolver, logger, options)
         val appPackages = ModulePackages.from(resolver.getAllFiles().map { it.packageName.asString() })
-        ComposeVariantSpec(codeGenerator, composeHolders, enablePreviewParameters, enableVariants).write()
+        val themes = PreviewThemeResolver(resolver, logger).resolveAll(options.previewTheme, options.previewThemes)
+        ComposeVariantSpec(codeGenerator, composeHolders, enablePreviewParameters, enableVariants, themes).write()
         ComposeRunnerSpec(codeGenerator, composeHolders, appPackages, logger).write()
     }
 }
