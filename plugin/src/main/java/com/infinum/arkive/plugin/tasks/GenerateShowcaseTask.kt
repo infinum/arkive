@@ -14,7 +14,6 @@ import java.io.File
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileTree
-import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
@@ -24,10 +23,21 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 // Everything the action needs is captured as task properties at registration — the
 // action never touches `project`, so the task serializes under the configuration cache.
-@CacheableTask
+//
+// Never cached and never up-to-date (the latter wired at registration, ArkivePlugin
+// .addTaskWithVariant): the action has a side effect on its own inputs — snapshotRetention
+// deletes the goldens it consumed — that a skipped run silently drops. Re-recorded PNGs
+// are byte-identical whenever the rendering didn't change, so a skip was common: NONE then
+// left every consumed golden in src/. Its output isn't a pure function of its inputs
+// either (the keep-previous branch below returns the PREVIOUS output). The work is file
+// copies and one JSON file, so always running costs about what a cache restore would.
+@DisableCachingByDefault(
+    because = "Consumes its own inputs (snapshotRetention deletes goldens) and may keep its previous output",
+)
 internal abstract class GenerateShowcaseTask : SourceTask() {
 
     /** `<build>/generated/arkive/showcase`; set at registration. */
@@ -113,6 +123,10 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         // re-run where the recording task was up-to-date (nothing new recorded), the
         // golden directory is legitimately empty. Regenerating from zero snapshots would
         // overwrite a perfectly good showcase with an empty one; keep the previous output.
+        // This is meant for UP-TO-DATE only. A record run served FROM-CACHE without its PNGs
+        // would keep a showcase built from other code, so a run that records outside the
+        // test task's outputs never comes from the cache (ArkivePlugin
+        // .keepRecordRunsOutOfBuildCache); Paparazzi's cache restores its PNGs.
         val previousOutput = outputDirectory.get().asFile.resolve(ARKIVE_SHOWCASE_FILE_NAME)
         if (grabbed.isEmpty() && previousOutput.exists()) {
             logger.warn(
@@ -181,8 +195,9 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         }
     }
 
-    // RELATIVE: cache keys must not embed machine-specific absolute paths, or the build
-    // cache can never hit across machines/checkouts.
+    // The task never skips (see the class comment), so the fingerprint feeds no up-to-date
+    // check or cache key; the declared source still drives task dependencies and NO-SOURCE.
+    // RELATIVE keeps that fingerprint free of machine-specific absolute paths.
     @InputFiles
     @SkipWhenEmpty
     @PathSensitive(PathSensitivity.RELATIVE)

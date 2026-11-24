@@ -6,6 +6,7 @@ import com.infinum.arkive.plugin.utils.ArkiveVersion
 import com.infinum.arkive.plugin.utils.capFirst
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.api.execution.TaskExecutionGraph
 
 /**
  * Everything about a snapshot rendering engine that the rest of the plugin needs:
@@ -69,6 +70,22 @@ internal interface SnapshotEngineAdapter {
         }
     }
 
+    /**
+     * Whether this invocation ([graph]) records [variant] through its unit-test task in a way
+     * that puts Arkive's PNGs OUTSIDE that task's declared outputs. Such a run must never come
+     * FROM-CACHE: the cache restores the declared outputs (UI trees, reports) but not the
+     * PNGs, so generateShowcase would find nothing new and silently keep an older run's
+     * showcase. False by default — Paparazzi declares its snapshot directory, which is where
+     * Arkive's Paparazzi PNGs land, as an output of record runs, so a cached record run
+     * restores them like the consumer's own goldens.
+     */
+    fun recordsOutsideTestOutputs(
+        project: Project,
+        graph: TaskExecutionGraph,
+        adapter: ConsumerAdapter,
+        variant: String,
+    ): Boolean = false
+
     companion object {
         const val ENGINE_PROPERTY = "arkive.engine"
         const val ENGINE_KSP_ARG = "arkive.engine"
@@ -130,6 +147,9 @@ internal object RoborazziEngine : SnapshotEngineAdapter {
 
     private const val ROBOLECTRIC_DEPENDENCY = "org.robolectric:robolectric:4.15.1"
 
+    // Roborazzi's own record switch for runs without a Roborazzi task in the graph.
+    private const val RECORD_PROPERTY = "roborazzi.test.record"
+
     // Compile floor for the compose test host; consumers on newer Compose win by
     // ordinary Gradle conflict resolution. roborazzi-compose does not carry it
     // transitively (it is compileOnly upstream).
@@ -148,6 +168,27 @@ internal object RoborazziEngine : SnapshotEngineAdapter {
 
     override fun verifyTaskName(adapter: ConsumerAdapter, variant: String) =
         "verifyRoborazzi${adapter.roborazziTaskSuffix(variant)}"
+
+    /**
+     * The generated test captures straight into the golden directory by explicit file path,
+     * which none of the test task's outputs cover (Roborazzi declares only its own output
+     * dirs), so every run in which Roborazzi records counts: its record and verifyAndRecord
+     * tasks, or — with neither in the graph — the `roborazzi.test.record` Gradle property,
+     * which Roborazzi then forwards to the plain test task (matched the way Roborazzi reads
+     * it, `== "true"`). Verify and compare runs write nothing there, and in a plain test run
+     * `captureRoboImage` returns without capturing, so those stay cacheable.
+     */
+    override fun recordsOutsideTestOutputs(
+        project: Project,
+        graph: TaskExecutionGraph,
+        adapter: ConsumerAdapter,
+        variant: String,
+    ): Boolean {
+        val suffix = adapter.roborazziTaskSuffix(variant)
+        val recordTasks = listOf(recordTaskName(adapter, variant), "verifyAndRecordRoborazzi$suffix")
+        return recordTasks.any { graph.hasTask(project.absoluteProjectPath(it)) } ||
+            project.providers.gradleProperty(RECORD_PROPERTY).orNull == "true"
+    }
 
     override fun apply(project: Project) {
         super.apply(project)

@@ -237,7 +237,8 @@ Selection, by priority:
   hardcoded in `RoborazziEngine`), flips
   `includeAndroidResources` reflectively on `android {}` flavors, and declares the golden
   dir as a test-task input — without that, editing a golden leaves the test UP-TO-DATE
-  and verify silently "passes" (found the hard way).
+  and verify silently "passes" (found the hard way). The goldens are NOT a test-task
+  output, so its record runs are kept out of the build cache (see "Showcase pipeline").
 - The generated Roborazzi test is **one parameterized test per snapshot**
   (`ParameterizedRobolectricTestRunner`, parameters collected by running the shooters
   with a recording callback). This is load-bearing, not style: Robolectric frees
@@ -421,9 +422,31 @@ survives in the golden directory, decided from the generated items, not filename
 Because NONE *consumes* the goldens, a re-run whose record task was up-to-date grabs
 zero snapshots — the task then KEEPS the previously generated showcase instead of
 overwriting it with an empty one (regenerate-from-nothing was a real bug: every second
-`generateWebShowcase` wiped unchanged modules).
+`generateWebShowcase` wiped unchanged modules). The fallback is meant for UP-TO-DATE
+only. With the build cache on, a record run whose inputs matched an earlier run (after a
+branch switch or a JDK change) came back FROM-CACHE: Gradle restored the test task's outputs (UI trees,
+reports) but not PNGs written outside them, so the fallback kept a showcase built from
+OTHER code, silently (also found the hard way). So `keepRecordRunsOutOfBuildCache`
+(ArkivePlugin) puts `doNotCacheIf` on the variant's test task, true only when
+`SnapshotEngineAdapter.recordsOutsideTestOutputs` says this invocation records outside the
+task's outputs. That is Roborazzi, where Arkive captures into the golden dir by explicit
+path, whenever it records: its record or verifyAndRecord task is in the graph, or
+`roborazzi.test.record=true`. Paparazzi answers false: it declares its snapshot dir as an
+output of record runs, so a cached record run restores Arkive's PNGs too. Verify and plain
+test runs (the consumer's own test/check) stay cacheable. `GenerateShowcaseTask` itself
+never skips (`@DisableCachingByDefault` + `upToDateWhen { false }`): retention deletes its
+own inputs, and re-recorded PNGs are usually byte-identical, so an UP-TO-DATE or FROM-CACHE
+run used to skip retention and leave every NONE-consumed golden in `src/`. Verified on the
+samples with the cache on (2026-11-23): alternating JBR 21 / OpenJDK 23 plus a preview edit
+always re-records under Roborazzi, also with the configuration cache reused; under
+Paparazzi a FROM-CACHE record run restores the PNGs and the showcase is right.
 `GenerateWebShowcaseTask` (root) aggregates each module's output into
 `<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
+Both levels are rebuilt, not overwritten. The grabber empties the module's `images/`
+before copying, but only when it grabbed something (the keep-previous fallback needs the
+old images). `UiTreeGrabber.copyReferenced` empties `uitree/`, and the aggregate deletes
+each `<module>/` before copying it. Before this, PNGs of renamed or removed components, or
+of the other engine, piled up in both and shipped.
 
 UI trees ride alongside, never through the golden dir: the plugin sets
 `arkive.uitree.dir = build/arkive/uitree/<variant>/` on the variant's test task (declared
