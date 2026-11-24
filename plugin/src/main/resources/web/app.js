@@ -10,11 +10,17 @@
     { key: 'tablet', label: 'Tablet', w: 520, h: 690 },
   ];
   const DENSITY_ORDER = ['ldpi', 'mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'];
+  // Pixels per dp of the density buckets the processor emits as variants.
+  const DENSITY_SCALE = { ldpi: 0.75, mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
+  // Compare treats densities within 2% (rounding in the trees' dp sizes) as the same.
+  const DENSITY_TOLERANCE = 1.02;
   const UI_MODE_ORDER = ['light', 'dark'];
   const UI_MODE_CATEGORY = 'uiMode';
   const SKIN_CATEGORY = 'skin';
   const PALETTE_LIMIT = 40;
   const ZOOM_MIN = 0.15;
+  // A Compare row of full screens at true pixels needs to go further out to fit.
+  const COMPARE_ZOOM_MIN = 0.05;
   const ZOOM_MAX = 6;
   const FIT_MARGIN = 96;
   const TOAST_MS = 1900;
@@ -42,10 +48,12 @@
     skin: null,
     stateKey: 'Base|Default',
     compareCat: null,
+    compareScale: 'dp',
     zoom: 1,
     panX: 0,
     panY: 0,
     dims: null,
+    fit: null,
     bezel: false,
     frame: 'pixel',
     palette: false,
@@ -59,6 +67,7 @@
 
   let canvasEl = null;
   let stageEl = null;
+  let compareView = null;
   let toastTimer = null;
 
   const CLICK_SLOP = 3;
@@ -667,6 +676,7 @@
       state.panX = 0;
       state.panY = 0;
       state.dims = null;
+      state.fit = null;
       state.inspectSel = -1;
       state.inspectHover = -1;
     }
@@ -853,6 +863,7 @@
     $('#main').innerHTML = html;
     canvasEl = null;
     stageEl = null;
+    compareView = null;
   }
 
   /* ------------------------------------------------------------- detail */
@@ -890,19 +901,23 @@
 
     let canvasInner;
     if (compareGroup) {
-      canvasInner = '<div class="canvas-compare">' +
+      // The row sits on the stage like a single shot, so zoom, pan and Fit act on all of it.
+      // It stays hidden until layoutCompare has sized every image.
+      canvasInner = '<div class="canvas-solo"><div class="stage" id="stage">' +
+        '<div class="compare-row" id="compare-row">' +
         compareGroup.items.map((s) =>
           '<div class="compare-item">' +
           '<div class="compare-shot' + darkTileClass(isDarkState(compareGroup.category, s.variant)) + '"><img src="' + esc(snapUrl(item.module, s.snapshotPath)) + '" alt="' + esc(s.variant) + '"></div>' +
-          '<div class="compare-caption"><span class="label">' + esc(s.variant) + '</span><span class="sub">' + esc(compareGroup.category) + '</span></div>' +
+          '<div class="compare-caption"><span class="label">' + esc(s.variant) + '</span><span class="sub"></span></div>' +
           '</div>').join('') +
-        '</div>';
+        '</div>' +
+        '</div></div>';
     } else if (state.bezel) {
       canvasInner = '<div class="canvas-solo"><div class="stage" id="stage">' +
         '<div class="phone">' +
         '<div class="phone-screen' + activeTile + '" style="width:' + frameDef.w + 'px;height:' + frameDef.h + 'px">' +
         '<div class="phone-status"><span>9:41</span><span>▮▮▮</span></div>' +
-        '<div class="phone-body"><img src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '"></div>' +
+        '<div class="phone-body"><img id="bezel-shot" src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '"></div>' +
         '</div>' +
         '</div>' +
         '</div></div>';
@@ -920,9 +935,10 @@
         '</div></div>';
     }
 
+    const panHint = 'drag to pan · ' + MOD_KEY + ' + scroll to zoom';
     const hint = compareGroup
-      ? 'compare · ' + compareGroup.category
-      : (inspecting ? 'hover to outline · click to pin · esc clears' : 'drag to pan · ' + MOD_KEY + ' + scroll to zoom');
+      ? 'compare · ' + compareGroup.category + ' · ' + panHint
+      : (inspecting ? 'hover to outline · click to pin · esc clears' : panHint);
 
     const stateSection =
       '<div class="panel-section">' +
@@ -1037,7 +1053,7 @@
           '>Inspect</button>'
         : '') +
       '</div>' +
-      '<div class="dimbadge" id="dim-label">' + (state.dims ? state.dims.w + ' × ' + state.dims.h + ' px' : 'measuring…') + '</div>' +
+      '<div class="dimbadge" id="dim-label">' + (state.dims && !compareGroup ? state.dims.w + ' × ' + state.dims.h + ' px' : 'measuring…') + '</div>' +
       '<div class="canvas-hint">' + esc(hint) + '</div>' +
       '</div>' +
       '<aside class="panel" id="panel">' + (inspecting ? '<div class="panel-section" id="inspector"></div>' : '') +
@@ -1053,13 +1069,29 @@
 
     canvasEl = $('#canvas');
     stageEl = $('#stage');
+    compareView = null;
+    if (compareGroup) startCompare(item, compareGroup);
     updateStage();
-    bindCanvas(item);
+    bindCanvas();
+    // The frame's size is fixed, so the device frame view fits right away.
+    if (!compareGroup && state.bezel && stageEl) {
+      setFit('bezel|' + frameDef.key, stageEl.offsetWidth, stageEl.offsetHeight);
+    }
     if (inspecting) startInspect(treeUrl(item.module, active.uiTreePath));
   }
 
   function updateStage() {
-    if (stageEl) {
+    if (stageEl && compareView) {
+      // Compare zooms by resizing the images, so captions and gaps stay readable at any zoom.
+      stageEl.style.transform = 'translate(' + state.panX + 'px,' + state.panY + 'px)';
+      if (compareView.ready) {
+        compareView.tiles.forEach((t) => {
+          if (!t.nw) return;
+          t.img.style.width = (t.w * state.zoom) + 'px';
+          t.img.style.height = (t.h * state.zoom) + 'px';
+        });
+      }
+    } else if (stageEl) {
       stageEl.style.transform =
         'translate(' + state.panX + 'px,' + state.panY + 'px) scale(' + state.zoom + ')';
     }
@@ -1068,31 +1100,179 @@
     if (inspectUrl) paintInspect();
   }
 
+  // The canvas content's identity and its size at zoom 1. A render that shows the same
+  // content (same key) keeps zoom and pan; new content (another state, entering or
+  // leaving Compare or the device frame, another frame) refits.
+  function setFit(key, w, h) {
+    const same = state.fit && state.fit.key === key;
+    state.fit = { key: key, w: w, h: h };
+    if (same) updateStage();
+    else fitZoom();
+  }
+
+  // The size badge shows the active snapshot's pixels; the single shot is also the fit content.
   function measure(img) {
-    if (!img || !img.naturalWidth) return;
+    if (!img || !img.isConnected || !img.naturalWidth) return;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
-    if (state.dims && state.dims.w === w && state.dims.h === h) return;
     state.dims = { w: w, h: h };
-    fitZoom();
     const dim = $('#dim-label');
     if (dim) dim.textContent = w + ' × ' + h + ' px';
+    if (img.id === 'shot') setFit('shot|' + img.getAttribute('src'), w, h);
+  }
+
+  function zoomMin() {
+    return compareView ? COMPARE_ZOOM_MIN : ZOOM_MIN;
   }
 
   function fitZoom() {
     const box = canvasEl ? canvasEl.getBoundingClientRect() : null;
-    const d = state.dims;
-    const fit = box && d ? Math.min(1, (box.width - FIT_MARGIN) / d.w, (box.height - FIT_MARGIN) / d.h) : 1;
-    state.zoom = Math.max(ZOOM_MIN, fit);
+    let fit = 1;
     state.panX = 0;
     state.panY = 0;
+    if (box && compareView) {
+      if (compareView.ready) {
+        const availW = box.width - FIT_MARGIN;
+        fit = compareFit(compareView, availW, box.height - FIT_MARGIN);
+        // A row too wide to fit at any zoom starts at its first tile, to be panned from there.
+        const rowW = compareSize(compareView, fit).w;
+        if (rowW > availW) state.panX = (rowW - availW) / 2;
+      }
+    } else if (box && state.fit) {
+      fit = Math.min(1, (box.width - FIT_MARGIN) / state.fit.w, (box.height - FIT_MARGIN) / state.fit.h);
+    }
+    state.zoom = Math.max(zoomMin(), fit);
     updateStage();
   }
 
-  function bindCanvas(item) {
+  /* ------------------------------------------------------------ compare */
+
+  // Compare waits for every image and UI tree of the category, then sizes the row.
+  function startCompare(item, group) {
+    const row = $('#compare-row');
+    if (!row) return;
+    const view = { category: group.category, row: row, ready: false, tiles: [] };
+    compareView = view;
+    const waits = [];
+    row.querySelectorAll('.compare-item').forEach((el, i) => {
+      const s = group.items[i];
+      const tree = s.uiTreePath ? loadTree(treeUrl(item.module, s.uiTreePath)) : null;
+      const img = $('img', el);
+      view.tiles.push({ variant: s.variant, img: img, caption: $('.compare-caption', el), tree: tree });
+      waits.push(imageSettled(img));
+      if (tree) waits.push(tree.promise);
+    });
+    Promise.all(waits).then(() => {
+      if (compareView === view) layoutCompare(view);
+    });
+  }
+
+  function imageSettled(img) {
+    if (img.complete) return Promise.resolve();
+    return new Promise((resolve) => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+    });
+  }
+
+  // Each tile's PNG pixels per dp, all from one source: the UI trees (exact, and they also
+  // catch an engine's downscaling), else the density bucket names, else unknown (null).
+  function tileDensities(view) {
+    const tiles = view.tiles;
+    const fromTree = (t) => {
+      const ok = t.nw && t.tree && t.tree.status === 'ok' && t.tree.data.tree.size[0] > 0;
+      return ok ? t.nw / t.tree.data.tree.size[0] : 0;
+    };
+    const trees = tiles.map(fromTree);
+    if (trees.every((d) => d > 0)) return trees;
+    if (view.category.toLowerCase() === 'density') {
+      const named = tiles.map((t) => DENSITY_SCALE[t.variant.toLowerCase()] || parseFloat(t.variant));
+      if (named.every((d) => d > 0)) return named;
+    }
+    return null;
+  }
+
+  // Sizes every image on one scale. When the densities differ (the density category), the
+  // badge toggles between dp (every image at its dp size, so layouts line up; 100% = 1 dp
+  // per CSS pixel) and px (true pixels, to compare resolution; 100% = 1 image pixel per CSS
+  // pixel). Otherwise the two only differ by one factor, and the row shows true pixels.
+  function layoutCompare(view) {
+    view.tiles.forEach((t) => {
+      t.nw = t.img.naturalWidth;
+      t.nh = t.img.naturalHeight;
+    });
+    const densities = tileDensities(view);
+    view.mixed = !!densities && Math.max(...densities) / Math.min(...densities) > DENSITY_TOLERANCE;
+    view.mode = view.mixed ? state.compareScale : 'px';
+    view.tiles.forEach((t, i) => {
+      const f = view.mode === 'dp' ? 1 / densities[i] : 1;
+      t.w = t.nw * f;
+      t.h = t.nh * f;
+      $('.sub', t.caption).textContent = t.nw ? t.nw + ' × ' + t.nh + ' px' : 'not loaded';
+    });
+    // Captions and gaps keep their CSS size at every zoom; measure them once.
+    view.gap = parseFloat(getComputedStyle(view.row).columnGap) || 0;
+    const captionGap = parseFloat(getComputedStyle(view.tiles[0].caption.parentNode).rowGap) || 0;
+    const captions = view.tiles.map((t) => t.caption.getBoundingClientRect());
+    view.tiles.forEach((t, i) => { t.capW = captions[i].width; });
+    view.capH = Math.max(...captions.map((r) => r.height)) + captionGap;
+    view.ready = true;
+    view.row.classList.add('is-ready');
+    renderCompareBadge(view);
+    setFit('compare|' + view.category + '|' + view.mode);
+  }
+
+  // Row size at zoom z: the images scale, captions and gaps don't.
+  function compareSize(view, z) {
+    let w = view.gap * (view.tiles.length - 1);
+    let h = 0;
+    view.tiles.forEach((t) => {
+      w += Math.max(t.w * z, t.capW);
+      h = Math.max(h, t.h * z);
+    });
+    return { w: w, h: h + view.capH };
+  }
+
+  // The largest zoom up to 1 at which the whole row fits (bisected: captions don't scale).
+  // When the captions alone are too wide for the canvas (narrow screens), no zoom fits; the
+  // row then fits its height only, so the images stay legible and the row pans sideways.
+  function compareFit(view, availW, availH) {
+    const fitsHeight = (z) => compareSize(view, z).h <= availH;
+    const fits = (z) => fitsHeight(z) && compareSize(view, z).w <= availW;
+    const test = fits(COMPARE_ZOOM_MIN) ? fits : fitsHeight;
+    if (test(1)) return 1;
+    let lo = COMPARE_ZOOM_MIN;
+    let hi = 1;
+    for (let i = 0; i < 20; i++) {
+      const mid = (lo + hi) / 2;
+      if (test(mid)) lo = mid;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  // In Compare the size badge names the scale (each caption carries its image's pixels).
+  function renderCompareBadge(view) {
+    const dim = $('#dim-label');
+    if (!dim) return;
+    if (!view.mixed) {
+      dim.classList.remove('is-toggle');
+      dim.textContent = plural(view.tiles.length, 'snapshot', 'snapshots') + ' · true pixels';
+      return;
+    }
+    const option = (scale, label, title) =>
+      '<button type="button" class="' + (view.mode === scale ? 'is-active' : '') + '" data-action="compare-scale" data-scale="' +
+      scale + '" title="' + esc(title) + '">' + label + '</button>';
+    dim.classList.add('is-toggle');
+    dim.innerHTML = '<span>Size by</span>' +
+      option('dp', 'dp', 'Every snapshot at its size in dp, so layouts line up (100% = 1 dp per pixel)') +
+      option('px', 'px', 'Every snapshot at its true pixel size, to compare resolution (100% = 1 image pixel per pixel)');
+  }
+
+  function bindCanvas() {
     if (!canvasEl) return;
 
-    const shot = $('#shot');
+    const shot = $('#shot') || $('#bezel-shot');
     if (shot) {
       if (shot.complete && shot.naturalWidth) {
         requestAnimationFrame(() => measure(shot));
@@ -1102,15 +1282,17 @@
     }
 
     let lastPressPanned = false;
-    canvasEl.addEventListener('mousedown', (e) => {
-      if (state.compareCat || e.target.closest('button')) return;
-      e.preventDefault();
+    // Pointer events, so a finger pans too (the canvas sets touch-action: none).
+    canvasEl.addEventListener('pointerdown', (e) => {
+      if (!e.isPrimary || e.target.closest('button')) return;
+      const id = e.pointerId;
       const sx = e.clientX;
       const sy = e.clientY;
       const ox = state.panX;
       const oy = state.panY;
       let panning = false;
       const move = (ev) => {
+        if (ev.pointerId !== id) return;
         // A press that moves less than CLICK_SLOP stays a click (inspect selection).
         if (!panning && Math.hypot(ev.clientX - sx, ev.clientY - sy) < CLICK_SLOP) return;
         panning = true;
@@ -1119,13 +1301,21 @@
         updateStage();
       };
       const up = (ev) => {
-        window.removeEventListener('mousemove', move);
-        window.removeEventListener('mouseup', up);
+        if (ev.pointerId !== id) return;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
         lastPressPanned = panning;
-        if (!panning && inspectUrl) selectAt(ev.clientX, ev.clientY);
+        if (!panning && inspectUrl && ev.type === 'pointerup') selectAt(ev.clientX, ev.clientY);
       };
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', up);
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    });
+
+    // Keeps a mouse press from dragging the image or selecting text.
+    canvasEl.addEventListener('mousedown', (e) => {
+      if (!e.target.closest('button')) e.preventDefault();
     });
 
     // Double-click: pin the component the node under the cursor belongs to and open its entry.
@@ -1156,12 +1346,13 @@
       }
     });
 
+    // ctrlKey also covers trackpad pinches, which would otherwise zoom the whole page.
     canvasEl.addEventListener('wheel', (e) => {
-      if (state.compareCat) return;
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
-        state.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, state.zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+        state.zoom = Math.min(ZOOM_MAX, Math.max(zoomMin(), state.zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
       } else {
+        state.panX -= e.deltaX;
         state.panY -= e.deltaY;
       }
       updateStage();
@@ -1332,13 +1523,16 @@
       state.stateKey = target.dataset.state;
       state.compareCat = null;
       state.dims = null;
+      state.fit = null;
       state.inspectSel = -1;
       state.inspectHover = -1;
       renderDetail();
       return;
     }
     if (target.dataset.compare) {
+      // Entering, switching or leaving Compare always refits what is shown next.
       state.compareCat = state.compareCat === target.dataset.compare ? null : target.dataset.compare;
+      state.fit = null;
       renderDetail();
       return;
     }
@@ -1360,12 +1554,16 @@
         state.bezel = !state.bezel;
         renderDetail();
         break;
+      case 'compare-scale':
+        state.compareScale = target.dataset.scale;
+        if (compareView && compareView.ready) layoutCompare(compareView);
+        break;
       case 'zoom-in':
         state.zoom = Math.min(ZOOM_MAX, state.zoom * 1.25);
         updateStage();
         break;
       case 'zoom-out':
-        state.zoom = Math.max(ZOOM_MIN, state.zoom / 1.25);
+        state.zoom = Math.max(zoomMin(), state.zoom / 1.25);
         updateStage();
         break;
       case 'zoom-fit': fitZoom(); break;

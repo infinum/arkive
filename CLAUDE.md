@@ -457,7 +457,18 @@ resolves images as `<module>/images/<basename(snapshotPath)>`. No build step, no
 bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added).
 The detail view's Inspect toggle (`I`) lazily fetches
 `<module>/uitree/<basename(uiTreePath)>` and overlays node boxes inside the transformed
-stage.
+stage. Zoom/pan/Fit share one state across the canvas's three modes (single shot, device
+frame, Compare); each shown content has a fit key (`setFit`), so a re-render of the same
+content keeps zoom and pan, and switching mode, state or frame refits — a missing refit
+once carried Compare's invisible zoom into the single view. Compare puts one category's
+row on the stage too, but zooms by resizing the images (captions and gaps keep their CSS
+size, so `compareFit` bisects). It waits for every image and UI tree first: when the
+variants' px-per-dp differ (the density category), it sizes each image by its dp
+(`naturalWidth / tree.size[0]`, which also absorbs engine downscaling; the bucket name
+when trees are missing) with a dp/px toggle in the size badge (dp: 100% = 1 dp per CSS
+px; px: true pixels); otherwise it shows true pixels. Each caption carries its image's
+pixel size. Panning uses pointer events (`.canvas` is `touch-action: none`), so touch
+pans too.
 
 ## Golden verification (verifyShowcase)
 

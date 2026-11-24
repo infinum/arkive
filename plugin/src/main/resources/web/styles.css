@@ -274,6 +274,7 @@ kbd {
 .canvas {
   flex: 1; position: relative; min-width: 0; overflow: hidden; background: #FCFCFC;
   background-image: radial-gradient(#E4E4E4 1px, transparent 1px); background-size: 16px 16px;
+  touch-action: none; /* a finger on the canvas pans it (app.js) instead of scrolling the page */
 }
 .canvas-solo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .stage { transform-origin: center center; }
@@ -288,18 +289,17 @@ kbd {
 .phone-body { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .phone-body img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
 
-.canvas-compare {
-  position: absolute; inset: 0; overflow: auto; padding: 40px;
-  display: flex; gap: 28px; align-items: center; justify-content: safe center;
-}
+/* Compare: one row on the stage; app.js sizes each image (zoom resizes them, captions keep their size). */
+.compare-row { display: flex; gap: 28px; align-items: flex-start; }
+.compare-row:not(.is-ready) { visibility: hidden; }
 .compare-item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.compare-shot { background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.10), 0 8px 24px rgba(0, 0, 0, 0.06); max-width: 340px; }
-.compare-shot img { display: block; max-width: 340px; height: auto; }
+.compare-shot { background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.10), 0 8px 24px rgba(0, 0, 0, 0.06); }
+.compare-shot img { display: block; max-width: none; }
 
 /* Dark-mode snapshots (uiMode_dark) render on a dark tile: transparent captures carry light content. */
 .card-shot.is-dark, .row .shot.is-dark, .sheet.is-dark, .phone-screen.is-dark, .compare-shot.is-dark { background: var(--dark-tile); }
 .phone-screen.is-dark .phone-status { color: #fff; }
-.compare-caption { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.compare-caption { display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
 .compare-caption .label { font: 600 11.5px/1 var(--font-mono); color: var(--inf-ink-900); }
 .compare-caption .sub { font: 400 10px/1 var(--font-mono); color: var(--inf-ink-400); }
 
@@ -323,6 +323,15 @@ kbd {
   padding: 5px 9px; background: rgba(255, 255, 255, 0.94); border: 1px solid var(--inf-ink-200);
   border-radius: 7px; font: 500 10.5px/1 var(--font-mono); color: var(--inf-ink-500);
 }
+/* Compare's scale toggle (dp / px) takes the size badge's place. */
+.dimbadge.is-toggle { gap: 2px; padding: 3px 3px 3px 9px; }
+.dimbadge.is-toggle span { margin-right: 6px; }
+.dimbadge button {
+  height: 20px; padding: 0 8px; background: transparent; border: none; border-radius: 4px;
+  cursor: pointer; font: inherit; color: var(--inf-ink-700);
+}
+.dimbadge button:hover { background: var(--inf-ink-100); }
+.dimbadge button.is-active { background: var(--inf-ink-900); color: #fff; }
 .canvas-hint {
   position: absolute; left: 16px; top: 16px;
   font: 400 10px/1.4 var(--font-mono); color: var(--inf-ink-400); pointer-events: none;
@@ -569,8 +578,7 @@ kbd {
   .dimbadge { bottom: 60px; }
   .panel { width: auto; border-left: none; border-top: 1px solid var(--inf-ink-200); overflow-y: visible; }
 
-  .canvas-compare { padding: 20px; gap: 18px; }
-  .compare-shot, .compare-shot img { max-width: min(340px, 78vw); }
+  .compare-row { gap: 18px; }
 
   .palette-overlay { padding-top: 5vh; }
   .palette { width: 94vw; max-height: 80vh; max-height: 80dvh; }
