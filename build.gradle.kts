@@ -125,7 +125,7 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.j
         org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension::class.java,
     ) {
         resolution("js-yaml", "4.3.2") // CVE-2026-84375
-        // 7.1.3: a function body ending in a bare </script was emitted unescaped (XSS)
+        // 7.1.3: a function body ending in a bare </script was emitted unescaped (XSS, CVE-2026-115897)
         resolution("serialize-javascript", "7.1.3") // GHSA-5c6j-r48x-rmvq, CVE-2026-34043, CVE-2026-97711
         resolution("diff", "8.0.3") // CVE-2026-24001
         resolution("brace-expansion", "2.1.7") // CVE-2026-102276, CVE-2026-102277, CVE-2026-102278
