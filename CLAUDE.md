@@ -438,6 +438,11 @@ always re-records under Roborazzi, also with the configuration cache reused; und
 Paparazzi a FROM-CACHE record run restores the PNGs and the showcase is right.
 `GenerateWebShowcaseTask` (root) aggregates each module's output into
 `<root>/build/generated/arkive/showcase/<module>/` and copies the web template beside it.
+Both levels are rebuilt, not overwritten. The grabber empties the module's `images/`
+before copying, but only when it grabbed something (the keep-previous fallback needs the
+old images). `UiTreeGrabber.copyReferenced` empties `uitree/`, and the aggregate deletes
+each `<module>/` before copying it. Before this, PNGs of renamed or removed components, or
+of the other engine, piled up in both and shipped.
 
 UI trees ride alongside, never through the golden dir: the plugin sets
 `arkive.uitree.dir = build/arkive/uitree/<variant>/` on the variant's test task (declared

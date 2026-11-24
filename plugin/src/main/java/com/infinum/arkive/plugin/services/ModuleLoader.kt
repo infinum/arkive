@@ -27,6 +27,9 @@ internal class ModuleLoaderImpl(
                 // Must match the name stamped into the module's JSON (the web app
                 // resolves images as <moduleName>/images/...) and stay unique per module.
                 val destinationDir = File(outputDir, moduleName)
+                // A fresh copy: overwriting alone kept images and trees the module's
+                // showcase no longer has, and they piled up in the aggregate.
+                destinationDir.deleteRecursively()
                 moduleDir.copyRecursively(destinationDir, overwrite = true)
                 fromJson(File(destinationDir, ARKIVE_SHOWCASE_FILE).readText())
             } else {

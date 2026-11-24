@@ -39,6 +39,14 @@ internal class SnapshotsGrabberImpl(
             }
             .toList()
 
+        // The output is rebuilt from this run's snapshots, the only ones the module JSON
+        // (built from them) can reference. Without that, images of renamed or removed
+        // components, or the other engine's (Paparazzi names carry the test method,
+        // Roborazzi's don't), piled up and were shipped. With nothing to copy, the
+        // keep-previous fallback (GenerateShowcaseTask) still needs the previous images.
+        if (originalSnapshots.isNotEmpty()) {
+            outputDir.deleteRecursively()
+        }
         outputDir.mkdirs()
 
         logger.warn("Copying ${originalSnapshots.size} snapshot(s) to ${outputDir.absolutePath}")
