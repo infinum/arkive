@@ -41,6 +41,7 @@
     panX: 0,
     panY: 0,
     dims: null,
+    fit: null,
     bezel: false,
     frame: 'pixel',
     palette: false,
@@ -583,6 +584,7 @@
       state.panX = 0;
       state.panY = 0;
       state.dims = null;
+      state.fit = null;
       state.inspectSel = -1;
       state.inspectHover = -1;
     }
@@ -801,7 +803,7 @@
         '<div class="phone">' +
         '<div class="phone-screen" style="width:' + frameDef.w + 'px;height:' + frameDef.h + 'px">' +
         '<div class="phone-status"><span>9:41</span><span>▮▮▮</span></div>' +
-        '<div class="phone-body"><img src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '"></div>' +
+        '<div class="phone-body"><img id="bezel-shot" src="' + esc(shotSrc) + '" alt="' + esc(shotLabel) + '"></div>' +
         '</div>' +
         '</div>' +
         '</div></div>';
@@ -953,7 +955,11 @@
     canvasEl = $('#canvas');
     stageEl = $('#stage');
     updateStage();
-    bindCanvas(item);
+    bindCanvas();
+    // The frame's size is fixed, so the device frame view fits right away.
+    if (!compareGroup && state.bezel && stageEl) {
+      setFit('bezel|' + frameDef.key, stageEl.offsetWidth, stageEl.offsetHeight);
+    }
     if (inspecting) startInspect(treeUrl(item.module, active.uiTreePath));
   }
 
@@ -967,31 +973,43 @@
     if (inspectUrl) paintInspect();
   }
 
+  // The canvas content's identity and its size at zoom 1. A render that shows the same
+  // content (same key) keeps zoom and pan; new content (another state, entering or
+  // leaving Compare or the device frame, another frame) refits.
+  function setFit(key, w, h) {
+    const same = state.fit && state.fit.key === key;
+    state.fit = { key: key, w: w, h: h };
+    if (same) updateStage();
+    else fitZoom();
+  }
+
+  // The size badge shows the active snapshot's pixels; the single shot is also the fit content.
   function measure(img) {
-    if (!img || !img.naturalWidth) return;
+    if (!img || !img.isConnected || !img.naturalWidth) return;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
-    if (state.dims && state.dims.w === w && state.dims.h === h) return;
     state.dims = { w: w, h: h };
-    fitZoom();
     const dim = $('#dim-label');
     if (dim) dim.textContent = w + ' × ' + h + ' px';
+    if (img.id === 'shot') setFit('shot|' + img.getAttribute('src'), w, h);
   }
 
   function fitZoom() {
     const box = canvasEl ? canvasEl.getBoundingClientRect() : null;
-    const d = state.dims;
-    const fit = box && d ? Math.min(1, (box.width - FIT_MARGIN) / d.w, (box.height - FIT_MARGIN) / d.h) : 1;
-    state.zoom = Math.max(ZOOM_MIN, fit);
+    let fit = 1;
     state.panX = 0;
     state.panY = 0;
+    if (box && state.fit) {
+      fit = Math.min(1, (box.width - FIT_MARGIN) / state.fit.w, (box.height - FIT_MARGIN) / state.fit.h);
+    }
+    state.zoom = Math.max(ZOOM_MIN, fit);
     updateStage();
   }
 
-  function bindCanvas(item) {
+  function bindCanvas() {
     if (!canvasEl) return;
 
-    const shot = $('#shot');
+    const shot = $('#shot') || $('#bezel-shot');
     if (shot) {
       if (shot.complete && shot.naturalWidth) {
         requestAnimationFrame(() => measure(shot));
@@ -1225,13 +1243,16 @@
       state.stateKey = target.dataset.state;
       state.compareCat = null;
       state.dims = null;
+      state.fit = null;
       state.inspectSel = -1;
       state.inspectHover = -1;
       renderDetail();
       return;
     }
     if (target.dataset.compare) {
+      // Entering, switching or leaving Compare always refits what is shown next.
       state.compareCat = state.compareCat === target.dataset.compare ? null : target.dataset.compare;
+      state.fit = null;
       renderDetail();
       return;
     }

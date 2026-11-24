@@ -453,7 +453,10 @@ resolves images as `<module>/images/<basename(snapshotPath)>`. No build step, no
 bundled fonts (system stack; the Infinum brand fonts are licensed and must not be added).
 The detail view's Inspect toggle (`I`) lazily fetches
 `<module>/uitree/<basename(uiTreePath)>` and overlays node boxes inside the transformed
-stage.
+stage. Zoom/pan/Fit share one state across the canvas's three modes (single shot, device
+frame, Compare); each shown content has a fit key (`setFit`), so a re-render of the same
+content keeps zoom and pan, and switching mode, state or frame refits — a missing refit
+once carried Compare's invisible zoom into the single view.
 
 ## Golden verification (verifyShowcase)
 
