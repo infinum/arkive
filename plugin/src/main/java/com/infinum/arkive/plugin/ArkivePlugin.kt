@@ -173,6 +173,7 @@ public class ArkivePlugin : Plugin<Project> {
         with(project) {
             val arkiveExtension = extensions.getByType(ArkiveExtension::class.java)
             UiTreeWiring.forwardToTests(project, adapter, variant, arkiveExtension.uiTree)
+            keepRecordRunsOutOfBuildCache(project, adapter, selection, variant)
             tasks.register(
                 showcaseTaskName(variant),
                 GenerateShowcaseTask::class.java,
@@ -210,6 +211,33 @@ public class ArkivePlugin : Plugin<Project> {
         }
         if (hasGeneratedTestClass(adapter, variant)) {
             addVerifyTaskWithVariant(project, adapter, selection, variant)
+        }
+    }
+
+    /**
+     * A run that records Arkive's PNGs outside [variant]'s test-task outputs (see
+     * [SnapshotEngineAdapter.recordsOutsideTestOutputs]) is kept out of the build cache, so
+     * it always executes and the PNGs always land. Scoped to exactly those runs: the
+     * consumer's own test/check runs of the same task stay cacheable. The engine is read in
+     * whenReady, after configuration validated the selection; the spec only reads the
+     * stored Boolean, which keeps it configuration-cache safe (Roborazzi and Paparazzi
+     * decide their own record mode the same way).
+     */
+    private fun keepRecordRunsOutOfBuildCache(
+        project: Project,
+        adapter: ConsumerAdapter,
+        selection: EngineSelection,
+        variant: String,
+    ) {
+        val recordsOutsideOutputs = project.objects.property(Boolean::class.java).convention(false)
+        project.gradle.taskGraph.whenReady { graph ->
+            recordsOutsideOutputs.set(selection.engine.recordsOutsideTestOutputs(project, graph, adapter, variant))
+        }
+        val testTaskName = adapter.unitTestTaskName(variant)
+        project.tasks.withType(Test::class.java).named { it == testTaskName }.configureEach { test ->
+            test.outputs.doNotCacheIf(
+                "Arkive records snapshots into the golden directory, which is not an output of this task",
+            ) { recordsOutsideOutputs.get() }
         }
     }
 

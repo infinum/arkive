@@ -109,6 +109,10 @@ internal abstract class GenerateShowcaseTask : SourceTask() {
         // re-run where the recording task was up-to-date (nothing new recorded), the
         // golden directory is legitimately empty. Regenerating from zero snapshots would
         // overwrite a perfectly good showcase with an empty one; keep the previous output.
+        // This is meant for UP-TO-DATE only. A record run served FROM-CACHE without its PNGs
+        // would keep a showcase built from other code, so a run that records outside the
+        // test task's outputs never comes from the cache (ArkivePlugin
+        // .keepRecordRunsOutOfBuildCache); Paparazzi's cache restores its PNGs.
         val previousOutput = outputDirectory.get().asFile.resolve(ARKIVE_SHOWCASE_FILE_NAME)
         if (grabbed.isEmpty() && previousOutput.exists()) {
             logger.warn(
