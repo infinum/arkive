@@ -29,12 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
-import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Ink
-import com.infinum.arkive.sample.theme.Moss
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.PineDark
-import com.infinum.arkive.sample.theme.Slate
 
 data class BottomNavItem(val icon: ImageVector, val label: String)
 
@@ -54,20 +49,20 @@ fun PeakTopBar(
         modifier = modifier
             .width(390.dp)
             .height(60.dp)
-            .background(Cloud)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.Filled.ArrowBack,
             contentDescription = null,
-            tint = Ink,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp),
         )
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 14.dp),
@@ -75,7 +70,7 @@ fun PeakTopBar(
         Icon(
             imageVector = Icons.Filled.MoreVert,
             contentDescription = null,
-            tint = Ink,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp),
         )
     }
@@ -90,7 +85,7 @@ fun PeakBottomBar(
     Row(
         modifier = modifier
             .width(390.dp)
-            .background(Cloud)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
@@ -106,7 +101,7 @@ private fun BottomBarItem(item: BottomNavItem, selected: Boolean) {
         Box(
             modifier = Modifier
                 .background(
-                    color = if (selected) Moss else Cloud,
+                    color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                     shape = CircleShape,
                 )
                 .padding(horizontal = 18.dp, vertical = 5.dp),
@@ -114,7 +109,7 @@ private fun BottomBarItem(item: BottomNavItem, selected: Boolean) {
             Icon(
                 imageVector = item.icon,
                 contentDescription = null,
-                tint = if (selected) PineDark else Slate,
+                tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -122,7 +117,7 @@ private fun BottomBarItem(item: BottomNavItem, selected: Boolean) {
         Text(
             text = item.label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (selected) PineDark else Slate,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -135,7 +130,7 @@ fun SegmentedTabs(
 ) {
     Row(
         modifier = modifier
-            .background(color = Moss, shape = CircleShape)
+            .background(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape)
             .padding(4.dp),
     ) {
         options.forEachIndexed { index, option ->
@@ -143,7 +138,7 @@ fun SegmentedTabs(
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (selected) Cloud else Moss,
+                        color = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer,
                         shape = CircleShape,
                     )
                     .padding(horizontal = 18.dp, vertical = 8.dp),
@@ -151,7 +146,7 @@ fun SegmentedTabs(
                 Text(
                     text = option,
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (selected) Ink else Slate,
+                    color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

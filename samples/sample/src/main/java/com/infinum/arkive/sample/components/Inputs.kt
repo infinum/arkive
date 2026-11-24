@@ -24,10 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.infinum.arkive.annotations.ArkiveComposable
 import com.infinum.arkive.sample.theme.AmberDeep
-import com.infinum.arkive.sample.theme.Cloud
-import com.infinum.arkive.sample.theme.Line
 import com.infinum.arkive.sample.theme.PeakTheme
-import com.infinum.arkive.sample.theme.Slate
 
 @Composable
 fun SearchField(
@@ -38,19 +35,19 @@ fun SearchField(
         modifier = modifier
             .width(340.dp)
             .height(50.dp)
-            .background(color = Cloud, shape = CircleShape)
-            .border(width = 1.dp, color = Line, shape = CircleShape)
+            .background(color = MaterialTheme.colorScheme.surface, shape = CircleShape)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = CircleShape)
             .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.Filled.Search,
             contentDescription = null,
-            tint = Slate,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
         Box(modifier = Modifier.width(10.dp))
-        Text(text = placeholder, style = MaterialTheme.typography.bodyLarge, color = Slate)
+        Text(text = placeholder, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -65,7 +62,7 @@ fun RatingStars(
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = null,
-                tint = if (index < rating) AmberDeep else Line,
+                tint = if (index < rating) AmberDeep else MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(22.dp),
             )
         }
