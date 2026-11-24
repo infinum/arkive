@@ -1019,15 +1019,17 @@
     }
 
     let lastPressPanned = false;
-    canvasEl.addEventListener('mousedown', (e) => {
-      if (state.compareCat || e.target.closest('button')) return;
-      e.preventDefault();
+    // Pointer events, so a finger pans too (the canvas sets touch-action: none).
+    canvasEl.addEventListener('pointerdown', (e) => {
+      if (state.compareCat || !e.isPrimary || e.target.closest('button')) return;
+      const id = e.pointerId;
       const sx = e.clientX;
       const sy = e.clientY;
       const ox = state.panX;
       const oy = state.panY;
       let panning = false;
       const move = (ev) => {
+        if (ev.pointerId !== id) return;
         // A press that moves less than CLICK_SLOP stays a click (inspect selection).
         if (!panning && Math.hypot(ev.clientX - sx, ev.clientY - sy) < CLICK_SLOP) return;
         panning = true;
@@ -1036,13 +1038,21 @@
         updateStage();
       };
       const up = (ev) => {
-        window.removeEventListener('mousemove', move);
-        window.removeEventListener('mouseup', up);
+        if (ev.pointerId !== id) return;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
         lastPressPanned = panning;
-        if (!panning && inspectUrl) selectAt(ev.clientX, ev.clientY);
+        if (!panning && inspectUrl && ev.type === 'pointerup') selectAt(ev.clientX, ev.clientY);
       };
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', up);
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    });
+
+    // Keeps a mouse press from dragging the image or selecting text.
+    canvasEl.addEventListener('mousedown', (e) => {
+      if (!state.compareCat && !e.target.closest('button')) e.preventDefault();
     });
 
     // Double-click: pin the component the node under the cursor belongs to and open its entry.
@@ -1079,6 +1089,7 @@
       if (e.ctrlKey || e.metaKey) {
         state.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, state.zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
       } else {
+        state.panX -= e.deltaX;
         state.panY -= e.deltaY;
       }
       updateStage();

@@ -273,6 +273,7 @@ kbd {
 .canvas {
   flex: 1; position: relative; min-width: 0; overflow: hidden; background: #FCFCFC;
   background-image: radial-gradient(#E4E4E4 1px, transparent 1px); background-size: 16px 16px;
+  touch-action: none; /* a finger on the canvas pans it (app.js) instead of scrolling the page */
 }
 .canvas-solo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .stage { transform-origin: center center; }

@@ -456,7 +456,8 @@ The detail view's Inspect toggle (`I`) lazily fetches
 stage. Zoom/pan/Fit share one state across the canvas's three modes (single shot, device
 frame, Compare); each shown content has a fit key (`setFit`), so a re-render of the same
 content keeps zoom and pan, and switching mode, state or frame refits — a missing refit
-once carried Compare's invisible zoom into the single view.
+once carried Compare's invisible zoom into the single view. Panning uses pointer events
+(`.canvas` is `touch-action: none`), so touch pans too.
 
 ## Golden verification (verifyShowcase)
 
