@@ -112,11 +112,11 @@ allprojects {
 // set, so :annotations:jsNodeTest is SKIPPED. It IS still downloaded on every CI run by
 // :kotlinNpmInstall, and Dependabot reports it, so the patched versions are pinned here.
 //
-// mocha declares ^7.0.0 for diff, ^6.0.2 for serialize-javascript and ^10.4.5 for glob,
-// so those three are deliberate out-of-range forces — safe precisely because the code
-// never runs. The
-// versions are chosen by the Kotlin Gradle plugin, so without these resolutions the only
-// other way to move them is a Kotlin upgrade, which the klib floor rules out.
+// mocha declares ^7.0.0 for diff, ^6.0.2 for serialize-javascript, ^10.4.5 for glob and
+// ^9.0.5 for minimatch, so those four are deliberate out-of-range forces — safe precisely
+// because the code never runs. The versions are chosen by the Kotlin Gradle plugin, so
+// without these resolutions the only other way to move them is a Kotlin upgrade, which
+// the klib floor rules out.
 //
 // After changing these, regenerate the lock: ./gradlew kotlinUpgradeYarnLock --rerun-tasks
 // (rootPackageJson doesn't track resolutions as an input, so a plain run stays UP-TO-DATE).
@@ -128,8 +128,10 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.j
         // 7.1.3: a function body ending in a bare </script was emitted unescaped (XSS, CVE-2026-115897)
         resolution("serialize-javascript", "7.1.3") // GHSA-5c6j-r48x-rmvq, CVE-2026-34043, CVE-2026-97711
         resolution("diff", "8.0.3") // CVE-2026-24001
-        resolution("brace-expansion", "2.1.7") // CVE-2026-102276, CVE-2026-102277, CVE-2026-102278
+        resolution("brace-expansion", "5.0.12") // CVE-2026-102276, CVE-2026-102277, CVE-2026-102278
         // 14.0.2: an aborted walk kept reading directories in the background
         resolution("glob", "14.0.2") // CVE-2026-118773
+        // 11.0.1: a **/../ pattern multiplied glob parts, then quadratic processing (CPU/memory DoS, CVE-2026-118764)
+        resolution("minimatch", "11.0.9")
     }
 }
